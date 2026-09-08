@@ -1,0 +1,102 @@
+@import url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-sans/style.css');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Geist Sans', 'Inter', sans-serif;
+  --color-primary-bg: #FFFFFF;
+  --color-section-bg: #FFFFFF;
+  --color-primary-text: #000000;
+  --color-secondary-text: #64748B;
+  --color-accent: #000000;
+  --color-hover-accent: #000000;
+  --color-border-light: #E5E7EB;
+  
+  --color-slate-900: #000000;
+  --color-slate-800: #000000;
+  --color-slate-950: #000000;
+  --color-gray-900: #000000;
+  --color-gray-950: #000000;
+  --color-zinc-900: #000000;
+  --color-zinc-950: #000000;
+  --color-neutral-900: #000000;
+  --color-neutral-950: #000000;
+}
+
+@utility text-fluid-sm {
+  font-size: clamp(0.875rem, 0.8vw + 0.6rem, 1rem); /* 14px to 16px */
+}
+@utility text-fluid-base {
+  font-size: clamp(1rem, 1vw + 0.75rem, 1.125rem); /* 16px to 18px */
+}
+@utility text-fluid-lg {
+  font-size: clamp(1.125rem, 1.5vw + 0.875rem, 1.5rem); /* 18px to 24px */
+}
+@utility text-fluid-xl {
+  font-size: clamp(1.5rem, 2vw + 1rem, 2rem); /* 24px to 32px */
+}
+@utility text-fluid-2xl {
+  font-size: clamp(1.75rem, 3vw + 1.25rem, 3rem); /* 28px to 48px */
+}
+@utility text-fluid-3xl {
+  font-size: clamp(2rem, 4vw + 1.5rem, 4rem); /* 32px to 64px */
+}
+@utility text-fluid-4xl {
+  font-size: clamp(2.5rem, 5vw + 1.75rem, 5.5rem); /* 40px to 88px */
+}
+
+html {
+  scroll-behavior: smooth;
+  font-family: 'Geist Sans', 'Inter', sans-serif;
+  background-color: #F8F9FA;
+  color: #000000;
+  /* Prevent horizontal scroll on mobile */
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  font-family: "Geist", sans-serif;
+  color: #000000;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure images never break containers */
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Custom scrollbar for premium feel */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #FFFFFF;
+}
+::-webkit-scrollbar-thumb {
+  background: #E5E7EB;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #0F172A;
+}
+
+.marquee-container {
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  gap: clamp(1rem, 4vw, 4rem); /* Fluid gap */
+}
+
+.marquee-content {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-around;
+  min-width: 100%;
+  gap: clamp(1rem, 4vw, 4rem);
+}
+

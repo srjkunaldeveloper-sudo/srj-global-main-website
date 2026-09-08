@@ -1,0 +1,153 @@
+/* ═══════════════════════════════════════════════
+   About Hero Section
+   ═══════════════════════════════════════════════ */
+
+.about-hero-section {
+  width: 100%;
+  background: #000000;
+  padding: 100px 0 80px;
+}
+
+.about-hero-section__container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 48px;
+}
+
+/* ── Left — Text ─────────────────────────── */
+
+.about-hero-section__content {
+  flex: 0 0 45%;
+  max-width: 45%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+}
+
+.about-hero-section__eyebrow {
+  font-family: "Outfit", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.about-hero-section__title {
+  font-family: "Outfit", sans-serif;
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 800;
+  line-height: 1.12;
+  color: #ffffff;
+  margin: 0;
+}
+
+.about-hero-section__accent {
+  color: #ffffff;
+}
+
+.about-hero-section__desc {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: #d1d5db;
+  margin: 0;
+}
+
+.about-hero-section__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 14px 32px;
+  font-family: "Outfit", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border: none;
+  border-radius: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: none;
+}
+
+/* ── Right — Image ───────────────────────── */
+
+.about-hero-section__image-wrapper {
+  flex: 1;
+  border-radius: 16px;
+  overflow: hidden;
+  height: clamp(360px, 50vw, 520px);
+}
+
+.about-hero-section__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ═══════════════════════════════════════════════
+   Responsive — Tablet
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .about-hero-section__container {
+    gap: 32px;
+  }
+
+  .about-hero-section__title {
+    font-size: clamp(28px, 3.5vw, 42px);
+  }
+
+  .about-hero-section__image-wrapper {
+    height: clamp(300px, 45vw, 440px);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   Responsive — Mobile
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .about-hero-section {
+    padding: 64px 0 48px;
+  }
+
+  .about-hero-section__container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .about-hero-section__content {
+    flex: none;
+    max-width: 100%;
+    text-align: center;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .about-hero-section__image-wrapper {
+    height: 280px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-hero-section__image-wrapper {
+    height: 220px;
+  }
+
+  .about-hero-section__title {
+    font-size: 28px;
+  }
+
+  .about-hero-section__desc {
+    font-size: 14px;
+  }
+}

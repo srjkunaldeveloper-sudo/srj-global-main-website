@@ -1,0 +1,249 @@
+/* =============================================
+   BLOG PAGE DESIGN SYSTEM
+   Premium enterprise knowledge platform styles
+   ============================================= */
+
+/* === SKELETON LOADING === */
+@keyframes blogShimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.blog-skeleton {
+  background: linear-gradient(90deg, rgba(0,0,0,0.03) 25%, rgba(0,0,0,0.06) 50%, rgba(0,0,0,0.03) 75%);
+  background-size: 800px 100%;
+  animation: blogShimmer 1.5s infinite ease-in-out;
+  border-radius: 12px;
+}
+
+/* === FLOATING ANIMATION === */
+@keyframes blogFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(-8px) rotate(1deg); }
+  75% { transform: translateY(4px) rotate(-1deg); }
+}
+
+@keyframes blogFloatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes blogGlowPulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+@keyframes blogBorderGlow {
+  0%, 100% { border-color: rgba(0, 0, 0, 0.08); }
+  50% { border-color: rgba(15, 23, 42, 0.2); }
+}
+
+@keyframes blogGradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes blogSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes blogCounter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === TRENDING CAROUSEL === */
+.blog-carousel-track {
+  display: flex;
+  gap: 24px;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: grab;
+}
+
+.blog-carousel-track:active {
+  cursor: grabbing;
+}
+
+.blog-carousel-track.dragging {
+  transition: none;
+}
+
+/* === SEARCH BAR === */
+.blog-search-container {
+  position: sticky;
+  top: 80px;
+  z-index: 100;
+  padding: 16px 0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* === FAQ ACCORDION === */
+.blog-faq-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), padding 0.3s ease;
+}
+
+.blog-faq-content.open {
+  max-height: 300px;
+}
+
+/* === ARTICLE GRID === */
+.blog-masonry {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+/* === VIDEO PLAY BUTTON === */
+.blog-video-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.blog-video-card:hover .blog-video-overlay {
+  opacity: 1;
+}
+
+/* === TAG CHIP === */
+.blog-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 50px;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  color: #475569;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.blog-tag-chip:hover {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.2);
+  color: #0f172a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.blog-tag-chip.active {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+/* === CATEGORY CARD HOVER BORDER === */
+.blog-category-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.blog-category-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, transparent, transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  transition: background 0.4s ease;
+  pointer-events: none;
+}
+
+.blog-category-card:hover::before {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(139, 92, 246, 0.5));
+}
+
+/* === NEWSLETTER GLOW CIRCLES === */
+@keyframes newsletterGlow1 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.15; }
+  50% { transform: translate(30px, -20px) scale(1.1); opacity: 0.25; }
+}
+
+@keyframes newsletterGlow2 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.1; }
+  50% { transform: translate(-20px, 30px) scale(1.15); opacity: 0.2; }
+}
+
+/* === TIMELINE CONNECTOR === */
+.blog-timeline-line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.4), rgba(139, 92, 246, 0.4), rgba(168, 85, 247, 0.2));
+  transform: translateX(-50%);
+}
+
+.blog-timeline-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border: 3px solid #070b11;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 1200px) {
+  .blog-masonry {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .blog-category-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .blog-masonry {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .blog-category-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .blog-timeline-line {
+    left: 24px;
+  }
+
+  .blog-timeline-dot {
+    left: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .blog-masonry {
+    grid-template-columns: 1fr;
+  }
+
+  .blog-category-grid {
+    grid-template-columns: 1fr;
+  }
+}
