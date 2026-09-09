@@ -20,7 +20,8 @@ import {
   XCircle,
   Edit,
   Folder,
-  HelpCircle
+  HelpCircle,
+  Layers
 } from 'lucide-react';
 import api from '../../config/api';
 import { serviceCategories } from '../../data/servicesData';
@@ -59,6 +60,13 @@ export default function AdminDashboard() {
     question: '', answer: '', category: 'General', sort_order: 0, is_active: 1
   });
   const [editFaqId, setEditFaqId] = useState(null);
+
+  // Industry Form State
+  const [industries, setIndustries] = useState([]);
+  const [newIndustry, setNewIndustry] = useState({
+    id: '', title: '', subtitle: '', icon: '', color: '#3B82F6', description: '', badge: '', features: '', benefits: '', sort_order: 0, is_active: 1
+  });
+  const [editIndustryId, setEditIndustryId] = useState(null);
   
   // Services Category Tab State
   const [activeServiceTab, setActiveServiceTab] = useState('all');
@@ -151,6 +159,9 @@ export default function AdminDashboard() {
       } else if (activeTab === 'faqs') {
         const res = await api.get('/faqs/admin');
         setFaqs(res.data.faqs || res.data || []);
+      } else if (activeTab === 'industries') {
+        const res = await api.get('/industries/admin');
+        setIndustries(res.data.industries || res.data || []);
       } else if (activeTab === 'careers') {
         const res = await api.get('/jobs');
         setJobs(res.data || []);
@@ -526,6 +537,129 @@ export default function AdminDashboard() {
     }
   };
 
+  // INDUSTRY handlers
+  const handleCreateIndustry = async (e) => {
+    e.preventDefault();
+    if (!newIndustry.id || !newIndustry.id.trim()) {
+      showNotification('error', 'Industry ID / Slug is required');
+      return;
+    }
+    if (!newIndustry.title || !newIndustry.title.trim()) {
+      showNotification('error', 'Industry title is required');
+      return;
+    }
+    if (!newIndustry.subtitle || !newIndustry.subtitle.trim()) {
+      showNotification('error', 'Subtitle is required');
+      return;
+    }
+    if (!newIndustry.icon || !newIndustry.icon.trim()) {
+      showNotification('error', 'Icon name is required');
+      return;
+    }
+    if (!newIndustry.color || !newIndustry.color.trim()) {
+      showNotification('error', 'Hex color code is required');
+      return;
+    }
+    if (!newIndustry.description || !newIndustry.description.trim()) {
+      showNotification('error', 'Description is required');
+      return;
+    }
+    if (!newIndustry.badge || !newIndustry.badge.trim()) {
+      showNotification('error', 'Badge label is required');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const featuresArray = typeof newIndustry.features === 'string'
+        ? newIndustry.features.split(',').map(s => s.trim()).filter(Boolean)
+        : (Array.isArray(newIndustry.features) ? newIndustry.features : []);
+
+      const benefitsArray = typeof newIndustry.benefits === 'string'
+        ? newIndustry.benefits.split(',').map(s => s.trim()).filter(Boolean)
+        : (Array.isArray(newIndustry.benefits) ? newIndustry.benefits : []);
+
+      const payload = {
+        id: newIndustry.id.trim().toLowerCase(),
+        title: newIndustry.title.trim(),
+        subtitle: newIndustry.subtitle.trim(),
+        icon: newIndustry.icon.trim(),
+        color: newIndustry.color.trim(),
+        description: newIndustry.description.trim(),
+        badge: newIndustry.badge.trim(),
+        features: featuresArray,
+        benefits: benefitsArray,
+        sort_order: parseInt(newIndustry.sort_order, 10) || 0,
+        is_active: parseInt(newIndustry.is_active, 10) === 1 ? 1 : 0
+      };
+
+      if (editIndustryId) {
+        await api.put(`/industries/${editIndustryId}`, payload);
+        showNotification('success', 'Industry updated successfully!');
+      } else {
+        await api.post('/industries', payload);
+        showNotification('success', 'Industry created successfully!');
+      }
+
+      setNewIndustry({
+        id: '', title: '', subtitle: '', icon: '', color: '#3B82F6', description: '', badge: '', features: '', benefits: '', sort_order: 0, is_active: 1
+      });
+      setEditIndustryId(null);
+      fetchData();
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to save industry');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditIndustry = (item) => {
+    const formattedFeatures = Array.isArray(item.features)
+      ? item.features.join(', ')
+      : (typeof item.features === 'string' ? item.features : '');
+
+    const formattedBenefits = Array.isArray(item.benefits)
+      ? item.benefits.join(', ')
+      : (typeof item.benefits === 'string' ? item.benefits : '');
+
+    setNewIndustry({
+      id: item.id || '',
+      title: item.title || '',
+      subtitle: item.subtitle || '',
+      icon: item.icon || '',
+      color: item.color || '#3B82F6',
+      description: item.description || '',
+      badge: item.badge || '',
+      features: formattedFeatures,
+      benefits: formattedBenefits,
+      sort_order: item.sort_order !== undefined ? item.sort_order : 0,
+      is_active: item.is_active !== undefined ? item.is_active : 1
+    });
+    setEditIndustryId(item.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleToggleIndustry = async (id) => {
+    try {
+      await api.put(`/industries/${id}/toggle`);
+      showNotification('success', 'Industry status updated!');
+      fetchData();
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to toggle status');
+    }
+  };
+
+  const handleDeleteIndustry = async (id) => {
+    if (!window.confirm(`Are you sure you want to delete the industry "${id}"?`)) return;
+    try {
+      await api.delete(`/industries/${id}`);
+      showNotification('success', 'Industry deleted successfully!');
+      fetchData();
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to delete industry');
+    }
+  };
+
   // JOB handlers
   const handleCreateJob = async (e) => {
     e.preventDefault();
@@ -792,6 +926,18 @@ export default function AdminDashboard() {
             >
               <HelpCircle size={18} />
               FAQs
+            </button>
+
+            <button
+              onClick={() => setActiveTab('industries')}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === 'industries' 
+                  ? 'bg-slate-900 text-white shadow-md' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Layers size={18} />
+              Industries
             </button>
 
             <button
@@ -2088,6 +2234,251 @@ export default function AdminDashboard() {
               </div>
             )}
 
+            {/* INDUSTRIES TAB */}
+            {activeTab === 'industries' && (
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                {/* Form to Create/Edit Industry */}
+                <div className="xl:col-span-1 bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] h-fit">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                      <Plus size={18} />
+                      {editIndustryId ? 'Edit Industry' : 'New Industry'}
+                    </h3>
+                    {editIndustryId && (
+                      <button
+                        onClick={() => {
+                          setEditIndustryId(null);
+                          setNewIndustry({
+                            id: '', title: '', subtitle: '', icon: '', color: '#3B82F6', description: '', badge: '', features: '', benefits: '', sort_order: 0, is_active: 1
+                          });
+                        }}
+                        className="text-xs text-slate-400 hover:text-red-500 font-bold cursor-pointer"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
+                  </div>
+                  <form onSubmit={handleCreateIndustry} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Industry ID / Slug *</label>
+                      <input
+                        type="text" required value={newIndustry.id}
+                        disabled={!!editIndustryId}
+                        onChange={(e) => setNewIndustry({...newIndustry, id: e.target.value})}
+                        placeholder="e.g. ecommerce (lowercase, hyphens)"
+                        className={`w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 ${
+                          editIndustryId ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''
+                        }`}
+                      />
+                      {editIndustryId && (
+                        <p className="text-[10px] text-slate-400 mt-1">ID / Slug cannot be changed during edit.</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Title *</label>
+                      <input
+                        type="text" required value={newIndustry.title}
+                        onChange={(e) => setNewIndustry({...newIndustry, title: e.target.value})}
+                        placeholder="e.g. E-Commerce Solutions"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Subtitle / Tagline *</label>
+                      <input
+                        type="text" required value={newIndustry.subtitle}
+                        onChange={(e) => setNewIndustry({...newIndustry, subtitle: e.target.value})}
+                        placeholder="e.g. Scalable Digital Stores & Payment Gateway Integration"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Icon Name *</label>
+                        <input
+                          type="text" required value={newIndustry.icon}
+                          onChange={(e) => setNewIndustry({...newIndustry, icon: e.target.value})}
+                          placeholder="FaStore / FaRocket"
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Theme Color *</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color" value={newIndustry.color}
+                            onChange={(e) => setNewIndustry({...newIndustry, color: e.target.value})}
+                            className="w-10 h-10 rounded-xl border border-slate-200 bg-white p-1 cursor-pointer"
+                          />
+                          <input
+                            type="text" required value={newIndustry.color}
+                            onChange={(e) => setNewIndustry({...newIndustry, color: e.target.value})}
+                            placeholder="#3B82F6"
+                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 font-mono text-xs placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Badge Label *</label>
+                      <input
+                        type="text" required value={newIndustry.badge}
+                        onChange={(e) => setNewIndustry({...newIndustry, badge: e.target.value})}
+                        placeholder="e.g. Retail & Sales"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Description *</label>
+                      <textarea
+                        required value={newIndustry.description} rows={4}
+                        onChange={(e) => setNewIndustry({...newIndustry, description: e.target.value})}
+                        placeholder="Detailed overview of industry capabilities and target value proposition..."
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Features (Comma-separated) *</label>
+                      <textarea
+                        required value={newIndustry.features} rows={3}
+                        onChange={(e) => setNewIndustry({...newIndustry, features: e.target.value})}
+                        placeholder="Feature 1, Feature 2, Feature 3"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 resize-none text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Benefits (Comma-separated) *</label>
+                      <textarea
+                        required value={newIndustry.benefits} rows={3}
+                        onChange={(e) => setNewIndustry({...newIndustry, benefits: e.target.value})}
+                        placeholder="Benefit 1, Benefit 2, Benefit 3"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 resize-none text-xs"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Sort Order</label>
+                        <input
+                          type="number" value={newIndustry.sort_order}
+                          onChange={(e) => setNewIndustry({...newIndustry, sort_order: parseInt(e.target.value, 10) || 0})}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Status</label>
+                        <select
+                          value={newIndustry.is_active}
+                          onChange={(e) => setNewIndustry({...newIndustry, is_active: parseInt(e.target.value, 10)})}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900"
+                        >
+                          <option value={1}>Active</option>
+                          <option value={0}>Inactive</option>
+                        </select>
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full py-3 rounded-xl bg-slate-900 hover:bg-black disabled:bg-slate-400 font-semibold text-white transition-all cursor-pointer"
+                    >
+                      {editIndustryId ? 'Save Changes' : 'Create Industry'}
+                    </button>
+                  </form>
+                </div>
+
+                {/* List of Industries */}
+                <div className="xl:col-span-2 space-y-4">
+                  <h3 className="text-lg font-bold text-slate-900">Industries Modules ({industries.length})</h3>
+                  {industries.length === 0 ? (
+                    <div className="bg-white p-8 rounded-3xl border border-slate-100 text-center text-slate-400">
+                      No industries found in database. Use the form on the left to create your first industry record.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                      {industries.map((ind) => (
+                        <div key={ind.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 flex-wrap mb-2">
+                              <span
+                                className="w-3.5 h-3.5 rounded-full shrink-0 border border-slate-200"
+                                style={{ backgroundColor: ind.color || '#3B82F6' }}
+                                title={`Color: ${ind.color}`}
+                              />
+                              <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                                {ind.id}
+                              </span>
+                              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                {ind.badge}
+                              </span>
+                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold border ml-auto md:ml-0 ${
+                                ind.is_active 
+                                  ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                  : 'bg-slate-100 text-slate-400 border-slate-200'
+                              }`}>
+                                {ind.is_active ? 'ACTIVE' : 'INACTIVE'}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600">
+                                Order: {ind.sort_order || 0}
+                              </span>
+                            </div>
+
+                            <h4 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                              {ind.title}
+                              <span className="text-xs font-mono font-normal text-slate-400">({ind.icon})</span>
+                            </h4>
+                            <p className="text-xs font-semibold text-slate-500 mb-2">{ind.subtitle}</p>
+                            <p className="text-slate-600 text-sm whitespace-pre-line leading-relaxed line-clamp-3 mb-3">{ind.description}</p>
+
+                            {/* Features & Benefits Pills */}
+                            <div className="flex flex-wrap gap-2 text-xs">
+                              {Array.isArray(ind.features) && ind.features.length > 0 && (
+                                <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-medium">
+                                  {ind.features.length} Features
+                                </span>
+                              )}
+                              {Array.isArray(ind.benefits) && ind.benefits.length > 0 && (
+                                <span className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-medium">
+                                  {ind.benefits.length} Benefits
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                            <button
+                              onClick={() => handleToggleIndustry(ind.id)}
+                              className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition cursor-pointer ${
+                                ind.is_active
+                                  ? 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                                  : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-600'
+                              }`}
+                            >
+                              {ind.is_active ? 'Deactivate' : 'Activate'}
+                            </button>
+
+                            <button
+                              onClick={() => handleEditIndustry(ind)}
+                              className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition cursor-pointer"
+                              title="Edit Industry"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            
+                            <button
+                              onClick={() => handleDeleteIndustry(ind.id)}
+                              className="p-2 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-100 hover:border-red-100 transition cursor-pointer"
+                              title="Delete Industry"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>

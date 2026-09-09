@@ -389,4 +389,164 @@ exports.validateUpdateFaq = [
   handleErrors,
 ];
 
+exports.validateCreateIndustry = [
+  body("id")
+    .trim()
+    .notEmpty().withMessage("ID/slug is required")
+    .isLength({ min: 2, max: 100 }).withMessage("ID must be 2-100 characters")
+    .matches(/^[a-z0-9-]+$/).withMessage("ID must contain lowercase alphanumeric characters and hyphens only"),
+  body("title")
+    .trim()
+    .notEmpty().withMessage("Title is required")
+    .isLength({ min: 2, max: 255 }).withMessage("Title must be 2-255 characters"),
+  body("subtitle")
+    .trim()
+    .notEmpty().withMessage("Subtitle is required")
+    .isLength({ min: 2, max: 255 }).withMessage("Subtitle must be 2-255 characters"),
+  body("icon")
+    .trim()
+    .notEmpty().withMessage("Icon is required")
+    .isLength({ max: 100 }).withMessage("Icon must be at most 100 characters"),
+  body("color")
+    .trim()
+    .notEmpty().withMessage("Color is required")
+    .matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).withMessage("Color must be a valid hex color code (e.g. #4F7DFF)"),
+  body("description")
+    .trim()
+    .notEmpty().withMessage("Description is required")
+    .isLength({ min: 5, max: 5000 }).withMessage("Description must be 5-5000 characters"),
+  body("badge")
+    .trim()
+    .notEmpty().withMessage("Badge is required")
+    .isLength({ max: 100 }).withMessage("Badge must be at most 100 characters"),
+  body("features")
+    .optional({ values: "falsy" })
+    .custom((value) => {
+      if (!value) return true;
+      if (Array.isArray(value)) return true;
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            if (!Array.isArray(parsed)) {
+              throw new Error("Features must be a valid list/array");
+            }
+          } catch (e) {
+            throw new Error("Features JSON is malformed");
+          }
+        }
+        return true;
+      }
+      throw new Error("Features must be a string or array");
+    }),
+  body("benefits")
+    .optional({ values: "falsy" })
+    .custom((value) => {
+      if (!value) return true;
+      if (Array.isArray(value)) return true;
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            if (!Array.isArray(parsed)) {
+              throw new Error("Benefits must be a valid list/array");
+            }
+          } catch (e) {
+            throw new Error("Benefits JSON is malformed");
+          }
+        }
+        return true;
+      }
+      throw new Error("Benefits must be a string or array");
+    }),
+  body("is_active")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("is_active must be 0 or 1"),
+  body("sort_order")
+    .optional()
+    .isInt().withMessage("sort_order must be an integer"),
+  handleErrors,
+];
+
+exports.validateUpdateIndustry = [
+  body("title")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ min: 2, max: 255 }).withMessage("Title must be 2-255 characters"),
+  body("subtitle")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ min: 2, max: 255 }).withMessage("Subtitle must be 2-255 characters"),
+  body("icon")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 100 }).withMessage("Icon must be at most 100 characters"),
+  body("color")
+    .optional({ values: "falsy" })
+    .trim()
+    .matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).withMessage("Color must be a valid hex color code (e.g. #4F7DFF)"),
+  body("description")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ min: 5, max: 5000 }).withMessage("Description must be 5-5000 characters"),
+  body("badge")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 100 }).withMessage("Badge must be at most 100 characters"),
+  body("features")
+    .optional({ values: "falsy" })
+    .custom((value) => {
+      if (!value) return true;
+      if (Array.isArray(value)) return true;
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            if (!Array.isArray(parsed)) {
+              throw new Error("Features must be a valid list/array");
+            }
+          } catch (e) {
+            throw new Error("Features JSON is malformed");
+          }
+        }
+        return true;
+      }
+      throw new Error("Features must be a string or array");
+    }),
+  body("benefits")
+    .optional({ values: "falsy" })
+    .custom((value) => {
+      if (!value) return true;
+      if (Array.isArray(value)) return true;
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            if (!Array.isArray(parsed)) {
+              throw new Error("Benefits must be a valid list/array");
+            }
+          } catch (e) {
+            throw new Error("Benefits JSON is malformed");
+          }
+        }
+        return true;
+      }
+      throw new Error("Benefits must be a string or array");
+    }),
+  body("is_active")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("is_active must be 0 or 1"),
+  body("sort_order")
+    .optional()
+    .isInt().withMessage("sort_order must be an integer"),
+  handleErrors,
+];
+
+
 

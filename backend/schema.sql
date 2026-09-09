@@ -132,5 +132,25 @@ CREATE TABLE IF NOT EXISTS `faqs` (
   INDEX `idx_faqs_sort_order` (`sort_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Industries Table
+CREATE TABLE IF NOT EXISTS `industries` (
+  `id` VARCHAR(100) PRIMARY KEY,
+  `title` VARCHAR(255) NOT NULL,
+  `subtitle` VARCHAR(255) NOT NULL,
+  `icon` VARCHAR(100) NOT NULL,
+  `color` VARCHAR(20) NOT NULL,
+  `description` TEXT NOT NULL,
+  `badge` VARCHAR(100) NOT NULL,
+  `features` TEXT NOT NULL,
+  `benefits` TEXT NOT NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_industries_is_active` (`is_active`),
+  INDEX `idx_industries_sort_order` (`sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 
 
