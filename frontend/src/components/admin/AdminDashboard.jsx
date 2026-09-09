@@ -18,7 +18,8 @@ import {
   MessageSquare,
   CheckCircle2,
   XCircle,
-  Edit
+  Edit,
+  Folder
 } from 'lucide-react';
 import api from '../../config/api';
 import { serviceCategories } from '../../data/servicesData';
@@ -32,6 +33,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [promotions, setPromotions] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
+  const [portfolio, setPortfolio] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -43,6 +45,12 @@ export default function AdminDashboard() {
     quote: '', author: '', role: '', company: '', rating: 5, sort_order: 0, image: null, is_active: 1
   });
   const [editTestimonialId, setEditTestimonialId] = useState(null);
+
+  // Portfolio Form State
+  const [newPortfolio, setNewPortfolio] = useState({
+    title: '', category: '', tags: '', project_url: '', description: '', sort_order: 0, image: null, is_active: 1
+  });
+  const [editPortfolioId, setEditPortfolioId] = useState(null);
   
   // Services Category Tab State
   const [activeServiceTab, setActiveServiceTab] = useState('all');
@@ -129,6 +137,9 @@ export default function AdminDashboard() {
       } else if (activeTab === 'testimonials') {
         const res = await api.get('/testimonials/admin');
         setTestimonials(res.data.testimonials || res.data || []);
+      } else if (activeTab === 'portfolio') {
+        const res = await api.get('/portfolio/admin');
+        setPortfolio(res.data.portfolio || res.data || []);
       } else if (activeTab === 'careers') {
         const res = await api.get('/jobs');
         setJobs(res.data || []);
@@ -349,6 +360,85 @@ export default function AdminDashboard() {
       fetchData();
     } catch (err) {
       showNotification('error', err.response?.data?.message || 'Failed to delete testimonial');
+    }
+  };
+
+  // PORTFOLIO handlers
+  const handleCreatePortfolio = async (e) => {
+    e.preventDefault();
+    if (!newPortfolio.title || !newPortfolio.title.trim()) {
+      showNotification('error', 'Project title is required');
+      return;
+    }
+    if (!newPortfolio.category || !newPortfolio.category.trim()) {
+      showNotification('error', 'Category is required');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      Object.keys(newPortfolio).forEach(key => {
+        if (newPortfolio[key] !== null && newPortfolio[key] !== undefined) {
+          formData.append(key, newPortfolio[key]);
+        }
+      });
+
+      if (editPortfolioId) {
+        await api.put(`/portfolio/${editPortfolioId}`, formData);
+        showNotification('success', 'Portfolio project updated successfully!');
+      } else {
+        await api.post('/portfolio', formData);
+        showNotification('success', 'Portfolio project created successfully!');
+      }
+
+      setNewPortfolio({ title: '', category: '', tags: '', project_url: '', description: '', sort_order: 0, image: null, is_active: 1 });
+      setEditPortfolioId(null);
+      fetchData();
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to save portfolio project');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditPortfolio = (item) => {
+    const formattedTags = Array.isArray(item.tags) 
+      ? item.tags.join(', ') 
+      : (typeof item.tags === 'string' ? item.tags : '');
+
+    setNewPortfolio({
+      title: item.title || '',
+      category: item.category || '',
+      tags: formattedTags,
+      project_url: item.project_url || '',
+      description: item.description || '',
+      sort_order: item.sort_order || 0,
+      image: item.image || null,
+      is_active: item.is_active !== undefined ? item.is_active : 1
+    });
+    setEditPortfolioId(item.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleTogglePortfolio = async (id, currentStatus) => {
+    try {
+      await api.put(`/portfolio/${id}/toggle`, { is_active: !currentStatus });
+      showNotification('success', 'Portfolio status updated!');
+      fetchData();
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to toggle status');
+    }
+  };
+
+  const handleDeletePortfolio = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this portfolio project?')) return;
+    try {
+      await api.delete(`/portfolio/${id}`);
+      showNotification('success', 'Portfolio project deleted successfully!');
+      fetchData();
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to delete portfolio project');
     }
   };
 
@@ -594,6 +684,18 @@ export default function AdminDashboard() {
             >
               <MessageSquare size={18} />
               Testimonials
+            </button>
+
+            <button
+              onClick={() => setActiveTab('portfolio')}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === 'portfolio' 
+                  ? 'bg-slate-900 text-white shadow-md' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Folder size={18} />
+              Portfolio
             </button>
 
             <button
@@ -1513,6 +1615,223 @@ export default function AdminDashboard() {
                               onClick={() => handleDeleteTestimonial(t.id)}
                               className="p-2 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-100 hover:border-red-100 transition cursor-pointer"
                               title="Delete Testimonial"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* PORTFOLIO TAB */}
+            {activeTab === 'portfolio' && (
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                {/* Form to Create/Edit Portfolio Item */}
+                <div className="xl:col-span-1 bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] h-fit">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                      <Plus size={18} />
+                      {editPortfolioId ? 'Edit Portfolio Project' : 'New Portfolio Project'}
+                    </h3>
+                    {editPortfolioId && (
+                      <button
+                        onClick={() => {
+                          setEditPortfolioId(null);
+                          setNewPortfolio({ title: '', category: '', tags: '', project_url: '', description: '', sort_order: 0, image: null, is_active: 1 });
+                        }}
+                        className="text-xs text-slate-400 hover:text-red-500 font-bold cursor-pointer"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
+                  </div>
+                  <form onSubmit={handleCreatePortfolio} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Project Title *</label>
+                      <input
+                        type="text" required value={newPortfolio.title}
+                        onChange={(e) => setNewPortfolio({...newPortfolio, title: e.target.value})}
+                        placeholder="e.g. Aura Fintech Platform"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Category *</label>
+                      <input
+                        type="text" required value={newPortfolio.category}
+                        onChange={(e) => setNewPortfolio({...newPortfolio, category: e.target.value})}
+                        placeholder="e.g. Financial Technology"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tech Tags (Comma-separated)</label>
+                      <input
+                        type="text" value={newPortfolio.tags}
+                        onChange={(e) => setNewPortfolio({...newPortfolio, tags: e.target.value})}
+                        placeholder="e.g. React, Next.js, PostgreSQL"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Project / Demo URL (Optional)</label>
+                      <input
+                        type="text" value={newPortfolio.project_url}
+                        onChange={(e) => setNewPortfolio({...newPortfolio, project_url: e.target.value})}
+                        placeholder="e.g. https://aura-fintech.example.com"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Description (Optional)</label>
+                      <textarea
+                        value={newPortfolio.description} rows={3}
+                        onChange={(e) => setNewPortfolio({...newPortfolio, description: e.target.value})}
+                        placeholder="Short summary of the project architecture and features..."
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 resize-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Sort Order</label>
+                        <input
+                          type="number" value={newPortfolio.sort_order}
+                          onChange={(e) => setNewPortfolio({...newPortfolio, sort_order: parseInt(e.target.value, 10) || 0})}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Status</label>
+                        <select
+                          value={newPortfolio.is_active}
+                          onChange={(e) => setNewPortfolio({...newPortfolio, is_active: parseInt(e.target.value, 10)})}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900"
+                        >
+                          <option value={1}>Active</option>
+                          <option value={0}>Inactive</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Project Image (Optional)</label>
+                      <input
+                        type="file" accept="image/*"
+                        onChange={(e) => setNewPortfolio({...newPortfolio, image: e.target.files[0]})}
+                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/5 transition-all text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800"
+                      />
+                      {typeof newPortfolio.image === 'string' && newPortfolio.image && (
+                        <div className="flex items-center justify-between text-xs text-slate-500 mt-2">
+                          <span>Current Image: <a href={newPortfolio.image} target="_blank" rel="noreferrer" className="text-blue-500 underline">View Image</a></span>
+                          <button
+                            type="button"
+                            onClick={() => setNewPortfolio({...newPortfolio, image: 'REMOVE'})}
+                            className="text-red-500 hover:underline font-bold cursor-pointer"
+                          >
+                            Remove Image
+                          </button>
+                        </div>
+                      )}
+                      {newPortfolio.image === 'REMOVE' && (
+                        <p className="text-xs text-amber-600 font-semibold mt-2">
+                          Image will be removed upon saving.
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full py-3 rounded-xl bg-slate-900 hover:bg-black font-semibold text-white transition-all cursor-pointer"
+                    >
+                      {editPortfolioId ? 'Save Changes' : 'Create Project'}
+                    </button>
+                  </form>
+                </div>
+
+                {/* List of Portfolio Projects */}
+                <div className="xl:col-span-2 space-y-4">
+                  <h3 className="text-lg font-bold text-slate-900">Portfolio Projects ({portfolio.length})</h3>
+                  {portfolio.length === 0 ? (
+                    <div className="bg-white p-8 rounded-3xl border border-slate-100 text-center text-slate-400">
+                      No portfolio projects found in database.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                      {portfolio.map((p) => (
+                        <div key={p.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              {p.image && typeof p.image === 'string' ? (
+                                <img src={p.image} alt={p.title} className="w-14 h-14 rounded-xl object-cover border border-slate-200" />
+                              ) : (
+                                <div className="w-14 h-14 rounded-xl bg-slate-100 text-slate-700 font-bold flex items-center justify-center border border-slate-200 text-xs">
+                                  No Img
+                                </div>
+                              )}
+                              <div>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{p.category}</span>
+                                <h4 className="text-base font-extrabold text-slate-900">{p.title}</h4>
+                              </div>
+                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold border ml-auto md:ml-0 ${
+                                p.is_active 
+                                  ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                  : 'bg-slate-100 text-slate-400 border-slate-200'
+                              }`}>
+                                {p.is_active ? 'ACTIVE' : 'INACTIVE'}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600">
+                                Order: {p.sort_order || 0}
+                              </span>
+                            </div>
+                            
+                            {p.description && (
+                              <p className="text-slate-600 text-sm mt-2 line-clamp-2">{p.description}</p>
+                            )}
+
+                            {/* Tags list */}
+                            {Array.isArray(p.tags) && p.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-3">
+                                {p.tags.map((tag, idx) => (
+                                  <span key={idx} className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-xs font-semibold">
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {p.project_url && (
+                              <p className="text-xs text-blue-600 mt-2 truncate">
+                                URL: <a href={p.project_url} target="_blank" rel="noreferrer" className="underline">{p.project_url}</a>
+                              </p>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-2 self-end md:self-center">
+                            <button
+                              onClick={() => handleTogglePortfolio(p.id, p.is_active)}
+                              className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition cursor-pointer ${
+                                p.is_active
+                                  ? 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                                  : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-600'
+                              }`}
+                            >
+                              {p.is_active ? 'Deactivate' : 'Activate'}
+                            </button>
+
+                            <button
+                              onClick={() => handleEditPortfolio(p)}
+                              className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition cursor-pointer"
+                              title="Edit Portfolio Project"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            
+                            <button
+                              onClick={() => handleDeletePortfolio(p.id)}
+                              className="p-2 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-100 hover:border-red-100 transition cursor-pointer"
+                              title="Delete Portfolio Project"
                             >
                               <Trash2 size={16} />
                             </button>

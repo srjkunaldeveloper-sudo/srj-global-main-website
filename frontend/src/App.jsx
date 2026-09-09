@@ -14,6 +14,7 @@ import Process from './components/Process';
 import Trust from './components/Trust';
 import Stats from './components/Stats';
 import Testimonials from './components/Testimonials';
+import Portfolio from './components/Portfolio';
 
 // Lazy load secondary routes to dramatically reduce initial bundle size
 const ServicesPage = lazy(() => import('./components/services/ServicesPage'));
@@ -63,6 +64,7 @@ export default function App() {
                   <Hero />
                   <Marquee />
                   <Services />
+                  <Portfolio />
                   <Process />
                   <Trust />
                   <Stats />

@@ -231,3 +231,115 @@ exports.validateCreateTestimonial = [
   handleErrors,
 ];
 
+exports.validateCreatePortfolio = [
+  body("title")
+    .trim()
+    .notEmpty().withMessage("Title is required")
+    .isLength({ min: 2, max: 255 }).withMessage("Title must be 2-255 characters"),
+  body("category")
+    .trim()
+    .notEmpty().withMessage("Category is required")
+    .isLength({ min: 2, max: 150 }).withMessage("Category must be 2-150 characters"),
+  body("tags")
+    .optional({ values: "falsy" })
+    .custom((value) => {
+      if (Array.isArray(value)) return true;
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            if (!Array.isArray(parsed)) {
+              throw new Error("Tags must be a valid list/array");
+            }
+          } catch (e) {
+            throw new Error("Tags JSON is malformed");
+          }
+        }
+        return true;
+      }
+      throw new Error("Tags must be a string or array");
+    }),
+  body("project_url")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("Project URL must be at most 500 characters")
+    .custom((value) => {
+      if (!value) return true;
+      try {
+        new URL(value.startsWith("http") ? value : `https://${value}`);
+        return true;
+      } catch (e) {
+        throw new Error("Must be a valid URL");
+      }
+    }),
+  body("description")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 5000 }).withMessage("Description must be at most 5000 characters"),
+  body("is_active")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("is_active must be 0 or 1"),
+  body("sort_order")
+    .optional()
+    .isInt().withMessage("sort_order must be an integer"),
+  handleErrors,
+];
+
+exports.validateUpdatePortfolio = [
+  body("title")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ min: 2, max: 255 }).withMessage("Title must be 2-255 characters"),
+  body("category")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ min: 2, max: 150 }).withMessage("Category must be 2-150 characters"),
+  body("tags")
+    .optional({ values: "falsy" })
+    .custom((value) => {
+      if (Array.isArray(value)) return true;
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            if (!Array.isArray(parsed)) {
+              throw new Error("Tags must be a valid list/array");
+            }
+          } catch (e) {
+            throw new Error("Tags JSON is malformed");
+          }
+        }
+        return true;
+      }
+      throw new Error("Tags must be a string or array");
+    }),
+  body("project_url")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("Project URL must be at most 500 characters")
+    .custom((value) => {
+      if (!value || value === "REMOVE") return true;
+      try {
+        new URL(value.startsWith("http") ? value : `https://${value}`);
+        return true;
+      } catch (e) {
+        throw new Error("Must be a valid URL");
+      }
+    }),
+  body("description")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 5000 }).withMessage("Description must be at most 5000 characters"),
+  body("is_active")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("is_active must be 0 or 1"),
+  body("sort_order")
+    .optional()
+    .isInt().withMessage("sort_order must be an integer"),
+  handleErrors,
+];
+
