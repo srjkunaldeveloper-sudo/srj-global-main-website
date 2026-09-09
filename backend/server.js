@@ -30,9 +30,11 @@ const industryRoutes = require("./routes/industryRoutes");
 const promotionRoutes = require("./routes/promotionRoutes");
 const testimonialRoutes = require("./routes/testimonialRoutes");
 const portfolioRoutes = require("./routes/portfolioRoutes");
+const faqRoutes = require("./routes/faqRoutes");
 const { generateSitemap } = require("./controllers/sitemapController");
 
 const app = express();
+
 
 app.set("trust proxy", 1);
 
@@ -137,7 +139,9 @@ app.use("/api/industries", industryRoutes);
 app.use("/api/promotions", promotionRoutes);
 app.use("/api/testimonials", testimonialRoutes);
 app.use("/api/portfolio", portfolioRoutes);
+app.use("/api/faqs", faqRoutes);
 app.use("/api", sendMeetingRoute);
+
 app.get("/api/sitemap.xml", generateSitemap);
 
 app.use((req, res) => {

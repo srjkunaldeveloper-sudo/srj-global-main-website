@@ -118,4 +118,19 @@ CREATE TABLE IF NOT EXISTS `portfolio` (
   INDEX `idx_portfolio_sort_order` (`sort_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- FAQs Table
+CREATE TABLE IF NOT EXISTS `faqs` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `question` TEXT NOT NULL,
+  `answer` TEXT NOT NULL,
+  `category` VARCHAR(100) DEFAULT 'General',
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_faqs_is_active` (`is_active`),
+  INDEX `idx_faqs_sort_order` (`sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 

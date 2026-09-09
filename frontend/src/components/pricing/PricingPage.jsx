@@ -31,7 +31,7 @@ import PricingHero from "./PricingHero";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import axios from 'axios';
-import { API_BASE_URL } from "../../config/api";
+import api, { API_BASE_URL } from "../../config/api";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -57,12 +57,7 @@ const PARTNER_POINTS = [
   { icon: Rocket, title: "Lifetime Support", desc: "We maintain what we build.", badge: "04" }
 ];
 
-const FAQ_DATA = [
-  { q: "How is pricing calculated?", a: "Pricing is transparently calculated based on your base plan, any add-on modules you select, and the delivery timeline. Rush deliveries incur an expedition fee." },
-  { q: "Can I customize plans?", a: "Absolutely. The packages above act as a starting point. We can build entirely bespoke solutions tailored exactly to your enterprise requirements." },
-  { q: "Can I request enterprise pricing?", a: "Yes, for massive scale systems or dedicated engineering teams, please schedule a consultation for a custom enterprise proposal." },
-  { q: "What happens after payment?", a: "Once approved, you'll be assigned a dedicated project manager who will onboard you into our ecosystem, define the product roadmap, and begin sprints." }
-];
+// FAQ_DATA replaced by API data (/api/faqs?category=Pricing)
 
 const Pricing = () => {
   const navigate = useNavigate();
@@ -76,6 +71,34 @@ const Pricing = () => {
   const [selectedAddons, setSelectedAddons] = useState([]);
   const [timeline, setTimeline] = useState(TIMELINE_OPTIONS[1]); // Default 8 weeks
   const [activeFaq, setActiveFaq] = useState(null);
+  
+  // Pricing FAQs API State
+  const [pricingFaqs, setPricingFaqs] = useState([]);
+  const [faqsLoading, setFaqsLoading] = useState(true);
+  const [faqsError, setFaqsError] = useState(false);
+
+  useEffect(() => {
+    const fetchPricingFaqs = async () => {
+      try {
+        const res = await api.get('/faqs?category=Pricing');
+        if (res.data && res.data.success && Array.isArray(res.data.faqs)) {
+          setPricingFaqs(res.data.faqs);
+        } else if (Array.isArray(res.data)) {
+          setPricingFaqs(res.data);
+        } else {
+          setPricingFaqs([]);
+        }
+      } catch (err) {
+        console.error('Error fetching Pricing FAQs:', err);
+        setFaqsError(true);
+        setPricingFaqs([]);
+      } finally {
+        setFaqsLoading(false);
+      }
+    };
+
+    fetchPricingFaqs();
+  }, []);
   
   // Custom Inquiry Modal State
   const [showInquiryModal, setShowInquiryModal] = useState(false);
@@ -648,36 +671,52 @@ const Pricing = () => {
       </section>
 
       {/* 8. FAQ */}
-      <section className="pricing-section" style={{ backgroundColor: '#ffffff' }}>
-        <motion.div className="section-header" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-          <h2 style={{ color: '#000000' }}>Frequently Asked Questions</h2>
-        </motion.div>
-        
-        <div className="faq-container">
-          {FAQ_DATA.map((faq, idx) => (
-            <div key={idx} className={`faq-item ${activeFaq === idx ? 'active' : ''}`}>
-              <div className="faq-header" style={{ color: '#0f172a', fontWeight: '600' }} onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}>
-                {faq.q}
-                <FaChevronDown className="faq-icon" style={{ color: '#64748b' }} size={16} />
-              </div>
-              <AnimatePresence>
-                {activeFaq === idx && (
-                  <motion.div 
-                    initial={{ height: 0, opacity: 0 }} 
-                    animate={{ height: 'auto', opacity: 1 }} 
-                    exit={{ height: 0, opacity: 0 }}
-                    style={{ overflow: 'hidden' }}
-                  >
-                    <div className="faq-body" style={{ color: '#64748b' }}>
-                      {faq.a}
+      {!faqsLoading && (pricingFaqs.length === 0 || faqsError) ? null : (
+        <section className="pricing-section" style={{ backgroundColor: '#ffffff' }}>
+          <motion.div className="section-header" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
+            <h2 style={{ color: '#000000' }}>Frequently Asked Questions</h2>
+          </motion.div>
+          
+          <div className="faq-container">
+            {faqsLoading ? (
+              Array.from({ length: 3 }).map((_, idx) => (
+                <div key={idx} className="faq-item p-6 animate-pulse space-y-2">
+                  <div className="h-4 bg-slate-200 rounded w-2/3" />
+                  <div className="h-3 bg-slate-100 rounded w-1/2" />
+                </div>
+              ))
+            ) : (
+              pricingFaqs.map((faq, idx) => {
+                const qText = faq.question || faq.q;
+                const aText = faq.answer || faq.a;
+
+                return (
+                  <div key={faq.id || idx} className={`faq-item ${activeFaq === idx ? 'active' : ''}`}>
+                    <div className="faq-header" style={{ color: '#0f172a', fontWeight: '600' }} onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}>
+                      {qText}
+                      <FaChevronDown className="faq-icon" style={{ color: '#64748b' }} size={16} />
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </div>
-      </section>
+                    <AnimatePresence>
+                      {activeFaq === idx && (
+                        <motion.div 
+                          initial={{ height: 0, opacity: 0 }} 
+                          animate={{ height: 'auto', opacity: 1 }} 
+                          exit={{ height: 0, opacity: 0 }}
+                          style={{ overflow: 'hidden' }}
+                        >
+                          <div className="faq-body" style={{ color: '#64748b', whitespace: 'pre-line' }}>
+                            {aText}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </section>
+      )}
 
       {/* 9. FINAL CTA */}
       <section className="pricing-section" style={{ textAlign: 'center', padding: '75px 5%', backgroundColor: '#ffffff' }}>

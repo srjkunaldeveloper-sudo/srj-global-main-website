@@ -27,8 +27,8 @@ import {
   successStories,
   popularTags,
   videos,
-  faqData,
 } from "../data/blogData";
+
 
 function Blog() {
   const location = useLocation();
@@ -246,7 +246,8 @@ function Blog() {
 
 
 
-            <BlogFAQ faqs={faqData} />
+            <BlogFAQ />
+
           </>
         )}
 

@@ -592,29 +592,3 @@ export const videos = [
   },
 ];
 
-export const faqData = [
-  {
-    question: "How often does SRJ Global Technologies publish new blog articles?",
-    answer: "We publish 3-5 in-depth articles every week across our core technology domains. Our content team includes senior engineers, architects, and domain experts who write from real project experience. We prioritize quality and depth over volume, ensuring every article provides actionable insights.",
-  },
-  {
-    question: "Can I contribute as a guest author or technical writer?",
-    answer: "Yes! We welcome contributions from experienced technology professionals. Our editorial team reviews submissions for technical accuracy, originality, and practical value. Reach out through our Contact page with your area of expertise and a writing sample, and we'll guide you through our contributor onboarding process.",
-  },
-  {
-    question: "How do you ensure the technical accuracy of your content?",
-    answer: "Every article undergoes a rigorous three-stage review process: technical peer review by subject matter experts, editorial review for clarity and accuracy, and a final quality check. Our authors are active practitioners who write about technologies they use in production environments daily.",
-  },
-  {
-    question: "Do you offer custom workshops or training based on your blog topics?",
-    answer: "Absolutely. Many of our blog topics are derived from our enterprise training programs. We offer customized workshops, corporate training sessions, and consulting engagements based on the knowledge shared in our blog. Contact us to discuss your team's specific learning objectives.",
-  },
-  {
-    question: "Can I request specific topics for future blog posts?",
-    answer: "We love hearing from our readers! Use the newsletter section below to suggest topics, or reach out via social media. We maintain a public roadmap of planned content and regularly incorporate reader suggestions into our editorial calendar.",
-  },
-  {
-    question: "Are your articles available in formats other than web pages?",
-    answer: "Yes, we offer PDF downloads for most articles, and our newsletter subscribers get early access to our monthly technology digest — a curated compilation of our best articles with exclusive bonus content and analysis.",
-  },
-];

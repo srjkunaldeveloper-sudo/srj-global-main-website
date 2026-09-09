@@ -343,3 +343,50 @@ exports.validateUpdatePortfolio = [
   handleErrors,
 ];
 
+exports.validateCreateFaq = [
+  body("question")
+    .trim()
+    .notEmpty().withMessage("Question is required")
+    .isLength({ min: 5, max: 2000 }).withMessage("Question must be 5-2000 characters"),
+  body("answer")
+    .trim()
+    .notEmpty().withMessage("Answer is required")
+    .isLength({ min: 5, max: 5000 }).withMessage("Answer must be 5-5000 characters"),
+  body("category")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 100 }).withMessage("Category must be at most 100 characters"),
+  body("is_active")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("is_active must be 0 or 1"),
+  body("sort_order")
+    .optional()
+    .isInt().withMessage("sort_order must be an integer"),
+  handleErrors,
+];
+
+exports.validateUpdateFaq = [
+  body("question")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ min: 5, max: 2000 }).withMessage("Question must be 5-2000 characters"),
+  body("answer")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ min: 5, max: 5000 }).withMessage("Answer must be 5-5000 characters"),
+  body("category")
+    .optional()
+    .trim()
+    .isLength({ max: 100 }).withMessage("Category must be at most 100 characters"),
+  body("is_active")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("is_active must be 0 or 1"),
+  body("sort_order")
+    .optional()
+    .isInt().withMessage("sort_order must be an integer"),
+  handleErrors,
+];
+
+
