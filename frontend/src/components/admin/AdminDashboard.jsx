@@ -13,7 +13,12 @@ import {
   Users, 
   Sparkles, 
   Info,
-  DollarSign
+  DollarSign,
+  Star,
+  MessageSquare,
+  CheckCircle2,
+  XCircle,
+  Edit
 } from 'lucide-react';
 import api from '../../config/api';
 import { serviceCategories } from '../../data/servicesData';
@@ -26,11 +31,18 @@ export default function AdminDashboard() {
   const [plans, setPlans] = useState([]);
   const [users, setUsers] = useState([]);
   const [promotions, setPromotions] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  
+  // Testimonial Form State
+  const [newTestimonial, setNewTestimonial] = useState({
+    quote: '', author: '', role: '', company: '', rating: 5, sort_order: 0, image: null, is_active: 1
+  });
+  const [editTestimonialId, setEditTestimonialId] = useState(null);
   
   // Services Category Tab State
   const [activeServiceTab, setActiveServiceTab] = useState('all');
@@ -114,6 +126,9 @@ export default function AdminDashboard() {
       } else if (activeTab === 'promotions') {
         const res = await api.get('/promotions');
         setPromotions(res.data.promotions || res.data || []);
+      } else if (activeTab === 'testimonials') {
+        const res = await api.get('/testimonials/admin');
+        setTestimonials(res.data.testimonials || res.data || []);
       } else if (activeTab === 'careers') {
         const res = await api.get('/jobs');
         setJobs(res.data || []);
@@ -269,6 +284,71 @@ export default function AdminDashboard() {
       fetchData();
     } catch (err) {
       showNotification('error', err.response?.data?.message || 'Failed to delete announcement');
+    }
+  };
+
+  // TESTIMONIAL handlers
+  const handleCreateTestimonial = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      Object.keys(newTestimonial).forEach(key => {
+        if (newTestimonial[key] !== null && newTestimonial[key] !== undefined) {
+          formData.append(key, newTestimonial[key]);
+        }
+      });
+
+      if (editTestimonialId) {
+        await api.put(`/testimonials/${editTestimonialId}`, formData);
+        showNotification('success', 'Testimonial updated successfully!');
+      } else {
+        await api.post('/testimonials', formData);
+        showNotification('success', 'Testimonial created successfully!');
+      }
+      setNewTestimonial({ quote: '', author: '', role: '', company: '', rating: 5, sort_order: 0, image: null, is_active: 1 });
+      setEditTestimonialId(null);
+      fetchData();
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to save testimonial');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditTestimonial = (item) => {
+    setNewTestimonial({
+      quote: item.quote || '',
+      author: item.author || '',
+      role: item.role || '',
+      company: item.company || '',
+      rating: item.rating || 5,
+      sort_order: item.sort_order || 0,
+      image: item.image || null,
+      is_active: item.is_active !== undefined ? item.is_active : 1
+    });
+    setEditTestimonialId(item.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleToggleTestimonial = async (id, currentStatus) => {
+    try {
+      await api.put(`/testimonials/${id}/toggle`, { is_active: !currentStatus });
+      showNotification('success', 'Testimonial status updated!');
+      fetchData();
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to toggle status');
+    }
+  };
+
+  const handleDeleteTestimonial = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this testimonial?')) return;
+    try {
+      await api.delete(`/testimonials/${id}`);
+      showNotification('success', 'Testimonial deleted successfully!');
+      fetchData();
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to delete testimonial');
     }
   };
 
@@ -502,6 +582,18 @@ export default function AdminDashboard() {
             >
               <Sparkles size={18} />
               Announcements
+            </button>
+
+            <button
+              onClick={() => setActiveTab('testimonials')}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === 'testimonials' 
+                  ? 'bg-slate-900 text-white shadow-md' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <MessageSquare size={18} />
+              Testimonials
             </button>
 
             <button
@@ -1213,6 +1305,214 @@ export default function AdminDashboard() {
                             <button
                               onClick={() => handleDeletePromotion(p.id)}
                               className="p-2.5 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-100 hover:border-red-100 transition cursor-pointer"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TESTIMONIALS TAB */}
+            {activeTab === 'testimonials' && (
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                {/* Form to Create/Edit Testimonial */}
+                <div className="xl:col-span-1 bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] h-fit">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                      <Plus size={18} />
+                      {editTestimonialId ? 'Edit Testimonial' : 'New Testimonial'}
+                    </h3>
+                    {editTestimonialId && (
+                      <button
+                        onClick={() => {
+                          setEditTestimonialId(null);
+                          setNewTestimonial({ quote: '', author: '', role: '', company: '', rating: 5, sort_order: 0, image: null, is_active: 1 });
+                        }}
+                        className="text-xs text-slate-400 hover:text-red-500 font-bold cursor-pointer"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
+                  </div>
+                  <form onSubmit={handleCreateTestimonial} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Author Name *</label>
+                      <input
+                        type="text" required value={newTestimonial.author}
+                        onChange={(e) => setNewTestimonial({...newTestimonial, author: e.target.value})}
+                        placeholder="e.g. Rajesh Kumar"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Role / Designation *</label>
+                      <input
+                        type="text" required value={newTestimonial.role}
+                        onChange={(e) => setNewTestimonial({...newTestimonial, role: e.target.value})}
+                        placeholder="e.g. CEO & Co-Founder"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Company</label>
+                      <input
+                        type="text" value={newTestimonial.company}
+                        onChange={(e) => setNewTestimonial({...newTestimonial, company: e.target.value})}
+                        placeholder="e.g. Apex Global Solutions"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Rating (1 to 5) *</label>
+                      <select
+                        value={newTestimonial.rating}
+                        onChange={(e) => setNewTestimonial({...newTestimonial, rating: parseInt(e.target.value, 10)})}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900"
+                      >
+                        <option value={5}>5 Stars (★★★★★)</option>
+                        <option value={4}>4 Stars (★★★★☆)</option>
+                        <option value={3}>3 Stars (★★★☆☆)</option>
+                        <option value={2}>2 Stars (★★☆☆☆)</option>
+                        <option value={1}>1 Star (★☆☆☆☆)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Testimonial Quote *</label>
+                      <textarea
+                        required value={newTestimonial.quote} rows={4}
+                        onChange={(e) => setNewTestimonial({...newTestimonial, quote: e.target.value})}
+                        placeholder="Write client review / feedback here..."
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 resize-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Sort Order</label>
+                        <input
+                          type="number" value={newTestimonial.sort_order}
+                          onChange={(e) => setNewTestimonial({...newTestimonial, sort_order: parseInt(e.target.value, 10) || 0})}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Status</label>
+                        <select
+                          value={newTestimonial.is_active}
+                          onChange={(e) => setNewTestimonial({...newTestimonial, is_active: parseInt(e.target.value, 10)})}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900"
+                        >
+                          <option value={1}>Active</option>
+                          <option value={0}>Inactive</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Avatar Image (Optional)</label>
+                      <input
+                        type="file" accept="image/*"
+                        onChange={(e) => setNewTestimonial({...newTestimonial, image: e.target.files[0]})}
+                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/5 transition-all text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800"
+                      />
+                      {typeof newTestimonial.image === 'string' && newTestimonial.image && (
+                        <div className="flex items-center justify-between text-xs text-slate-500 mt-2">
+                          <span>Current Image: <a href={newTestimonial.image} target="_blank" rel="noreferrer" className="text-blue-500 underline">View Avatar</a></span>
+                          <button
+                            type="button"
+                            onClick={() => setNewTestimonial({...newTestimonial, image: 'REMOVE'})}
+                            className="text-red-500 hover:underline font-bold cursor-pointer"
+                          >
+                            Remove Avatar
+                          </button>
+                        </div>
+                      )}
+                      {newTestimonial.image === 'REMOVE' && (
+                        <p className="text-xs text-amber-600 font-semibold mt-2">
+                          Avatar will be removed upon saving.
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full py-3 rounded-xl bg-slate-900 hover:bg-black font-semibold text-white transition-all cursor-pointer"
+                    >
+                      {editTestimonialId ? 'Save Changes' : 'Create Testimonial'}
+                    </button>
+                  </form>
+                </div>
+
+                {/* List of Testimonials */}
+                <div className="xl:col-span-2 space-y-4">
+                  <h3 className="text-lg font-bold text-slate-900">Testimonials List ({testimonials.length})</h3>
+                  {testimonials.length === 0 ? (
+                    <div className="bg-white p-8 rounded-3xl border border-slate-100 text-center text-slate-400">
+                      No testimonials found in database.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                      {testimonials.map((t) => (
+                        <div key={t.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              {t.image && typeof t.image === 'string' ? (
+                                <img src={t.image} alt={t.author} className="w-10 h-10 rounded-full object-cover border border-slate-200" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center border border-slate-200 text-sm">
+                                  {t.author ? t.author.charAt(0).toUpperCase() : 'T'}
+                                </div>
+                              )}
+                              <div>
+                                <h4 className="text-base font-extrabold text-slate-900">{t.author}</h4>
+                                <p className="text-xs text-slate-500">{t.role}{t.company ? ` • ${t.company}` : ''}</p>
+                              </div>
+                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold border ml-auto md:ml-0 ${
+                                t.is_active 
+                                  ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                  : 'bg-slate-100 text-slate-400 border-slate-200'
+                              }`}>
+                                {t.is_active ? 'ACTIVE' : 'INACTIVE'}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600">
+                                Order: {t.sort_order || 0}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-amber-400 my-2">
+                              {Array.from({ length: t.rating || 5 }).map((_, i) => (
+                                <Star key={i} size={14} fill="currentColor" />
+                              ))}
+                              <span className="text-xs text-slate-400 font-medium ml-1">({t.rating || 5}/5)</span>
+                            </div>
+                            <p className="text-slate-600 text-sm italic line-clamp-3">"{t.quote}"</p>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 self-end md:self-center">
+                            <button
+                              onClick={() => handleToggleTestimonial(t.id, t.is_active)}
+                              className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition cursor-pointer ${
+                                t.is_active
+                                  ? 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                                  : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-600'
+                              }`}
+                            >
+                              {t.is_active ? 'Deactivate' : 'Activate'}
+                            </button>
+
+                            <button
+                              onClick={() => handleEditTestimonial(t)}
+                              className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition cursor-pointer"
+                              title="Edit Testimonial"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            
+                            <button
+                              onClick={() => handleDeleteTestimonial(t.id)}
+                              className="p-2 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-100 hover:border-red-100 transition cursor-pointer"
+                              title="Delete Testimonial"
                             >
                               <Trash2 size={16} />
                             </button>

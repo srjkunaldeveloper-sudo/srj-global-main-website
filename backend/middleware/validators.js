@@ -201,3 +201,33 @@ exports.validateIdParam = [
     .isInt({ min: 1 }).withMessage("ID must be a positive integer"),
   handleErrors,
 ];
+
+exports.validateCreateTestimonial = [
+  body("quote")
+    .trim()
+    .notEmpty().withMessage("Quote/content is required")
+    .isLength({ min: 5, max: 5000 }).withMessage("Quote must be 5-5000 characters"),
+  body("author")
+    .trim()
+    .notEmpty().withMessage("Author name is required")
+    .isLength({ min: 2, max: 255 }).withMessage("Author name must be 2-255 characters"),
+  body("role")
+    .trim()
+    .notEmpty().withMessage("Role/designation is required")
+    .isLength({ min: 2, max: 255 }).withMessage("Role must be 2-255 characters"),
+  body("company")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 255 }).withMessage("Company name must be at most 255 characters"),
+  body("rating")
+    .optional()
+    .isInt({ min: 1, max: 5 }).withMessage("Rating must be an integer between 1 and 5"),
+  body("is_active")
+    .optional()
+    .isInt({ min: 0, max: 1 }).withMessage("is_active must be 0 or 1"),
+  body("sort_order")
+    .optional()
+    .isInt().withMessage("sort_order must be an integer"),
+  handleErrors,
+];
+

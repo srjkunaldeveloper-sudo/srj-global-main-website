@@ -28,6 +28,7 @@ const sendMeetingRoute = require("./routes/sendMeeting");
 const jobRoutes = require("./routes/jobRoutes");
 const industryRoutes = require("./routes/industryRoutes");
 const promotionRoutes = require("./routes/promotionRoutes");
+const testimonialRoutes = require("./routes/testimonialRoutes");
 const { generateSitemap } = require("./controllers/sitemapController");
 
 const app = express();
@@ -133,6 +134,7 @@ app.use("/api/plans", planRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/industries", industryRoutes);
 app.use("/api/promotions", promotionRoutes);
+app.use("/api/testimonials", testimonialRoutes);
 app.use("/api", sendMeetingRoute);
 app.get("/api/sitemap.xml", generateSitemap);
 

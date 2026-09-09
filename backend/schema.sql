@@ -83,3 +83,21 @@ CREATE TABLE IF NOT EXISTS `promotions` (
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX `idx_promotions_is_active` (`is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Testimonials Table
+CREATE TABLE IF NOT EXISTS `testimonials` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `quote` TEXT NOT NULL,
+  `author` VARCHAR(255) NOT NULL,
+  `role` VARCHAR(255) DEFAULT NULL,
+  `company` VARCHAR(255) DEFAULT NULL,
+  `rating` INT DEFAULT 5,
+  `image` VARCHAR(500) DEFAULT NULL,
+  `is_active` TINYINT(1) DEFAULT 1,
+  `sort_order` INT DEFAULT 0,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_testimonials_is_active` (`is_active`),
+  INDEX `idx_testimonials_sort_order` (`sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
