@@ -707,7 +707,23 @@ exports.validateSubscribe = [
   handleErrors,
 ];
 
+exports.validateUpdateSettingKey = [
+  param("key")
+    .trim()
+    .notEmpty().withMessage("Setting key parameter is required")
+    .isLength({ max: 100 }).withMessage("Setting key must be at most 100 characters")
+    .matches(/^[a-zA-Z0-9_]+$/).withMessage("Setting key must contain only letters, numbers, and underscores"),
+  handleErrors,
+];
 
-
-
+exports.validateBulkUpdateSettings = [
+  body()
+    .custom((reqBody) => {
+      if (!reqBody || typeof reqBody !== "object") {
+        throw new Error("Request body must be a valid JSON object");
+      }
+      return true;
+    }),
+  handleErrors,
+];
 

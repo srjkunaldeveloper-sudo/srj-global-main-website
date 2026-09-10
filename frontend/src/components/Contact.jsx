@@ -3,8 +3,24 @@ import { Mail, Phone, MapPin, Send, CheckCircle2, AlertCircle } from 'lucide-rea
 import { motion } from 'framer-motion';
 import api from '../config/api';
 import SEO from './SEO';
+import { useSiteSettings } from '../context/SiteSettingsContext';
 
 export default function Contact() {
+  const { getSetting } = useSiteSettings();
+
+  // Dynamic Site Settings
+  const contactEmail = getSetting('contact_email', 'srjglobaltechnology@gmail.com');
+  const contactPhone = getSetting('contact_phone', '+91 99904 30305');
+  const whatsappPhone = getSetting('whatsapp_phone', '+91 92667 06599');
+  const officeAddress = getSetting('office_address', 'C-1101, Urbtech Trade Center Tower, Noida Sector-132, Uttar Pradesh 201304');
+  const googleMapsUrl = getSetting('google_maps_url', 'https://maps.google.com/?q=Urbtech+Trade+Center+Tower+Noida+Sector+132');
+  const mapsIframeUrl = getSetting('maps_iframe_url', 'https://www.google.com/maps?q=Urbtech+Trade+Center+Tower+Noida+Sector+132&output=embed');
+  const responseSla = getSetting('response_sla', 'within 24 hours');
+
+  // WhatsApp Link Construction
+  const whatsappDigits = (whatsappPhone || '').replace(/\D/g, '');
+  const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : 'https://wa.me/';
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -91,7 +107,7 @@ export default function Contact() {
             Get In Touch
           </h2>
           <p className="text-secondary-text text-fluid-base">
-            Have any questions or scoping requirements? Submit specifications directly to our desk, and our team will get back to you within 24 hours.
+            Have any questions or scoping requirements? Submit specifications directly to our desk, and our team will get back to you {responseSla}.
           </p>
         </motion.div>
 
@@ -274,62 +290,82 @@ export default function Contact() {
             <div>
               <h3 className="text-xl font-bold text-primary-text mb-6">Contact Information</h3>
               <div className="space-y-6">
-                <a href="mailto:srjglobaltechnology@gmail.com" className="flex items-center gap-4 group">
-                  <div className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 group-hover:text-black group-hover:border-slate-800 transition-colors duration-200 shrink-0">
-                    <Mail size={18} />
-                  </div>
-                  <div>
-                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">EMAIL US</div>
-                    <div className="text-sm font-semibold text-primary-text group-hover:text-black transition-colors duration-200 break-all">srjglobaltechnology@gmail.com</div>
-                  </div>
-                </a>
-
-                <a href="tel:+919990430305" className="flex items-center gap-4 group">
-                  <div className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 group-hover:text-black group-hover:border-slate-800 transition-colors duration-200 shrink-0">
-                    <Phone size={18} />
-                  </div>
-                  <div>
-                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">CALL US</div>
-                    <div className="text-sm font-semibold text-primary-text group-hover:text-black transition-colors duration-200">+91 99904 30305</div>
-                  </div>
-                </a>
-
-                <a 
-                  href="https://maps.google.com/?q=Urbtech+Trade+Center+Tower+Noida+Sector+132" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="flex items-center gap-4 group"
-                >
-                  <div className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 group-hover:text-black group-hover:border-slate-800 transition-colors duration-200 shrink-0">
-                    <MapPin size={18} />
-                  </div>
-                  <div>
-                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Office Location</div>
-                    <div className="text-sm font-semibold text-primary-text group-hover:text-black transition-colors duration-200">
-                      C-1101, Urbtech Trade Center Tower,<br />Noida Sector-132, Uttar Pradesh 201304
+                {contactEmail && (
+                  <a href={`mailto:${contactEmail}`} className="flex items-center gap-4 group">
+                    <div className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 group-hover:text-black group-hover:border-slate-800 transition-colors duration-200 shrink-0">
+                      <Mail size={18} />
                     </div>
-                  </div>
-                </a>
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">EMAIL US</div>
+                      <div className="text-sm font-semibold text-primary-text group-hover:text-black transition-colors duration-200 break-all">{contactEmail}</div>
+                    </div>
+                  </a>
+                )}
+
+                {contactPhone && (
+                  <a href={`tel:${contactPhone.replace(/\s+/g, '')}`} className="flex items-center gap-4 group">
+                    <div className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 group-hover:text-black group-hover:border-slate-800 transition-colors duration-200 shrink-0">
+                      <Phone size={18} />
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">CALL US</div>
+                      <div className="text-sm font-semibold text-primary-text group-hover:text-black transition-colors duration-200">{contactPhone}</div>
+                    </div>
+                  </a>
+                )}
+
+                {whatsappPhone && (
+                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 group">
+                    <div className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 group-hover:text-black group-hover:border-slate-800 transition-colors duration-200 shrink-0">
+                      <Phone size={18} />
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">WHATSAPP US</div>
+                      <div className="text-sm font-semibold text-primary-text group-hover:text-black transition-colors duration-200">{whatsappPhone}</div>
+                    </div>
+                  </a>
+                )}
+
+                {officeAddress && (
+                  <a 
+                    href={googleMapsUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="flex items-center gap-4 group"
+                  >
+                    <div className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 group-hover:text-black group-hover:border-slate-800 transition-colors duration-200 shrink-0">
+                      <MapPin size={18} />
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Office Location</div>
+                      <div className="text-sm font-semibold text-primary-text group-hover:text-black transition-colors duration-200 whitespace-pre-line">
+                        {officeAddress}
+                      </div>
+                    </div>
+                  </a>
+                )}
               </div>
             </div>
 
             {/* Location Map View */}
-            <div>
-              <h4 className="text-xs font-bold text-primary-text uppercase tracking-wider mb-4">Location Map</h4>
-              <div className="relative aspect-video rounded-3xl overflow-hidden border border-slate-100 bg-slate-50 shadow-[0_8px_30px_rgb(0,0,0,0.015)]">
-                <iframe
-                  title="Office Map Location"
-                  src="https://www.google.com/maps?q=Urbtech+Trade+Center+Tower+Noida+Sector+132&output=embed"
-                  width="100%"
-                  height="100%"
-                  style={{
-                    border: "0",
-                  }}
-                  allowFullScreen=""
-                  loading="lazy"
-                ></iframe>
+            {mapsIframeUrl && (
+              <div>
+                <h4 className="text-xs font-bold text-primary-text uppercase tracking-wider mb-4">Location Map</h4>
+                <div className="relative aspect-video rounded-3xl overflow-hidden border border-slate-100 bg-slate-50 shadow-[0_8px_30px_rgb(0,0,0,0.015)]">
+                  <iframe
+                    title="Office Map Location"
+                    src={mapsIframeUrl}
+                    width="100%"
+                    height="100%"
+                    style={{
+                      border: "0",
+                    }}
+                    allowFullScreen=""
+                    loading="lazy"
+                  ></iframe>
+                </div>
               </div>
-            </div>
+            )}
           </motion.div>
         </motion.div>
       </div>

@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import api from '../../config/api';
 import { serviceCategories } from '../../data/servicesData';
+import SiteSettingsManager from './SiteSettingsManager';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('blogs');
@@ -1221,6 +1222,18 @@ export default function AdminDashboard() {
             >
               <Users size={18} />
               Admin Users
+            </button>
+
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === 'settings' 
+                  ? 'bg-slate-900 text-white shadow-md' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Settings size={18} />
+              Site Settings
             </button>
           </nav>
         </div>
@@ -3416,6 +3429,10 @@ export default function AdminDashboard() {
                   )}
                 </div>
               </div>
+            )}
+
+            {activeTab === 'settings' && (
+              <SiteSettingsManager />
             )}
           </div>
         )}

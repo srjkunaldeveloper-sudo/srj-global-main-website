@@ -12,9 +12,17 @@ import {
   FaExternalLinkAlt,
   FaSyncAlt,
 } from "react-icons/fa";
+import { useSiteSettings } from "../context/SiteSettingsContext";
 
 function PrivacyPolicy() {
   const location = useLocation();
+  const { getSetting } = useSiteSettings();
+
+  const companyName = getSetting('company_name', 'SRJ Global Technologies');
+  const officeAddress = getSetting('office_address', 'C-1101, Urbtech Trade Center Tower, Noida Sector-132, Uttar Pradesh 201304');
+  const contactEmail = getSetting('contact_email', 'srjglobaltechnology@gmail.com');
+  const contactPhone = getSetting('contact_phone', '+91 99904 30305');
+  const whatsappPhone = getSetting('whatsapp_phone', '+91 92667 06599');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -96,7 +104,7 @@ function PrivacyPolicy() {
         </h2>
 
         <p style={textStyle}>
-          At SRJ Global Technologies, we value your privacy and are committed to
+          At {companyName}, we value your privacy and are committed to
           safeguarding the personal information you share with us. This Privacy
           Policy explains how we collect, use, and protect your data when you
           interact with our website, digital platforms, and IT services. By
@@ -199,7 +207,7 @@ function PrivacyPolicy() {
           </li>
 
           <li>
-            <strong>Business Transfers:</strong> If SRJ Global Technologies
+            <strong>Business Transfers:</strong> If {companyName}
             undergoes a merger, acquisition, or restructuring.
           </li>
         </ul>
@@ -324,16 +332,23 @@ function PrivacyPolicy() {
             lineHeight: "2",
           }}
         >
-          <strong>SRJ Global Technologies</strong>
+          <strong>{companyName}</strong>
           <br />
-          📍 Urbtech Trade Centre, Tower C, Adjacent to DPS School, Sector 132,
-          Noida, Uttar Pradesh 201304
+          📍 {officeAddress}
           <br />
-          📧 srjglobaltechnology@gmail.com
-          <br />
-          📞 +91 96251 90448
-          <br />
-          📞 +91 92667 06599
+          📧 {contactEmail}
+          {contactPhone && (
+            <>
+              <br />
+              📞 {contactPhone}
+            </>
+          )}
+          {whatsappPhone && (
+            <>
+              <br />
+              📞 {whatsappPhone}
+            </>
+          )}
         </div>
       </div>
     </div>

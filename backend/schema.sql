@@ -196,8 +196,60 @@ CREATE TABLE IF NOT EXISTS `subscribers` (
   INDEX `idx_subscribers_created_at` (`created_at` DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Site Settings Table
+CREATE TABLE IF NOT EXISTS `site_settings` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `setting_key` VARCHAR(100) NOT NULL UNIQUE,
+  `setting_value` TEXT DEFAULT NULL,
+  `group_name` VARCHAR(50) NOT NULL DEFAULT 'general',
+  `field_type` VARCHAR(50) NOT NULL DEFAULT 'text',
+  `description` VARCHAR(255) DEFAULT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_settings_key` (`setting_key`),
+  INDEX `idx_settings_group` (`group_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Initial Site Settings Seed Data
+INSERT INTO `site_settings` (`setting_key`, `setting_value`, `group_name`, `field_type`, `description`) VALUES
+-- Identity Group
+('company_name', 'SRJ Global Technologies', 'identity', 'text', 'Official brand name of the company'),
+('brand_tagline', 'Premium Scalable IT & Software Solutions', 'identity', 'text', 'Global company tagline/slogan'),
+('logo_url', '/src/assets/Logo.png', 'identity', 'url', 'Path to company logo asset'),
+('favicon_url', '/favicon.png', 'identity', 'url', 'Path to site favicon'),
+('canonical_url', 'https://srjglobaltechnology.com', 'identity', 'url', 'Canonical site URL'),
 
+-- Contact Group
+('contact_email', 'srjglobaltechnology@gmail.com', 'contact', 'email', 'Primary business contact email'),
+('contact_phone', '+91 99904 30305', 'contact', 'phone', 'Primary customer phone number'),
+('whatsapp_phone', '+91 92667 06599', 'contact', 'phone', 'WhatsApp support phone number'),
+('office_address', 'C-1101, Urbtech Trade Center Tower, Noida Sector-132, Uttar Pradesh 201304', 'contact', 'textarea', 'Physical office address'),
+('google_maps_url', 'https://maps.google.com/?q=Urbtech+Trade+Center+Tower+Noida+Sector+132', 'contact', 'url', 'Google Maps direction link'),
+('maps_iframe_url', 'https://www.google.com/maps?q=Urbtech+Trade+Center+Tower+Noida+Sector+132&output=embed', 'contact', 'url', 'Google Maps embed iframe URL'),
 
+-- Social Group
+('social_instagram', 'https://www.instagram.com/', 'social', 'url', 'Instagram page URL'),
+('social_pinterest', 'https://www.pinterest.com/', 'social', 'url', 'Pinterest page URL'),
+('social_youtube', 'https://www.youtube.com/', 'social', 'url', 'YouTube channel URL'),
+('social_facebook', 'https://www.facebook.com/', 'social', 'url', 'Facebook page URL'),
+('social_twitter', 'https://twitter.com/', 'social', 'url', 'Twitter / X profile URL'),
+('social_linkedin', 'https://www.linkedin.com/', 'social', 'url', 'LinkedIn company page URL'),
 
+-- Footer Group
+('footer_description', 'Innovative digital solutions: we build high-quality websites, mobile apps, and custom enterprise platforms for growing brands.', 'footer', 'textarea', 'Short company bio displayed in footer'),
+('footer_copyright', '© {year} SRJ Global Technologies. All rights reserved.', 'footer', 'text', 'Footer copyright statement'),
+('google_review_url', 'https://search.google.com/local/writereview?placeid=YOUR_PLACE_ID', 'footer', 'url', 'Google Business Review URL'),
 
+-- SEO Group
+('global_seo_title', 'SRJ Global Technologies | Premium Scalable IT & Software Solutions', 'seo', 'text', 'Default global site SEO title'),
+('global_seo_description', 'SRJ Global Technologies builds premium, scalable digital platforms, applications, and artificial intelligence solutions for modern businesses.', 'seo', 'textarea', 'Default global meta description'),
+('global_seo_keywords', 'contact SRJ Global Technologies, hire developers, IT consultation', 'seo', 'text', 'Default global meta keywords'),
+('global_og_image', 'https://srjglobaltechnology.com/og-image.png', 'seo', 'url', 'Default Open Graph share image URL'),
+
+-- Business Group
+('response_sla', 'within 24 hours', 'business', 'text', 'Standard inquiry response SLA promise'),
+('business_hours', 'Mon - Sat: 9:00 AM - 7:00 PM IST', 'business', 'text', 'Company business operating hours')
+ON DUPLICATE KEY UPDATE
+  `group_name` = VALUES(`group_name`),
+  `field_type` = VALUES(`field_type`),
+  `description` = VALUES(`description`);

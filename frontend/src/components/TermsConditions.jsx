@@ -1,8 +1,16 @@
 import React, { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { useSiteSettings } from "../context/SiteSettingsContext";
 
 function TermsConditions() {
   const location = useLocation();
+  const { getSetting } = useSiteSettings();
+
+  const companyName = getSetting('company_name', 'SRJ Global Technologies');
+  const officeAddress = getSetting('office_address', 'C-1101, Urbtech Trade Center Tower, Noida Sector-132, Uttar Pradesh 201304');
+  const contactEmail = getSetting('contact_email', 'srjglobaltechnology@gmail.com');
+  const contactPhone = getSetting('contact_phone', '+91 99904 30305');
+  const whatsappPhone = getSetting('whatsapp_phone', '+91 92667 06599');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -69,7 +77,7 @@ function TermsConditions() {
         </p>
 
         <p style={textStyle}>
-          Welcome to SRJ Global Technologies (“we,” “our,” or “us”). We’re
+          Welcome to {companyName} (“we,” “our,” or “us”). We’re
           delighted to have you here! These Terms and Conditions (“Terms”) are
           meant to provide clarity on how you can enjoy and make the most of our
           IT services, products, and solutions. By choosing to work with us,
@@ -83,10 +91,9 @@ function TermsConditions() {
         <h2 style={headingStyle}>1. Introduction</h2>
 
         <p style={textStyle}>
-          SRJ Global Technologies is a leading IT solutions provider offering a
+          {companyName} is a leading IT solutions provider offering a
           wide range of digital and technology services. These Terms ensure
-          transparency, clarity, and mutual understanding between SRJ Global
-          Technologies and our clients.
+          transparency, clarity, and mutual understanding between {companyName} and our clients.
         </p>
 
         <ul style={{ ...textStyle, paddingLeft: "25px" }}>
@@ -205,8 +212,7 @@ function TermsConditions() {
 
         <ul style={{ ...textStyle, paddingLeft: "25px" }}>
           <li>
-            All deliverables remain the intellectual property of SRJ Global
-            Technologies until full payment is received.
+            All deliverables remain the intellectual property of {companyName} until full payment is received.
           </li>
           <li>
             Upon final payment, ownership of deliverables (e.g., website, app,
@@ -214,7 +220,7 @@ function TermsConditions() {
             licensed tools, plugins, or services.
           </li>
           <li>
-            SRJ Global Technologies reserves the right to showcase completed
+            {companyName} reserves the right to showcase completed
             projects in its portfolio for marketing purposes.
           </li>
         </ul>
@@ -260,7 +266,7 @@ function TermsConditions() {
             notice.
           </li>
           <li>
-            If the client cancels midway, SRJ Global Technologies will retain
+            If the client cancels midway, {companyName} will retain
             the advance payment as compensation for time, effort, and resources
             utilized.
           </li>
@@ -287,7 +293,7 @@ function TermsConditions() {
         <h2 style={headingStyle}>12. Force Majeure</h2>
 
         <p style={textStyle}>
-          SRJ Global Technologies will not be held liable for delays or failures
+          {companyName} will not be held liable for delays or failures
           in service delivery due to events beyond our control, including but
           not limited to natural disasters, cyber-attacks, pandemics, government
           restrictions, or server downtime.
@@ -336,15 +342,11 @@ function TermsConditions() {
             fontFamily: "'Geist Sans', 'Inter', sans-serif",
           }}
         >
-          <strong>SRJ Global Technologies</strong>
-          <p>
-            📍 Urbtech Trade Centre, Tower C, Adjacent to DPS School, Sector
-            132, Noida, Uttar Pradesh 201304
-          </p>
-          <p>📧 srjglobaltechnology@gmail.com</p>
-          <p>📞 +91 96251 90448</p>
-          <p>📞 +91 92667 06599</p>
-          <p>🌐 www.srjglobaltechnologies.com</p>
+          <strong>{companyName}</strong>
+          {officeAddress && <p>📍 {officeAddress}</p>}
+          {contactEmail && <p>📧 {contactEmail}</p>}
+          {contactPhone && <p>📞 {contactPhone}</p>}
+          {whatsappPhone && <p>📞 {whatsappPhone}</p>}
         </div>
       </div>
     </div>

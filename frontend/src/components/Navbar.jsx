@@ -5,8 +5,10 @@ import gsap from 'gsap';
 import logoImg from '../assets/Logo2.png';
 import "@fontsource/geist-sans";
 import { serviceCategories } from '../data/servicesData';
+import { useSiteSettings } from '../context/SiteSettingsContext';
 
 export default function Navbar() {
+  const { getSetting } = useSiteSettings();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -117,12 +119,12 @@ export default function Navbar() {
           className="flex items-center shrink-0 cursor-pointer select-none py-1"
         >
           <img
-            src={logoImg}
-            alt="SRJ Global Logo"
+            src={(getSetting('logo_url') && (getSetting('logo_url').startsWith('http') || getSetting('logo_url').startsWith('/uploads'))) ? getSetting('logo_url') : logoImg}
+            alt={getSetting('company_name', 'SRJ Global Technologies')}
             className="h-13 w-12 object-contain pointer-events-none"
           />
           <span className="hidden font-sans text-lg text-slate-900 tracking-tight">
-            SRJ Global
+            {getSetting('company_name', 'SRJ Global')}
           </span>
         </div>
 
