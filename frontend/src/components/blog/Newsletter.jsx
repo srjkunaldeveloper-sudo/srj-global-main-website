@@ -1,17 +1,45 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { FaPaperPlane } from "react-icons/fa";
+import api from "../../config/api";
 
 export default function Newsletter() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [statusType, setStatusType] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (email) {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) return;
+
+    setLoading(true);
+    setMessage("");
+    setStatusType(null);
+
+    try {
+      const res = await api.post("/subscribers", { email: trimmedEmail });
       setSubmitted(true);
-      setTimeout(() => setSubmitted(false), 3000);
       setEmail("");
+      setStatusType("success");
+      setMessage(res.data?.message || "Thank you for subscribing to our newsletter!");
+      
+      setTimeout(() => {
+        setSubmitted(false);
+        setMessage("");
+        setStatusType(null);
+      }, 5000);
+    } catch (err) {
+      console.error("Newsletter subscription error:", err);
+      setStatusType("error");
+      const errorMsg =
+        err.response?.data?.message ||
+        "Subscription failed. Please check your email and try again.";
+      setMessage(errorMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -126,9 +154,13 @@ export default function Newsletter() {
             >
               <input
                 type="email"
+                id="newsletter-email"
+                name="email"
+                aria-label="Email address"
                 placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
                 required
                 style={{
                   flex: 1,
@@ -141,6 +173,7 @@ export default function Newsletter() {
                   fontFamily: "'Geist Sans', 'Inter', sans-serif",
                   outline: "none",
                   transition: "all 0.3s ease",
+                  opacity: loading ? 0.7 : 1,
                 }}
                 onFocus={(e) => {
                   e.target.style.borderColor = "rgba(0, 0, 0, 0.25)";
@@ -153,8 +186,10 @@ export default function Newsletter() {
               />
               <motion.button
                 type="submit"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                disabled={loading}
+                aria-busy={loading}
+                whileHover={loading ? {} : { scale: 1.02 }}
+                whileTap={loading ? {} : { scale: 0.98 }}
                 style={{
                   padding: "14px 28px",
                   background: "#0f172a",
@@ -163,16 +198,33 @@ export default function Newsletter() {
                   color: "#ffffff",
                   fontSize: "15px",
                   fontWeight: "700",
-                  cursor: "pointer",
+                  cursor: loading ? "not-allowed" : "pointer",
                   fontFamily: "'Geist Sans', 'Inter', sans-serif",
                   boxShadow: "0 8px 24px rgba(15, 23, 42, 0.15)",
                   whiteSpace: "nowrap",
                   transition: "all 0.3s ease",
+                  opacity: loading ? 0.7 : 1,
                 }}
               >
-                {submitted ? "Subscribed!" : "Subscribe"}
+                {loading ? "Subscribing..." : (submitted ? "Subscribed!" : "Subscribe")}
               </motion.button>
             </form>
+
+            {message && (
+              <div
+                role="status"
+                aria-live="polite"
+                style={{
+                  fontFamily: "'Geist Sans', 'Inter', sans-serif",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  marginTop: "12px",
+                  color: statusType === "success" ? "#059669" : "#dc2626",
+                }}
+              >
+                {message}
+              </div>
+            )}
 
             <p style={{
               fontFamily: "'Geist Sans', 'Inter', sans-serif",

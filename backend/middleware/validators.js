@@ -682,6 +682,16 @@ exports.validateUpdateTeam = [
   handleErrors,
 ];
 
+exports.validateSubscribe = [
+  body("email")
+    .trim()
+    .notEmpty().withMessage("Email is required")
+    .isEmail().withMessage("Must be a valid email address")
+    .isLength({ max: 255 }).withMessage("Email must be at most 255 characters"),
+  handleErrors,
+];
+
+
 
 
 

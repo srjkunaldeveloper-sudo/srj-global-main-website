@@ -32,6 +32,7 @@ const testimonialRoutes = require("./routes/testimonialRoutes");
 const portfolioRoutes = require("./routes/portfolioRoutes");
 const faqRoutes = require("./routes/faqRoutes");
 const teamRoutes = require("./routes/teamRoutes");
+const subscriberRoutes = require("./routes/subscriberRoutes");
 const { generateSitemap } = require("./controllers/sitemapController");
 
 const app = express();
@@ -142,6 +143,7 @@ app.use("/api/testimonials", testimonialRoutes);
 app.use("/api/portfolio", portfolioRoutes);
 app.use("/api/faqs", faqRoutes);
 app.use("/api/team", teamRoutes);
+app.use("/api/subscribers", subscriberRoutes);
 app.use("/api", sendMeetingRoute);
 
 app.get("/api/sitemap.xml", generateSitemap);

@@ -176,6 +176,22 @@ CREATE TABLE IF NOT EXISTS `team_members` (
   INDEX `idx_team_sort_order` (`sort_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Subscribers Table
+CREATE TABLE IF NOT EXISTS `subscribers` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `email` VARCHAR(255) NOT NULL UNIQUE,
+  `status` VARCHAR(50) NOT NULL DEFAULT 'active',
+  `source` VARCHAR(100) DEFAULT 'website_footer_blog',
+  `subscribed_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `unsubscribed_at` TIMESTAMP NULL DEFAULT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_subscribers_email` (`email`),
+  INDEX `idx_subscribers_status` (`status`),
+  INDEX `idx_subscribers_created_at` (`created_at` DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 
 
 
