@@ -95,14 +95,30 @@ exports.validateCreateContact = [
     .trim()
     .notEmpty().withMessage("Phone is required")
     .matches(/^\+?[\d\s\-()]{7,20}$/).withMessage("Must be a valid phone number"),
+  body("company")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 255 }).withMessage("Company must be at most 255 characters"),
   body("service")
     .trim()
     .notEmpty().withMessage("Service is required")
-    .isLength({ max: 200 }).withMessage("Service must be at most 200 characters"),
+    .isLength({ max: 150 }).withMessage("Service must be at most 150 characters"),
+  body("budget")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 100 }).withMessage("Budget must be at most 100 characters"),
   body("message")
     .trim()
     .notEmpty().withMessage("Message is required")
     .isLength({ min: 10, max: 5000 }).withMessage("Message must be 10-5000 characters"),
+  handleErrors,
+];
+
+exports.validateUpdateContactStatus = [
+  body("status")
+    .trim()
+    .notEmpty().withMessage("Status is required")
+    .isIn(["new", "contacted", "resolved"]).withMessage("Status must be one of: new, contacted, resolved"),
   handleErrors,
 ];
 

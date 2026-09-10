@@ -36,10 +36,15 @@ CREATE TABLE IF NOT EXISTS `contacts` (
   `last_name` VARCHAR(100) NOT NULL,
   `email` VARCHAR(255) NOT NULL,
   `phone` VARCHAR(20) NOT NULL,
+  `company` VARCHAR(255) DEFAULT NULL,
   `service` VARCHAR(150) NOT NULL,
+  `budget` VARCHAR(100) DEFAULT NULL,
   `message` TEXT NOT NULL,
+  `status` VARCHAR(50) NOT NULL DEFAULT 'new',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX `idx_contacts_created_at` (`created_at` DESC)
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_contacts_created_at` (`created_at` DESC),
+  INDEX `idx_contacts_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Services Table

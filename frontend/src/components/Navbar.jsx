@@ -25,7 +25,7 @@ export default function Navbar() {
     { name: 'Collaboration', href: '/collaboration' },
     { name: 'Industries', href: '/industries' },
     { name: 'About Us', href: '/about' },
-    { name: 'Contact Us', href: '/about' },
+    { name: 'Contact Us', href: '/contact' },
   ];
 
   useEffect(() => {
@@ -130,12 +130,6 @@ export default function Navbar() {
         <div className="hidden lg:flex items-center justify-center flex-1">
           <div className="flex items-center gap-6 xl:gap-8">
             {navLinks.map((link) => {
-              const isContact = link.name === 'Contact Us';
-              const linkProps = isContact 
-                ? { href: "https://calendly.com/srjglobaltechnology", target: "_blank", rel: "noopener noreferrer" }
-                : { to: link.href };
-              const Component = isContact ? 'a' : Link;
-
               const handleMouseEnter = () => {
                 if (link.name === 'Services' || link.name === 'Pricing') {
                   setActiveDropdown(link.name);
@@ -145,9 +139,9 @@ export default function Navbar() {
               };
 
               return (
-                <Component
+                <Link
                   key={link.name}
-                  {...linkProps}
+                  to={link.href}
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                   onMouseEnter={handleMouseEnter}
                   className={`group flex items-center gap-1 font-sans text-lg xl:text-xl transition-all inline-flex shrink-0 overflow-visible py-2 px-1.5 whitespace-nowrap ${
@@ -161,7 +155,7 @@ export default function Navbar() {
                       className={`transition-transform duration-300 ${activeDropdown === link.name ? 'rotate-180' : 'group-hover:translate-y-0.5'}`}
                     />
                   )}
-                </Component>
+                </Link>
               );
             })}
           </div>
@@ -247,16 +241,7 @@ export default function Navbar() {
           </div>
           <div className="flex flex-col gap-2">
             {navLinks.map((link) => {
-              const isContact = link.name === 'Contact Us';
               const hasDropdown = link.name === 'Services' || link.name === 'Pricing';
-              
-              if (isContact) {
-                return (
-                  <a key={link.name} href="https://calendly.com/srjglobaltechnology" target="_blank" rel="noopener noreferrer" className="font-sans text-base font-bold text-slate-650 hover:text-black py-3 px-2 border-b border-slate-50 flex items-center min-h-[44px]">
-                    {link.name}
-                  </a>
-                );
-              }
 
               if (hasDropdown) {
                 return (

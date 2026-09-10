@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
-import axios from 'axios';
-import { API_BASE_URL } from '../config/api';
+import api from '../config/api';
 import SEO from './SEO';
 
 export default function Contact() {
@@ -15,26 +14,36 @@ export default function Contact() {
     budget: '₹10k - ₹25k',
     message: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [statusType, setStatusType] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setStatusMessage('');
+    setStatusType(null);
     
     const nameParts = formData.name.trim().split(/\s+/);
     const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || ' ';
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : (nameParts[0] || 'User');
+
+    setLoading(true);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/contact`, {
+      const response = await api.post('/contact', {
         firstName,
         lastName,
-        email: formData.email,
-        phone: formData.phone,
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        company: formData.company ? formData.company.trim() : '',
         service: formData.projectType,
-        message: formData.message
+        budget: formData.budget,
+        message: formData.message.trim()
       });
 
       if (response.data && response.data.success) {
-        alert(`Thank you ${formData.name}. We have received your consultation request!`);
+        setStatusType('success');
+        setStatusMessage("Your inquiry has been submitted successfully. We'll get back to you soon.");
         setFormData({
           name: '',
           email: '',
@@ -46,8 +55,11 @@ export default function Contact() {
         });
       }
     } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || 'Error submitting request. Please try again.');
+      console.error('Contact form submission error:', err);
+      setStatusType('error');
+      setStatusMessage(err.response?.data?.message || 'Unable to submit your inquiry right now. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -227,12 +239,30 @@ export default function Contact() {
               />
             </div>
 
+            {statusMessage && (
+              <div 
+                role="status"
+                aria-live="polite"
+                className={`p-4 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
+                  statusType === 'success' 
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                    : 'bg-red-50 text-red-700 border border-red-200'
+                }`}
+              >
+                {statusType === 'success' ? <CheckCircle2 size={16} className="shrink-0" /> : <AlertCircle size={16} className="shrink-0" />}
+                <span>{statusMessage}</span>
+              </div>
+            )}
+
             <button
               type="submit"
-              className="inline-flex items-center justify-center gap-2 w-full px-6 py-4 rounded-xl bg-slate-900 hover:bg-black text-white font-semibold transition-all duration-200 hover:shadow-lg min-h-[48px]"
+              disabled={loading}
+              className={`inline-flex items-center justify-center gap-2 w-full px-6 py-4 rounded-xl bg-slate-900 hover:bg-black text-white font-semibold transition-all duration-200 hover:shadow-lg min-h-[48px] ${
+                loading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'
+              }`}
             >
-              Send Inquiry
-              <Send size={16} />
+              {loading ? 'Sending...' : 'Send Inquiry'}
+              {!loading && <Send size={16} />}
             </button>
           </motion.form>
 

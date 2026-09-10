@@ -25,7 +25,11 @@ import {
   UsersRound,
   UserCheck,
   UserX,
-  Search
+  Search,
+  Eye,
+  Clock,
+  Building,
+  Filter
 } from 'lucide-react';
 import api from '../../config/api';
 import { serviceCategories } from '../../data/servicesData';
@@ -84,6 +88,11 @@ export default function AdminDashboard() {
   // Subscriber State
   const [subscribers, setSubscribers] = useState([]);
   const [subscriberSearch, setSubscriberSearch] = useState('');
+  
+  // Contact Admin State
+  const [contactSearch, setContactSearch] = useState('');
+  const [contactStatusFilter, setContactStatusFilter] = useState('all');
+  const [selectedContactModal, setSelectedContactModal] = useState(null);
   
   // Services Category Tab State
   const [activeServiceTab, setActiveServiceTab] = useState('all');
@@ -837,6 +846,53 @@ export default function AdminDashboard() {
   };
 
   const formatSubscriberDate = (dateStr) => {
+    if (!dateStr) return '—';
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  // Contact Handlers
+  const handleUpdateContactStatus = async (id, newStatus) => {
+    try {
+      const res = await api.put(`/contact/${id}/status`, { status: newStatus });
+      showNotification('success', `Contact status updated to "${newStatus}"`);
+      setContacts(prev => prev.map(c => c.id === id ? { 
+        ...c, 
+        status: newStatus, 
+        updated_at: res.data.contact?.updated_at || new Date().toISOString() 
+      } : c));
+      if (selectedContactModal && selectedContactModal.id === id) {
+        setSelectedContactModal(prev => ({ ...prev, status: newStatus }));
+      }
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to update contact status');
+    }
+  };
+
+  const handleDeleteContact = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete contact inquiry from "${name}"?`)) return;
+    try {
+      await api.delete(`/contact/${id}`);
+      showNotification('success', 'Contact inquiry deleted successfully!');
+      setContacts(prev => prev.filter(c => c.id !== id));
+      if (selectedContactModal && selectedContactModal.id === id) {
+        setSelectedContactModal(null);
+      }
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to delete contact inquiry');
+    }
+  };
+
+  const formatContactDate = (dateStr) => {
     if (!dateStr) return '—';
     try {
       return new Date(dateStr).toLocaleDateString('en-US', {
@@ -1609,31 +1665,224 @@ export default function AdminDashboard() {
 
             {/* CONTACT INQUIRIES TAB */}
             {activeTab === 'contacts' && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold text-slate-900">Client Contacts Form Messages ({contacts.length})</h3>
-                {contacts.length === 0 ? (
-                  <div className="bg-white p-8 rounded-3xl border border-slate-100 text-center text-slate-400">
-                    No contact form inquiries registered in the database.
+              <div className="space-y-6">
+                {/* Stats Header */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-slate-100 text-slate-700 shrink-0">
+                      <Mail size={22} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Inquiries</p>
+                      <h4 className="text-2xl font-extrabold text-slate-900">{contacts.length}</h4>
+                    </div>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {contacts.map((c) => (
-                      <div key={c.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)]">
-                        <div className="flex justify-between items-start border-b border-slate-100 pb-4 mb-4">
-                          <div>
-                            <h4 className="font-extrabold text-slate-900 text-base">{c.first_name} {c.last_name}</h4>
-                            <p className="text-xs text-slate-400 mt-1">{c.email} | {c.phone}</p>
-                          </div>
-                          <span className="px-3 py-1 rounded bg-slate-50 text-xs font-bold text-slate-700 border border-slate-150">
-                            {c.service}
-                          </span>
-                        </div>
-                        <p className="text-slate-600 text-sm leading-relaxed">{c.message}</p>
-                        <span className="text-[10px] text-slate-400 block mt-4 font-semibold">{new Date(c.created_at).toLocaleString()}</span>
+
+                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-blue-50 text-blue-600 shrink-0">
+                      <Sparkles size={22} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">New</p>
+                      <h4 className="text-2xl font-extrabold text-slate-900">
+                        {contacts.filter(c => c.status === 'new').length}
+                      </h4>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-amber-50 text-amber-600 shrink-0">
+                      <Clock size={22} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Contacted</p>
+                      <h4 className="text-2xl font-extrabold text-slate-900">
+                        {contacts.filter(c => c.status === 'contacted').length}
+                      </h4>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-emerald-50 text-emerald-600 shrink-0">
+                      <CheckCircle2 size={22} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Resolved</p>
+                      <h4 className="text-2xl font-extrabold text-slate-900">
+                        {contacts.filter(c => c.status === 'resolved').length}
+                      </h4>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filter & Contact Table Card */}
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] space-y-4">
+                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900">Contact Inquiries</h3>
+                      <p className="text-xs text-slate-500 font-medium">View, filter, track status, and manage client direct inquiry messages</p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                      {/* Status Filter Dropdown */}
+                      <div className="relative">
+                        <select
+                          value={contactStatusFilter}
+                          onChange={(e) => setContactStatusFilter(e.target.value)}
+                          className="w-full sm:w-40 pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-slate-900 text-xs font-semibold focus:outline-none focus:border-slate-900 cursor-pointer appearance-none"
+                        >
+                          <option value="all">All Statuses ({contacts.length})</option>
+                          <option value="new">New ({contacts.filter(c => c.status === 'new').length})</option>
+                          <option value="contacted">Contacted ({contacts.filter(c => c.status === 'contacted').length})</option>
+                          <option value="resolved">Resolved ({contacts.filter(c => c.status === 'resolved').length})</option>
+                        </select>
+                        <Filter size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                       </div>
-                    ))}
+
+                      {/* Search Bar */}
+                      <div className="relative w-full sm:w-64">
+                        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="text"
+                          value={contactSearch}
+                          onChange={(e) => setContactSearch(e.target.value)}
+                          placeholder="Search name, email, phone, company..."
+                          className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 text-xs focus:outline-none focus:border-slate-900"
+                        />
+                      </div>
+                    </div>
                   </div>
-                )}
+
+                  {/* List / Table */}
+                  {contacts.length === 0 ? (
+                    <div className="p-12 text-center text-slate-400 space-y-2">
+                      <Mail size={40} className="mx-auto text-slate-300 stroke-[1.5]" />
+                      <h4 className="text-base font-bold text-slate-700">No contact inquiries yet</h4>
+                      <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                        Inquiries submitted by clients via the contact form will appear here in real time.
+                      </p>
+                    </div>
+                  ) : (() => {
+                    const filteredContacts = contacts.filter((c) => {
+                      if (contactStatusFilter !== 'all' && c.status !== contactStatusFilter) return false;
+                      const q = contactSearch.trim().toLowerCase();
+                      if (!q) return true;
+                      const fullName = `${c.first_name || ''} ${c.last_name || ''}`.toLowerCase();
+                      const email = (c.email || '').toLowerCase();
+                      const phone = (c.phone || '').toLowerCase();
+                      const company = (c.company || '').toLowerCase();
+                      const service = (c.service || '').toLowerCase();
+                      return fullName.includes(q) || email.includes(q) || phone.includes(q) || company.includes(q) || service.includes(q);
+                    });
+
+                    if (filteredContacts.length === 0) {
+                      return (
+                        <div className="p-8 text-center text-slate-400 text-xs space-y-2">
+                          <p>No contact inquiries match your search and filter criteria.</p>
+                          <button
+                            onClick={() => { setContactSearch(''); setContactStatusFilter('all'); }}
+                            className="text-blue-600 font-semibold hover:underline text-xs"
+                          >
+                            Reset filters
+                          </button>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="border-b border-slate-100 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                              <th className="py-3 px-4">Client Name</th>
+                              <th className="py-3 px-4">Contact Info</th>
+                              <th className="py-3 px-4">Company & Service</th>
+                              <th className="py-3 px-4">Budget</th>
+                              <th className="py-3 px-4">Message</th>
+                              <th className="py-3 px-4">Status</th>
+                              <th className="py-3 px-4">Received At</th>
+                              <th className="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 text-xs">
+                            {filteredContacts.map((c) => (
+                              <tr key={c.id} className="hover:bg-slate-50/50 transition">
+                                <td className="py-3.5 px-4 font-bold text-slate-900 whitespace-nowrap">
+                                  {c.first_name} {c.last_name}
+                                </td>
+                                <td className="py-3.5 px-4 whitespace-nowrap">
+                                  <div className="space-y-0.5">
+                                    <div className="text-slate-800 font-medium">{c.email}</div>
+                                    <div className="text-[11px] text-slate-400 font-mono">{c.phone}</div>
+                                  </div>
+                                </td>
+                                <td className="py-3.5 px-4 whitespace-nowrap">
+                                  <div className="space-y-1">
+                                    <span className="inline-block px-2.5 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                                      {c.service || 'General'}
+                                    </span>
+                                    {c.company && (
+                                      <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                                        <Building size={11} className="text-slate-400" />
+                                        {c.company}
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="py-3.5 px-4 font-semibold text-slate-700 whitespace-nowrap">
+                                  {c.budget ? c.budget : <span className="text-slate-400 font-normal">—</span>}
+                                </td>
+                                <td className="py-3.5 px-4 max-w-xs">
+                                  <p className="text-slate-600 line-clamp-2 text-xs leading-relaxed" title={c.message}>
+                                    {c.message}
+                                  </p>
+                                </td>
+                                <td className="py-3.5 px-4 whitespace-nowrap">
+                                  <select
+                                    value={c.status || 'new'}
+                                    onChange={(e) => handleUpdateContactStatus(c.id, e.target.value)}
+                                    className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold border cursor-pointer focus:outline-none transition-colors ${
+                                      c.status === 'new'
+                                        ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                                        : c.status === 'contacted'
+                                        ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                                        : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                    }`}
+                                  >
+                                    <option value="new" className="bg-white text-slate-900 font-medium">NEW</option>
+                                    <option value="contacted" className="bg-white text-slate-900 font-medium">CONTACTED</option>
+                                    <option value="resolved" className="bg-white text-slate-900 font-medium">RESOLVED</option>
+                                  </select>
+                                </td>
+                                <td className="py-3.5 px-4 text-slate-500 text-[11px] whitespace-nowrap font-medium">
+                                  {formatContactDate(c.created_at)}
+                                </td>
+                                <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button
+                                      onClick={() => setSelectedContactModal(c)}
+                                      className="p-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition cursor-pointer"
+                                      title="View Full Details"
+                                    >
+                                      <Eye size={15} />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteContact(c.id, `${c.first_name} ${c.last_name}`)}
+                                      className="p-1.5 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-100 hover:border-red-100 transition cursor-pointer"
+                                      title="Delete Inquiry"
+                                    >
+                                      <Trash2 size={15} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })()}
+                </div>
               </div>
             )}
 
@@ -3190,6 +3439,124 @@ export default function AdminDashboard() {
                 </button>
              </div>
              {renderServiceForm()}
+          </div>
+        </div>
+      )}
+
+      {/* Contact Inquiry Detail Modal */}
+      {selectedContactModal && (
+        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 md:p-8 shadow-2xl space-y-6">
+            <div className="flex justify-between items-start border-b border-slate-100 pb-4">
+              <div>
+                <span className={`inline-block px-3 py-1 rounded-full text-xs font-extrabold border mb-2 ${
+                  selectedContactModal.status === 'new'
+                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                    : selectedContactModal.status === 'contacted'
+                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                }`}>
+                  STATUS: {(selectedContactModal.status || 'new').toUpperCase()}
+                </span>
+                <h3 className="text-xl font-extrabold text-slate-900">
+                  {selectedContactModal.first_name} {selectedContactModal.last_name}
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">Inquiry ID: #{selectedContactModal.id}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedContactModal(null)} 
+                className="text-slate-400 hover:text-slate-700 font-semibold text-sm p-1.5 rounded-xl hover:bg-slate-100 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Grid details */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] block mb-1">Email Address</span>
+                <a href={`mailto:${selectedContactModal.email}`} className="text-blue-600 font-semibold hover:underline break-all">
+                  {selectedContactModal.email}
+                </a>
+              </div>
+
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] block mb-1">Phone Number</span>
+                <a href={`tel:${selectedContactModal.phone}`} className="text-slate-800 font-semibold hover:underline">
+                  {selectedContactModal.phone}
+                </a>
+              </div>
+
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] block mb-1">Company</span>
+                <span className="text-slate-800 font-semibold">
+                  {selectedContactModal.company || '—'}
+                </span>
+              </div>
+
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] block mb-1">Service Required</span>
+                <span className="text-slate-800 font-semibold">
+                  {selectedContactModal.service || '—'}
+                </span>
+              </div>
+
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] block mb-1">Project Budget</span>
+                <span className="text-slate-800 font-semibold">
+                  {selectedContactModal.budget || '—'}
+                </span>
+              </div>
+
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] block mb-1">Submitted Date</span>
+                <span className="text-slate-800 font-semibold">
+                  {formatContactDate(selectedContactModal.created_at)}
+                </span>
+              </div>
+            </div>
+
+            {/* Status Selector in Modal */}
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-xs font-bold text-slate-800 block">Update Inquiry Status</span>
+                <span className="text-[11px] text-slate-500">Select new status to update database record</span>
+              </div>
+              <select
+                value={selectedContactModal.status || 'new'}
+                onChange={(e) => handleUpdateContactStatus(selectedContactModal.id, e.target.value)}
+                className="px-4 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-bold focus:outline-none focus:border-slate-900 cursor-pointer shadow-sm"
+              >
+                <option value="new">Mark as NEW</option>
+                <option value="contacted">Mark as CONTACTED</option>
+                <option value="resolved">Mark as RESOLVED</option>
+              </select>
+            </div>
+
+            {/* Full Message content */}
+            <div>
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Full Inquiry Message</span>
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-slate-800 text-xs leading-relaxed whitespace-pre-wrap font-sans">
+                {selectedContactModal.message}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-between items-center border-t border-slate-100 pt-4">
+              <button
+                onClick={() => handleDeleteContact(selectedContactModal.id, `${selectedContactModal.first_name} ${selectedContactModal.last_name}`)}
+                className="px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold flex items-center gap-2 transition cursor-pointer"
+              >
+                <Trash2 size={14} />
+                Delete Inquiry
+              </button>
+              <button
+                onClick={() => setSelectedContactModal(null)}
+                className="px-5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

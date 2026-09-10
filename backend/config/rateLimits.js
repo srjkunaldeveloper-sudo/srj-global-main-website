@@ -34,6 +34,7 @@ exports.contactLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === "test",
   message: standardResponse("Too many submissions. Please try again later."),
 });
 
