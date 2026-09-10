@@ -548,5 +548,140 @@ exports.validateUpdateIndustry = [
   handleErrors,
 ];
 
+exports.validateCreateTeam = [
+  body("name")
+    .trim()
+    .notEmpty().withMessage("Name is required")
+    .isLength({ min: 2, max: 255 }).withMessage("Name must be 2-255 characters"),
+  body("role")
+    .trim()
+    .notEmpty().withMessage("Role is required")
+    .isLength({ min: 2, max: 150 }).withMessage("Role must be 2-150 characters"),
+  body("role_class")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 50 }).withMessage("Role class must be at most 50 characters"),
+  body("bio")
+    .trim()
+    .notEmpty().withMessage("Bio is required")
+    .isLength({ min: 5, max: 5000 }).withMessage("Bio must be 5-5000 characters"),
+  body("image")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("Image URL must be at most 500 characters"),
+  body("featured")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("featured must be 0 or 1"),
+  body("online")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("online must be 0 or 1"),
+  body("verified")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("verified must be 0 or 1"),
+  body("badge")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 100 }).withMessage("Badge must be at most 100 characters"),
+  body("linkedin")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("LinkedIn link must be at most 500 characters"),
+  body("github")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("GitHub link must be at most 500 characters"),
+  body("twitter")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("Twitter link must be at most 500 characters"),
+  body("email")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 255 }).withMessage("Email must be at most 255 characters"),
+  body("website")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("Website link must be at most 500 characters"),
+  body("is_active")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("is_active must be 0 or 1"),
+  body("sort_order")
+    .optional()
+    .isInt().withMessage("sort_order must be an integer"),
+  handleErrors,
+];
+
+exports.validateUpdateTeam = [
+  body("name")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ min: 2, max: 255 }).withMessage("Name must be 2-255 characters"),
+  body("role")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ min: 2, max: 150 }).withMessage("Role must be 2-150 characters"),
+  body("role_class")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 50 }).withMessage("Role class must be at most 50 characters"),
+  body("bio")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ min: 5, max: 5000 }).withMessage("Bio must be 5-5000 characters"),
+  body("image")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("Image URL must be at most 500 characters"),
+  body("featured")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("featured must be 0 or 1"),
+  body("online")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("online must be 0 or 1"),
+  body("verified")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("verified must be 0 or 1"),
+  body("badge")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 100 }).withMessage("Badge must be at most 100 characters"),
+  body("linkedin")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("LinkedIn link must be at most 500 characters"),
+  body("github")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("GitHub link must be at most 500 characters"),
+  body("twitter")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("Twitter link must be at most 500 characters"),
+  body("email")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 255 }).withMessage("Email must be at most 255 characters"),
+  body("website")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("Website link must be at most 500 characters"),
+  body("is_active")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("is_active must be 0 or 1"),
+  body("sort_order")
+    .optional()
+    .isInt().withMessage("sort_order must be an integer"),
+  handleErrors,
+];
+
+
 
 

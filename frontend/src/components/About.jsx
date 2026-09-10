@@ -2,6 +2,7 @@ import AboutHero from "./about/AboutHero";
 import TrustedBy from "./TrustedBy";
 import { BrandLogo } from "./TrustedBy";
 import OurJourney from "./about/OurJourney";
+import TeamSection from "./about/TeamSection";
 import ClientReviews from "./about/ClientReviews";
 import Stats from "./Stats";
 
@@ -74,6 +75,8 @@ export default function About() {
           </div>
         </div>
       </section>
+
+      <TeamSection />
 
       <ClientReviews />
 

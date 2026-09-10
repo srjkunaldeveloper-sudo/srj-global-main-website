@@ -67,6 +67,15 @@ export default function AdminDashboard() {
     id: '', title: '', subtitle: '', icon: '', color: '#3B82F6', description: '', badge: '', features: '', benefits: '', sort_order: 0, is_active: 1
   });
   const [editIndustryId, setEditIndustryId] = useState(null);
+
+  // Team Form State
+  const [team, setTeam] = useState([]);
+  const [newTeam, setNewTeam] = useState({
+    name: '', role: '', role_class: 'dev', bio: '', image: '', featured: 0, online: 1, verified: 0, badge: '', linkedin: '', github: '', twitter: '', email: '', website: '', sort_order: 0, is_active: 1
+  });
+  const [editTeamId, setEditTeamId] = useState(null);
+  const [teamImageFile, setTeamImageFile] = useState(null);
+  const [teamImagePreview, setTeamImagePreview] = useState(null);
   
   // Services Category Tab State
   const [activeServiceTab, setActiveServiceTab] = useState('all');
@@ -162,6 +171,9 @@ export default function AdminDashboard() {
       } else if (activeTab === 'industries') {
         const res = await api.get('/industries/admin');
         setIndustries(res.data.industries || res.data || []);
+      } else if (activeTab === 'team') {
+        const res = await api.get('/team/admin');
+        setTeam(res.data.team || res.data || []);
       } else if (activeTab === 'careers') {
         const res = await api.get('/jobs');
         setJobs(res.data || []);
@@ -660,6 +672,133 @@ export default function AdminDashboard() {
     }
   };
 
+  // TEAM handlers
+  const handleTeamImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setTeamImageFile(file);
+      setTeamImagePreview(URL.createObjectURL(file));
+      setNewTeam(prev => ({ ...prev, image: file }));
+    }
+  };
+
+  const handleRemoveTeamImage = () => {
+    setTeamImageFile(null);
+    setTeamImagePreview(null);
+    setNewTeam(prev => ({ ...prev, image: 'REMOVE' }));
+  };
+
+  const handleCreateTeamMember = async (e) => {
+    e.preventDefault();
+    if (!newTeam.name || !newTeam.name.trim()) {
+      showNotification('error', 'Member name is required');
+      return;
+    }
+    if (!newTeam.role || !newTeam.role.trim()) {
+      showNotification('error', 'Member role is required');
+      return;
+    }
+    if (!newTeam.bio || !newTeam.bio.trim()) {
+      showNotification('error', 'Biography is required');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      
+      formData.append('name', newTeam.name.trim());
+      formData.append('role', newTeam.role.trim());
+      formData.append('role_class', newTeam.role_class ? newTeam.role_class.trim() : 'dev');
+      formData.append('bio', newTeam.bio.trim());
+      formData.append('featured', newTeam.featured ? 1 : 0);
+      formData.append('online', newTeam.online ? 1 : 0);
+      formData.append('verified', newTeam.verified ? 1 : 0);
+      formData.append('badge', newTeam.badge ? newTeam.badge.trim() : '');
+      formData.append('linkedin', newTeam.linkedin ? newTeam.linkedin.trim() : '');
+      formData.append('github', newTeam.github ? newTeam.github.trim() : '');
+      formData.append('twitter', newTeam.twitter ? newTeam.twitter.trim() : '');
+      formData.append('email', newTeam.email ? newTeam.email.trim() : '');
+      formData.append('website', newTeam.website ? newTeam.website.trim() : '');
+      formData.append('sort_order', parseInt(newTeam.sort_order, 10) || 0);
+      formData.append('is_active', parseInt(newTeam.is_active, 10) === 1 ? 1 : 0);
+
+      if (teamImageFile) {
+        formData.append('image', teamImageFile);
+      } else if (newTeam.image === 'REMOVE') {
+        formData.append('image', 'REMOVE');
+      } else if (typeof newTeam.image === 'string' && newTeam.image) {
+        formData.append('image', newTeam.image);
+      }
+
+      if (editTeamId) {
+        await api.put(`/team/${editTeamId}`, formData);
+        showNotification('success', 'Team member updated successfully!');
+      } else {
+        await api.post('/team', formData);
+        showNotification('success', 'Team member created successfully!');
+      }
+
+      setNewTeam({
+        name: '', role: '', role_class: 'dev', bio: '', image: '', featured: 0, online: 1, verified: 0, badge: '', linkedin: '', github: '', twitter: '', email: '', website: '', sort_order: 0, is_active: 1
+      });
+      setEditTeamId(null);
+      setTeamImageFile(null);
+      setTeamImagePreview(null);
+      fetchData();
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to save team member');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditTeamMember = (item) => {
+    setNewTeam({
+      name: item.name || '',
+      role: item.role || '',
+      role_class: item.role_class || 'dev',
+      bio: item.bio || '',
+      image: item.image || '',
+      featured: item.featured ? 1 : 0,
+      online: item.online !== undefined ? (item.online ? 1 : 0) : 1,
+      verified: item.verified ? 1 : 0,
+      badge: item.badge || '',
+      linkedin: item.linkedin || '',
+      github: item.github || '',
+      twitter: item.twitter || '',
+      email: item.email || '',
+      website: item.website || '',
+      sort_order: item.sort_order !== undefined ? item.sort_order : 0,
+      is_active: item.is_active !== undefined ? (item.is_active ? 1 : 0) : 1
+    });
+    setEditTeamId(item.id);
+    setTeamImageFile(null);
+    setTeamImagePreview(item.image || null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleToggleTeamMember = async (id) => {
+    try {
+      await api.put(`/team/${id}/toggle`);
+      showNotification('success', 'Team member status updated!');
+      fetchData();
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to toggle status');
+    }
+  };
+
+  const handleDeleteTeamMember = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this team member?')) return;
+    try {
+      await api.delete(`/team/${id}`);
+      showNotification('success', 'Team member deleted successfully!');
+      fetchData();
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to delete team member');
+    }
+  };
+
   // JOB handlers
   const handleCreateJob = async (e) => {
     e.preventDefault();
@@ -938,6 +1077,18 @@ export default function AdminDashboard() {
             >
               <Layers size={18} />
               Industries
+            </button>
+
+            <button
+              onClick={() => setActiveTab('team')}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === 'team' 
+                  ? 'bg-slate-900 text-white shadow-md' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Users size={18} />
+              Team
             </button>
 
             <button
@@ -2468,6 +2619,334 @@ export default function AdminDashboard() {
                               onClick={() => handleDeleteIndustry(ind.id)}
                               className="p-2 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-100 hover:border-red-100 transition cursor-pointer"
                               title="Delete Industry"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TEAM TAB */}
+            {activeTab === 'team' && (
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                {/* Form to Create/Edit Team Member */}
+                <div className="xl:col-span-1 bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] h-fit">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                      <Plus size={18} />
+                      {editTeamId ? 'Edit Team Member' : 'New Team Member'}
+                    </h3>
+                    {editTeamId && (
+                      <button
+                        onClick={() => {
+                          setEditTeamId(null);
+                          setTeamImageFile(null);
+                          setTeamImagePreview(null);
+                          setNewTeam({
+                            name: '', role: '', role_class: 'dev', bio: '', image: '', featured: 0, online: 1, verified: 0, badge: '', linkedin: '', github: '', twitter: '', email: '', website: '', sort_order: 0, is_active: 1
+                          });
+                        }}
+                        className="text-xs text-slate-400 hover:text-red-500 font-bold cursor-pointer"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
+                  </div>
+                  <form onSubmit={handleCreateTeamMember} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Full Name *</label>
+                      <input
+                        type="text" required value={newTeam.name}
+                        onChange={(e) => setNewTeam({...newTeam, name: e.target.value})}
+                        placeholder="John Anderson"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Role / Position *</label>
+                      <input
+                        type="text" required value={newTeam.role}
+                        onChange={(e) => setNewTeam({...newTeam, role: e.target.value})}
+                        placeholder="Chief Executive Officer"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Role Class</label>
+                        <input
+                          type="text" value={newTeam.role_class}
+                          onChange={(e) => setNewTeam({...newTeam, role_class: e.target.value})}
+                          placeholder="ceo, cto, dev, design"
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Special Badge Tag</label>
+                        <input
+                          type="text" value={newTeam.badge}
+                          onChange={(e) => setNewTeam({...newTeam, badge: e.target.value})}
+                          placeholder="Team Lead, AI Expert"
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Biography *</label>
+                      <textarea
+                        required value={newTeam.bio} rows={4}
+                        onChange={(e) => setNewTeam({...newTeam, bio: e.target.value})}
+                        placeholder="Short professional biography..."
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 resize-none text-xs"
+                      />
+                    </div>
+
+                    {/* Image Input & Preview */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Profile Photo</label>
+                      <input
+                        type="file" accept="image/*"
+                        onChange={handleTeamImageChange}
+                        className="w-full px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900 text-xs mb-2"
+                      />
+                      {teamImagePreview && teamImagePreview !== 'REMOVE' && (
+                        <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-xl border border-slate-200">
+                          <img src={teamImagePreview} alt="Preview" className="w-12 h-12 rounded-lg object-cover" />
+                          <div className="flex-1 overflow-hidden">
+                            <p className="text-xs font-semibold text-slate-700 truncate">{teamImageFile ? teamImageFile.name : 'Current Profile Image'}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleRemoveTeamImage}
+                            className="px-2.5 py-1 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      )}
+                      {newTeam.image === 'REMOVE' && (
+                        <p className="text-xs text-amber-600 font-medium">Image marked for removal on save.</p>
+                      )}
+                    </div>
+
+                    {/* Social Links */}
+                    <div className="space-y-3 pt-2 border-t border-slate-100">
+                      <p className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Social Links</p>
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">LinkedIn</label>
+                          <input
+                            type="text" value={newTeam.linkedin}
+                            onChange={(e) => setNewTeam({...newTeam, linkedin: e.target.value})}
+                            placeholder="https://linkedin.com/in/... or #"
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">GitHub</label>
+                          <input
+                            type="text" value={newTeam.github}
+                            onChange={(e) => setNewTeam({...newTeam, github: e.target.value})}
+                            placeholder="https://github.com/... or #"
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Twitter / X</label>
+                          <input
+                            type="text" value={newTeam.twitter}
+                            onChange={(e) => setNewTeam({...newTeam, twitter: e.target.value})}
+                            placeholder="https://twitter.com/... or #"
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Email</label>
+                          <input
+                            type="text" value={newTeam.email}
+                            onChange={(e) => setNewTeam({...newTeam, email: e.target.value})}
+                            placeholder="john@example.com or #"
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Personal / Portfolio Website</label>
+                        <input
+                          type="text" value={newTeam.website}
+                          onChange={(e) => setNewTeam({...newTeam, website: e.target.value})}
+                          placeholder="https://john.dev or #"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Checkboxes / Toggles for Featured, Online, Verified */}
+                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100">
+                      <label className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!!newTeam.featured}
+                          onChange={(e) => setNewTeam({...newTeam, featured: e.target.checked ? 1 : 0})}
+                          className="rounded border-slate-300 text-slate-900 focus:ring-0"
+                        />
+                        Featured
+                      </label>
+                      <label className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!!newTeam.online}
+                          onChange={(e) => setNewTeam({...newTeam, online: e.target.checked ? 1 : 0})}
+                          className="rounded border-slate-300 text-slate-900 focus:ring-0"
+                        />
+                        Online
+                      </label>
+                      <label className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!!newTeam.verified}
+                          onChange={(e) => setNewTeam({...newTeam, verified: e.target.checked ? 1 : 0})}
+                          className="rounded border-slate-300 text-slate-900 focus:ring-0"
+                        />
+                        Verified
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Sort Order</label>
+                        <input
+                          type="number" value={newTeam.sort_order}
+                          onChange={(e) => setNewTeam({...newTeam, sort_order: parseInt(e.target.value, 10) || 0})}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Status</label>
+                        <select
+                          value={newTeam.is_active}
+                          onChange={(e) => setNewTeam({...newTeam, is_active: parseInt(e.target.value, 10)})}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900"
+                        >
+                          <option value={1}>Active</option>
+                          <option value={0}>Inactive</option>
+                        </select>
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full py-3 rounded-xl bg-slate-900 hover:bg-black disabled:bg-slate-400 font-semibold text-white transition-all cursor-pointer"
+                    >
+                      {editTeamId ? 'Save Changes' : 'Create Team Member'}
+                    </button>
+                  </form>
+                </div>
+
+                {/* List of Team Members */}
+                <div className="xl:col-span-2 space-y-4">
+                  <h3 className="text-lg font-bold text-slate-900">Team Members ({team.length})</h3>
+                  {team.length === 0 ? (
+                    <div className="bg-white p-8 rounded-3xl border border-slate-100 text-center text-slate-400">
+                      No team members found in database. Use the form on the left to add your first member.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                      {team.map((m) => (
+                        <div key={m.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                          <div className="flex items-start gap-4 flex-1">
+                            {/* Member Avatar */}
+                            <div className="relative shrink-0">
+                              {m.image ? (
+                                <img src={m.image} alt={m.name} className="w-14 h-14 rounded-2xl object-cover border border-slate-100 shadow-sm" />
+                              ) : (
+                                <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-lg border border-slate-200">
+                                  {m.name.charAt(0)}
+                                </div>
+                              )}
+                              {m.online === 1 && (
+                                <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white" title="Online Status" />
+                              )}
+                            </div>
+
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 flex-wrap mb-1">
+                                <span className="text-xs font-extrabold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md">
+                                  {m.role_class || 'dev'}
+                                </span>
+                                {m.badge && (
+                                  <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+                                    {m.badge}
+                                  </span>
+                                )}
+                                {m.featured === 1 && (
+                                  <span className="text-[10px] font-extrabold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">
+                                    FEATURED
+                                  </span>
+                                )}
+                                {m.verified === 1 && (
+                                  <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                                    VERIFIED
+                                  </span>
+                                )}
+                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold border ml-auto md:ml-0 ${
+                                  m.is_active 
+                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                    : 'bg-slate-100 text-slate-400 border-slate-200'
+                                }`}>
+                                  {m.is_active ? 'ACTIVE' : 'INACTIVE'}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600">
+                                  Order: {m.sort_order || 0}
+                                </span>
+                              </div>
+
+                              <h4 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                                {m.name}
+                                <span className="text-xs font-semibold text-slate-500">— {m.role}</span>
+                              </h4>
+                              <p className="text-slate-600 text-xs leading-relaxed line-clamp-2 mt-1 mb-2">{m.bio}</p>
+
+                              {/* Social link tags */}
+                              <div className="flex flex-wrap gap-2 text-[11px] text-slate-400 font-mono">
+                                {m.linkedin && <span>LI: {m.linkedin}</span>}
+                                {m.github && <span>GH: {m.github}</span>}
+                                {m.twitter && <span>TW: {m.twitter}</span>}
+                                {m.email && <span>EM: {m.email}</span>}
+                                {m.website && <span>WEB: {m.website}</span>}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                            <button
+                              onClick={() => handleToggleTeamMember(m.id)}
+                              className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition cursor-pointer ${
+                                m.is_active
+                                  ? 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                                  : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-600'
+                              }`}
+                            >
+                              {m.is_active ? 'Deactivate' : 'Activate'}
+                            </button>
+
+                            <button
+                              onClick={() => handleEditTeamMember(m)}
+                              className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition cursor-pointer"
+                              title="Edit Member"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            
+                            <button
+                              onClick={() => handleDeleteTeamMember(m.id)}
+                              className="p-2 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-100 hover:border-red-100 transition cursor-pointer"
+                              title="Delete Member"
                             >
                               <Trash2 size={16} />
                             </button>

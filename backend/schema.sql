@@ -151,6 +151,32 @@ CREATE TABLE IF NOT EXISTS `industries` (
   INDEX `idx_industries_sort_order` (`sort_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Team Members Table
+CREATE TABLE IF NOT EXISTS `team_members` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `role` VARCHAR(150) NOT NULL,
+  `role_class` VARCHAR(50) DEFAULT 'dev',
+  `bio` TEXT NOT NULL,
+  `image` VARCHAR(500) DEFAULT NULL,
+  `featured` TINYINT(1) DEFAULT 0,
+  `online` TINYINT(1) DEFAULT 1,
+  `verified` TINYINT(1) DEFAULT 0,
+  `badge` VARCHAR(100) DEFAULT NULL,
+  `linkedin` VARCHAR(500) DEFAULT NULL,
+  `github` VARCHAR(500) DEFAULT NULL,
+  `twitter` VARCHAR(500) DEFAULT NULL,
+  `email` VARCHAR(255) DEFAULT NULL,
+  `website` VARCHAR(500) DEFAULT NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_team_is_active` (`is_active`),
+  INDEX `idx_team_sort_order` (`sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 
 
 

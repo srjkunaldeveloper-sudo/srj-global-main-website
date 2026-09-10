@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import {
   FaLinkedin,
@@ -8,58 +8,8 @@ import {
   FaGlobe,
   FaArrowRight,
 } from "react-icons/fa";
+import api from "../../config/api";
 import "./TeamSection.css";
-
-const team = [
-  {
-    name: "John Anderson",
-    role: "CEO",
-    roleClass: "ceo",
-    bio: "Leading innovation, strategy and global expansion across all verticals.",
-    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
-    featured: true,
-    online: true,
-    verified: true,
-    badge: "Team Lead",
-    socials: { linkedin: "#", github: "#", twitter: "#", email: "#", web: "#" },
-  },
-  {
-    name: "Sarah Chen",
-    role: "CTO",
-    roleClass: "cto",
-    bio: "Building scalable AI systems used by millions of users worldwide.",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=256&q=80",
-    featured: false,
-    online: true,
-    verified: true,
-    badge: "AI Expert",
-    socials: { linkedin: "#", github: "#", twitter: "#", email: "#" },
-  },
-  {
-    name: "David Park",
-    role: "Senior Developer",
-    roleClass: "dev",
-    bio: "Full-stack architect crafting performant systems at enterprise scale.",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80",
-    featured: false,
-    online: false,
-    verified: false,
-    badge: null,
-    socials: { linkedin: "#", github: "#", email: "#" },
-  },
-  {
-    name: "Emily Rodriguez",
-    role: "UI Designer",
-    roleClass: "design",
-    bio: "Crafting intuitive interfaces that delight users and drive conversions.",
-    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=256&q=80",
-    featured: false,
-    online: true,
-    verified: false,
-    badge: null,
-    socials: { linkedin: "#", github: "#", twitter: "#" },
-  },
-];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -68,6 +18,28 @@ const fadeUp = {
     y: 0,
     transition: { duration: 0.6, delay: i * 0.08, ease: [0.22, 0.61, 0.36, 1] },
   }),
+};
+
+const isValidSocialLink = (val) => {
+  if (!val || typeof val !== 'string') return false;
+  const trimmed = val.trim();
+  if (!trimmed || trimmed === '#' || trimmed.toLowerCase() === 'javascript:void(0)') return false;
+  return true;
+};
+
+const getEmailHref = (val) => {
+  if (!isValidSocialLink(val)) return null;
+  const trimmed = val.trim();
+  if (trimmed.startsWith('mailto:')) return trimmed;
+  if (trimmed.includes('@')) return `mailto:${trimmed}`;
+  return null;
+};
+
+const getUrlHref = (val) => {
+  if (!isValidSocialLink(val)) return null;
+  const trimmed = val.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  return `https://${trimmed}`;
 };
 
 function SpotlightCard({ member, index }) {
@@ -87,10 +59,20 @@ function SpotlightCard({ member, index }) {
     setSpot((s) => ({ ...s, active: false }));
   }, []);
 
+  const roleClass = member.role_class || member.roleClass || 'dev';
+  const isFeatured = !!member.featured;
+  const avatarImage = member.image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80';
+
+  const linkedinHref = getUrlHref(member.linkedin);
+  const githubHref = getUrlHref(member.github);
+  const twitterHref = getUrlHref(member.twitter);
+  const emailHref = getEmailHref(member.email);
+  const websiteHref = getUrlHref(member.website || member.web);
+
   return (
     <motion.article
       ref={cardRef}
-      className={`tm-card${member.featured ? " tm-card--featured" : ""}`}
+      className={`tm-card${isFeatured ? " tm-card--featured" : ""}`}
       custom={index}
       variants={fadeUp}
       initial="hidden"
@@ -114,7 +96,7 @@ function SpotlightCard({ member, index }) {
         <div className="tm-avatar__ring" />
         <img
           className="tm-avatar__img"
-          src={member.image}
+          src={avatarImage}
           alt={`${member.name} -- ${member.role}`}
           loading={index < 4 ? "eager" : "lazy"}
           decoding="async"
@@ -126,35 +108,35 @@ function SpotlightCard({ member, index }) {
       <h3 className="tm-card__name">{member.name}</h3>
 
       {/* Role Badge */}
-      <span className={`tm-role tm-role--${member.roleClass}`}>{member.role}</span>
+      <span className={`tm-role tm-role--${roleClass}`}>{member.role}</span>
 
       {/* Bio */}
       <p className="tm-card__bio">{member.bio}</p>
 
       {/* Social Links */}
       <div className="tm-socials">
-        {member.socials.linkedin && (
-          <a href={member.socials.linkedin} className="tm-social" aria-label={`${member.name} LinkedIn`} target="_blank" rel="noopener noreferrer">
+        {linkedinHref && (
+          <a href={linkedinHref} className="tm-social" aria-label={`${member.name} LinkedIn`} target="_blank" rel="noopener noreferrer">
             <FaLinkedin />
           </a>
         )}
-        {member.socials.github && (
-          <a href={member.socials.github} className="tm-social" aria-label={`${member.name} GitHub`} target="_blank" rel="noopener noreferrer">
+        {githubHref && (
+          <a href={githubHref} className="tm-social" aria-label={`${member.name} GitHub`} target="_blank" rel="noopener noreferrer">
             <FaGithub />
           </a>
         )}
-        {member.socials.twitter && (
-          <a href={member.socials.twitter} className="tm-social" aria-label={`${member.name} Twitter`} target="_blank" rel="noopener noreferrer">
+        {twitterHref && (
+          <a href={twitterHref} className="tm-social" aria-label={`${member.name} Twitter`} target="_blank" rel="noopener noreferrer">
             <FaTwitter />
           </a>
         )}
-        {member.socials.email && (
-          <a href={member.socials.email} className="tm-social" aria-label={`${member.name} Email`}>
+        {emailHref && (
+          <a href={emailHref} className="tm-social" aria-label={`${member.name} Email`}>
             <FaEnvelope />
           </a>
         )}
-        {member.socials.web && (
-          <a href={member.socials.web} className="tm-social" aria-label={`${member.name} Website`} target="_blank" rel="noopener noreferrer">
+        {websiteHref && (
+          <a href={websiteHref} className="tm-social" aria-label={`${member.name} Website`} target="_blank" rel="noopener noreferrer">
             <FaGlobe />
           </a>
         )}
@@ -171,6 +153,60 @@ function SpotlightCard({ member, index }) {
 export default function TeamSection() {
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-80px" });
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const fetchTeamMembers = async () => {
+      try {
+        const res = await api.get("/team");
+        if (res.data && res.data.success && Array.isArray(res.data.team)) {
+          setTeamMembers(res.data.team);
+        } else if (Array.isArray(res.data)) {
+          setTeamMembers(res.data);
+        } else {
+          setTeamMembers([]);
+        }
+      } catch (err) {
+        console.error("Error fetching active team members:", err);
+        setError(true);
+        setTeamMembers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTeamMembers();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="tm-section" ref={sectionRef} aria-labelledby="tm-heading">
+        <div className="tm-wrap">
+          <div className="tm-header">
+            <span className="tm-eyebrow">OUR TEAM</span>
+            <h2 className="tm-heading" id="tm-heading">
+              Meet the <span className="tm-heading__accent">Experts</span> Behind Our Success
+            </h2>
+            <p className="tm-sub">
+              A passionate team of engineers, designers, strategists and innovators
+              building exceptional digital experiences.
+            </p>
+          </div>
+          <div className="tm-grid">
+            {[1, 2, 3, 4].map((n) => (
+              <div key={n} className="tm-card animate-pulse" style={{ minHeight: "360px", opacity: 0.6 }} />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!loading && (teamMembers.length === 0 || error)) {
+    return null;
+  }
 
   return (
     <section className="tm-section" ref={sectionRef} aria-labelledby="tm-heading">
@@ -217,9 +253,7 @@ export default function TeamSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, ease: [0.22, 0.61, 0.36, 1] }}
         >
-          <span className="tm-eyebrow">
-            OUR TEAM
-          </span>
+          <span className="tm-eyebrow">OUR TEAM</span>
           <h2 className="tm-heading" id="tm-heading">
             Meet the <span className="tm-heading__accent">Experts</span> Behind Our Success
           </h2>
@@ -231,8 +265,8 @@ export default function TeamSection() {
 
         {/* Team Grid */}
         <div className="tm-grid">
-          {team.map((member, i) => (
-            <SpotlightCard key={member.name} member={member} index={i} />
+          {teamMembers.map((member, i) => (
+            <SpotlightCard key={member.id || member.name} member={member} index={i} />
           ))}
         </div>
       </div>
