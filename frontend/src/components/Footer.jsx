@@ -2,9 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import logoImg from '../assets/Logo.png';
 import { useSiteSettings } from '../context/SiteSettingsContext';
+import { useNavigation } from '../context/NavigationContext';
 
 export default function Footer() {
   const { getSetting } = useSiteSettings();
+  const { footerQuickNav, footerLegalNav } = useNavigation();
   const currentYear = new Date().getFullYear();
 
   // Dynamic Settings
@@ -144,11 +146,31 @@ export default function Footer() {
         <div className="sm:col-span-1 lg:col-span-2 lg:col-start-5">
           <h3 className="text-slate-900 font-bold text-base mb-4 sm:mb-6 tracking-wide">Quick Links</h3>
           <div className="flex flex-col gap-2.5">
-            <Link to="/contact" className="text-slate-500 hover:text-black hover:translate-x-1 transition-all duration-300 text-fluid-sm py-1 inline-block">Contact Us</Link>
-            <Link to="/pricing" className="text-slate-500 hover:text-black hover:translate-x-1 transition-all duration-300 text-fluid-sm py-1 inline-block">Pricing Plans</Link>
-            <Link to="/blog" className="text-slate-500 hover:text-black hover:translate-x-1 transition-all duration-300 text-fluid-sm py-1 inline-block">Blog</Link>
-            <Link to="/careers" className="text-slate-500 hover:text-black hover:translate-x-1 transition-all duration-300 text-fluid-sm py-1 inline-block">Careers</Link>
-            <Link to="/collaboration" className="text-slate-500 hover:text-black hover:translate-x-1 transition-all duration-300 text-fluid-sm py-1 inline-block">Collaboration</Link>
+            {(footerQuickNav || []).map((item, index) => {
+              const isExternal = item.item_type === 'external';
+              const isHash = item.item_type === 'hash' && item.url && item.url.startsWith('#');
+              const linkClass = "text-slate-500 hover:text-black hover:translate-x-1 transition-all duration-300 text-fluid-sm py-1 inline-block";
+
+              if (isExternal || isHash) {
+                return (
+                  <a
+                    key={item.id || index}
+                    href={item.url}
+                    target={item.target || '_self'}
+                    rel={item.target === '_blank' ? 'noopener noreferrer' : undefined}
+                    className={linkClass}
+                  >
+                    {item.label}
+                  </a>
+                );
+              }
+
+              return (
+                <Link key={item.id || index} to={item.url} className={linkClass}>
+                  {item.label}
+                </Link>
+              );
+            })}
           </div>
         </div>
 
@@ -215,11 +237,31 @@ export default function Footer() {
           )}
 
           <div className="flex flex-wrap items-center gap-2.5 mt-8 text-xs">
-            <Link to="/privacy" className="text-slate-400 hover:text-black transition-colors duration-200 py-1">Privacy Policy</Link>
-            <span className="text-slate-200">•</span>
-            <a href="#contact" className="text-slate-400 hover:text-black transition-colors duration-200 py-1">Cookies</a>
-            <span className="text-slate-200">•</span>
-            <Link to="/terms" className="text-slate-400 hover:text-black transition-colors duration-200 py-1">Terms & Conditions</Link>
+            {(footerLegalNav || []).map((item, index) => {
+              const isExternal = item.item_type === 'external';
+              const isHash = item.item_type === 'hash' && item.url && item.url.startsWith('#');
+              const linkClass = "text-slate-400 hover:text-black transition-colors duration-200 py-1";
+
+              return (
+                <React.Fragment key={item.id || index}>
+                  {index > 0 && <span className="text-slate-200">•</span>}
+                  {isExternal || isHash ? (
+                    <a
+                      href={item.url}
+                      target={item.target || '_self'}
+                      rel={item.target === '_blank' ? 'noopener noreferrer' : undefined}
+                      className={linkClass}
+                    >
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link to={item.url} className={linkClass}>
+                      {item.label}
+                    </Link>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
         </div>
 
@@ -235,3 +277,4 @@ export default function Footer() {
     </footer>
   );
 }
+

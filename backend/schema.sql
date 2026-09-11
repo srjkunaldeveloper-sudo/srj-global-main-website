@@ -287,15 +287,15 @@ INSERT INTO `navigation_items` (`id`, `group_location`, `parent_id`, `label`, `u
 (7, 'header', NULL, 'Contact Us', '/contact', 'route', '_self', NULL, NULL, 7, 1),
 
 -- Services Dropdown Children (Parent ID: 2)
-(8, 'header', 2, 'Game Development', '/services#game-development', 'hash', '_self', 'Rocket', NULL, 1, 1),
-(9, 'header', 2, 'Software Development', '/services#software-development', 'hash', '_self', 'Code', NULL, 2, 1),
-(10, 'header', 2, 'Mobile App Development', '/services#mobile-app-development', 'hash', '_self', 'Smartphone', NULL, 3, 1),
-(11, 'header', 2, 'UI/UX & Product Design', '/services#ui-ux-designing', 'hash', '_self', 'PenTool', NULL, 4, 1),
-(12, 'header', 2, 'AI, ML & Automation', '/services#ai-automation', 'hash', '_self', 'Cpu', NULL, 5, 1),
-(13, 'header', 2, 'Cloud & DevOps Solutions', '/services#cloud-computing', 'hash', '_self', 'Cloud', NULL, 6, 1),
-(14, 'header', 2, 'Data Engineering & Analytics', '/services#data-analytics', 'hash', '_self', 'Database', NULL, 7, 1),
-(15, 'header', 2, 'Cyber Security & Compliance', '/services#cyber-security', 'hash', '_self', 'Shield', NULL, 8, 1),
-(16, 'header', 2, 'Startup Launch & Advisory', '/services#startup-tips', 'hash', '_self', 'Rocket', NULL, 9, 1),
+(8, 'header', 2, 'Game Development', '/services#game-development', 'hash', '_self', 'Rocket', 'Immersive 2D/3D games for mobile, PC & console', 1, 1),
+(9, 'header', 2, 'Software Development', '/services#software-development', 'hash', '_self', 'Code', 'Enterprise-grade custom software & web applications', 2, 1),
+(10, 'header', 2, 'Mobile App Development', '/services#mobile-app-development', 'hash', '_self', 'Smartphone', 'Native & cross-platform iOS/Android mobile apps', 3, 1),
+(11, 'header', 2, 'UI/UX & Digital Product Design', '/services#ui-ux-design', 'hash', '_self', 'PenTool', 'User-centric interfaces & engaging digital experiences', 4, 1),
+(12, 'header', 2, 'AI & Intelligent Solutions', '/services#ai-intelligent-solutions', 'hash', '_self', 'Cpu', 'Machine learning, LLMs & intelligent automation', 5, 1),
+(13, 'header', 2, 'Cloud & DevOps', '/services#cloud-devops', 'hash', '_self', 'Cloud', 'Scalable cloud infrastructure & DevOps automation', 6, 1),
+(14, 'header', 2, 'Data & Analytics', '/services#data-analytics', 'hash', '_self', 'Database', 'Data engineering, business intelligence & analytics', 7, 1),
+(15, 'header', 2, 'Cybersecurity', '/services#cybersecurity', 'hash', '_self', 'Shield', 'Security audits, penetration testing & compliance', 8, 1),
+(16, 'header', 2, 'Startup Launch Support', '/services#startup-launch-support', 'hash', '_self', 'Rocket', 'MVP development & technical advisory for startups', 9, 1),
 
 -- Pricing Dropdown Children (Parent ID: 3)
 (17, 'header', 3, 'Base Architecture', '/pricing', 'route', '_self', 'Code', 'Perfect for startups and small business websites.', 1, 1),

@@ -6,6 +6,7 @@ import LenisProvider from './components/LenisProvider';
 import PromotionPopup from './components/PromotionPopup';
 import SEO from './components/SEO';
 import { SiteSettingsProvider } from './context/SiteSettingsContext';
+import { NavigationProvider } from './context/NavigationContext';
 
 // Keep Homepage components statically imported for instant First Contentful Paint
 import Hero from './components/Hero';
@@ -48,60 +49,63 @@ export default function App() {
 
   return (
     <SiteSettingsProvider>
-      <LenisProvider>
-        <div className="min-h-screen text-primary-text font-sans antialiased selection:bg-accent/15 selection:text-accent flex flex-col">
-          {!isAdminPath && <Navbar />}
-          {!isAdminPath && <PromotionPopup />}
-          
-          <main className="flex-grow">
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                {/* Static Homepage Route */}
-                <Route path="/" element={
-                  <>
-                    <SEO 
-                      title="Software Development & IT Solutions" 
-                      description="SRJ Global Technologies specializes in custom software development, IT consulting, and innovative digital solutions to propel your business forward."
-                      keywords="software development, IT solutions, SRJ Global Technologies, web development, app development"
-                      url="https://srjglobaltechnology.com"
-                    />
-                    <Hero />
-                    <Marquee />
-                    <Services />
-                    <Portfolio />
-                    <Process />
-                    <Trust />
-                    <Stats />
-                    <Testimonials />
-                    <Faq />
-                  </>
+      <NavigationProvider>
+        <LenisProvider>
+          <div className="min-h-screen text-primary-text font-sans antialiased selection:bg-accent/15 selection:text-accent flex flex-col">
+            {!isAdminPath && <Navbar />}
+            {!isAdminPath && <PromotionPopup />}
+            
+            <main className="flex-grow">
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  {/* Static Homepage Route */}
+                  <Route path="/" element={
+                    <>
+                      <SEO 
+                        title="Software Development & IT Solutions" 
+                        description="SRJ Global Technologies specializes in custom software development, IT consulting, and innovative digital solutions to propel your business forward."
+                        keywords="software development, IT solutions, SRJ Global Technologies, web development, app development"
+                        url="https://srjglobaltechnology.com"
+                      />
+                      <Hero />
+                      <Marquee />
+                      <Services />
+                      <Portfolio />
+                      <Process />
+                      <Trust />
+                      <Stats />
+                      <Testimonials />
+                      <Faq />
+                    </>
 
-                } />
-                
-                {/* Lazy Loaded Routes */}
-                <Route path="/services" element={<ServicesPage />} />
-                <Route path="/services/:id" element={<ServiceDetail />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/collaboration" element={<Collaboration />} />
-                <Route path="/industries" element={<Industries />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:id" element={<BlogDetail />} />
-                <Route path="/careers" element={<Careers />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsConditions />} />
-                
-                {/* Admin Portal Routes */}
-                <Route path="/admin/login" element={<AdminLogin />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-                </Routes>
-            </Suspense>
-          </main>
-          
-          {!isAdminPath && <Footer />}
-        </div>
-      </LenisProvider>
+                  } />
+                  
+                  {/* Lazy Loaded Routes */}
+                  <Route path="/services" element={<ServicesPage />} />
+                  <Route path="/services/:id" element={<ServiceDetail />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/collaboration" element={<Collaboration />} />
+                  <Route path="/industries" element={<Industries />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:id" element={<BlogDetail />} />
+                  <Route path="/careers" element={<Careers />} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<TermsConditions />} />
+                  
+                  {/* Admin Portal Routes */}
+                  <Route path="/admin/login" element={<AdminLogin />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  </Routes>
+              </Suspense>
+            </main>
+            
+            {!isAdminPath && <Footer />}
+          </div>
+        </LenisProvider>
+      </NavigationProvider>
     </SiteSettingsProvider>
   );
 }
+
