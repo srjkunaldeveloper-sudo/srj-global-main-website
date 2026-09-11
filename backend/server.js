@@ -34,6 +34,7 @@ const faqRoutes = require("./routes/faqRoutes");
 const teamRoutes = require("./routes/teamRoutes");
 const subscriberRoutes = require("./routes/subscriberRoutes");
 const siteSettingRoutes = require("./routes/siteSettingRoutes");
+const navigationRoutes = require("./routes/navigationRoutes");
 const { generateSitemap } = require("./controllers/sitemapController");
 
 const app = express();
@@ -146,6 +147,7 @@ app.use("/api/faqs", faqRoutes);
 app.use("/api/team", teamRoutes);
 app.use("/api/subscribers", subscriberRoutes);
 app.use("/api/settings", siteSettingRoutes);
+app.use("/api/navigation", navigationRoutes);
 app.use("/api", sendMeetingRoute);
 
 app.get("/api/sitemap.xml", generateSitemap);

@@ -1,4 +1,4 @@
-const { body, param, validationResult } = require("express-validator");
+const { body, param, query, validationResult } = require("express-validator");
 
 const handleErrors = (req, res, next) => {
   const errors = validationResult(req);
@@ -721,6 +721,175 @@ exports.validateBulkUpdateSettings = [
     .custom((reqBody) => {
       if (!reqBody || typeof reqBody !== "object") {
         throw new Error("Request body must be a valid JSON object");
+      }
+      return true;
+    }),
+  handleErrors,
+];
+
+exports.validateGetNavigationQuery = [
+  query("location")
+    .optional({ values: "falsy" })
+    .trim()
+    .isIn(["header", "footer_quick", "footer_legal"])
+    .withMessage("Invalid location parameter. Must be header, footer_quick, or footer_legal"),
+  handleErrors,
+];
+
+exports.validateCreateNavigation = [
+  body("group_location")
+    .trim()
+    .notEmpty().withMessage("group_location is required")
+    .isIn(["header", "footer_quick", "footer_legal"])
+    .withMessage("group_location must be header, footer_quick, or footer_legal"),
+  body("label")
+    .trim()
+    .notEmpty().withMessage("label is required")
+    .isLength({ max: 100 }).withMessage("label must be at most 100 characters"),
+  body("url")
+    .trim()
+    .notEmpty().withMessage("url is required")
+    .isLength({ max: 255 }).withMessage("url must be at most 255 characters")
+    .custom((val) => {
+      const clean = val.trim();
+      if (/^(javascript|data|vbscript):/i.test(clean)) {
+        throw new Error("URL contains dangerous scheme (javascript:, data:, vbscript:)");
+      }
+      if (!clean.startsWith("/") && !clean.includes("#") && !/^(https?:|\/\/|mailto:|tel:)/i.test(clean)) {
+        throw new Error("URL must be a valid path (starting with '/'), hash ('#'), or absolute URL");
+      }
+      return true;
+    }),
+  body("item_type")
+    .optional({ values: "falsy" })
+    .trim()
+    .isIn(["route", "hash", "external"])
+    .withMessage("item_type must be route, hash, or external"),
+  body("target")
+    .optional({ values: "falsy" })
+    .trim()
+    .isIn(["_self", "_blank"])
+    .withMessage("target must be _self or _blank"),
+  body("icon_name")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 50 }).withMessage("icon_name must be at most 50 characters"),
+  body("description")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 255 }).withMessage("description must be at most 255 characters"),
+  body("sort_order")
+    .optional()
+    .isInt({ min: 0 }).withMessage("sort_order must be a non-negative integer"),
+  body("is_active")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("is_active must be a boolean or 0/1"),
+  body("parent_id")
+    .optional({ values: "null" })
+    .custom((val) => {
+      if (val === null || val === "" || val === undefined) return true;
+      const num = parseInt(val, 10);
+      if (isNaN(num) || num < 1) {
+        throw new Error("parent_id must be a positive integer or null");
+      }
+      return true;
+    }),
+  handleErrors,
+];
+
+exports.validateUpdateNavigation = [
+  body("group_location")
+    .optional({ values: "falsy" })
+    .trim()
+    .isIn(["header", "footer_quick", "footer_legal"])
+    .withMessage("group_location must be header, footer_quick, or footer_legal"),
+  body("label")
+    .optional({ values: "falsy" })
+    .trim()
+    .notEmpty().withMessage("label cannot be empty")
+    .isLength({ max: 100 }).withMessage("label must be at most 100 characters"),
+  body("url")
+    .optional({ values: "falsy" })
+    .trim()
+    .notEmpty().withMessage("url cannot be empty")
+    .isLength({ max: 255 }).withMessage("url must be at most 255 characters")
+    .custom((val) => {
+      const clean = val.trim();
+      if (/^(javascript|data|vbscript):/i.test(clean)) {
+        throw new Error("URL contains dangerous scheme (javascript:, data:, vbscript:)");
+      }
+      if (!clean.startsWith("/") && !clean.includes("#") && !/^(https?:|\/\/|mailto:|tel:)/i.test(clean)) {
+        throw new Error("URL must be a valid path (starting with '/'), hash ('#'), or absolute URL");
+      }
+      return true;
+    }),
+  body("item_type")
+    .optional({ values: "falsy" })
+    .trim()
+    .isIn(["route", "hash", "external"])
+    .withMessage("item_type must be route, hash, or external"),
+  body("target")
+    .optional({ values: "falsy" })
+    .trim()
+    .isIn(["_self", "_blank"])
+    .withMessage("target must be _self or _blank"),
+  body("icon_name")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 50 }).withMessage("icon_name must be at most 50 characters"),
+  body("description")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 255 }).withMessage("description must be at most 255 characters"),
+  body("sort_order")
+    .optional()
+    .isInt({ min: 0 }).withMessage("sort_order must be a non-negative integer"),
+  body("is_active")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("is_active must be a boolean or 0/1"),
+  body("parent_id")
+    .optional({ values: "null" })
+    .custom((val) => {
+      if (val === null || val === "" || val === undefined) return true;
+      const num = parseInt(val, 10);
+      if (isNaN(num) || num < 1) {
+        throw new Error("parent_id must be a positive integer or null");
+      }
+      return true;
+    }),
+  handleErrors,
+];
+
+exports.validateReorderNavigation = [
+  body()
+    .custom((reqBody) => {
+      let itemsList = reqBody;
+      if (reqBody && Array.isArray(reqBody.items)) {
+        itemsList = reqBody.items;
+      }
+      if (!Array.isArray(itemsList) || itemsList.length === 0) {
+        throw new Error("Reorder request body must contain a non-empty array of items");
+      }
+      const seenIds = new Set();
+      for (let i = 0; i < itemsList.length; i++) {
+        const item = itemsList[i];
+        if (!item || typeof item !== "object") {
+          throw new Error(`Item at index ${i} must be an object`);
+        }
+        const id = parseInt(item.id, 10);
+        const sortOrder = parseInt(item.sort_order, 10);
+        if (isNaN(id) || id <= 0) {
+          throw new Error(`Item at index ${i} must have a positive integer id`);
+        }
+        if (isNaN(sortOrder) || sortOrder < 0) {
+          throw new Error(`Item at index ${i} must have a non-negative integer sort_order`);
+        }
+        if (seenIds.has(id)) {
+          throw new Error(`Duplicate item ID ${id} in reorder request`);
+        }
+        seenIds.add(id);
       }
       return true;
     }),

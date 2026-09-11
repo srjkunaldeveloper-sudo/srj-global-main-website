@@ -253,3 +253,74 @@ ON DUPLICATE KEY UPDATE
   `group_name` = VALUES(`group_name`),
   `field_type` = VALUES(`field_type`),
   `description` = VALUES(`description`);
+
+-- Navigation Items Table
+CREATE TABLE IF NOT EXISTS `navigation_items` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `group_location` ENUM('header', 'footer_quick', 'footer_legal') NOT NULL DEFAULT 'header',
+  `parent_id` INT NULL DEFAULT NULL,
+  `label` VARCHAR(100) NOT NULL,
+  `url` VARCHAR(255) NOT NULL,
+  `item_type` ENUM('route', 'hash', 'external') NOT NULL DEFAULT 'route',
+  `target` ENUM('_self', '_blank') NOT NULL DEFAULT '_self',
+  `icon_name` VARCHAR(50) NULL DEFAULT NULL,
+  `description` VARCHAR(255) NULL DEFAULT NULL,
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_navigation_parent` FOREIGN KEY (`parent_id`) REFERENCES `navigation_items` (`id`) ON DELETE CASCADE,
+  INDEX `idx_group_location_sort` (`group_location`, `sort_order`),
+  INDEX `idx_parent_sort` (`parent_id`, `sort_order`),
+  INDEX `idx_active` (`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Initial Navigation Items Seed Data (Idempotent Seed)
+INSERT INTO `navigation_items` (`id`, `group_location`, `parent_id`, `label`, `url`, `item_type`, `target`, `icon_name`, `description`, `sort_order`, `is_active`) VALUES
+-- Header Top-Level Items
+(1, 'header', NULL, 'Home', '/', 'route', '_self', NULL, NULL, 1, 1),
+(2, 'header', NULL, 'Services', '/services', 'route', '_self', NULL, NULL, 2, 1),
+(3, 'header', NULL, 'Pricing', '/pricing', 'route', '_self', NULL, NULL, 3, 1),
+(4, 'header', NULL, 'Collaboration', '/collaboration', 'route', '_self', NULL, NULL, 4, 1),
+(5, 'header', NULL, 'Industries', '/industries', 'route', '_self', NULL, NULL, 5, 1),
+(6, 'header', NULL, 'About Us', '/about', 'route', '_self', NULL, NULL, 6, 1),
+(7, 'header', NULL, 'Contact Us', '/contact', 'route', '_self', NULL, NULL, 7, 1),
+
+-- Services Dropdown Children (Parent ID: 2)
+(8, 'header', 2, 'Game Development', '/services#game-development', 'hash', '_self', 'Rocket', NULL, 1, 1),
+(9, 'header', 2, 'Software Development', '/services#software-development', 'hash', '_self', 'Code', NULL, 2, 1),
+(10, 'header', 2, 'Mobile App Development', '/services#mobile-app-development', 'hash', '_self', 'Smartphone', NULL, 3, 1),
+(11, 'header', 2, 'UI/UX & Product Design', '/services#ui-ux-designing', 'hash', '_self', 'PenTool', NULL, 4, 1),
+(12, 'header', 2, 'AI, ML & Automation', '/services#ai-automation', 'hash', '_self', 'Cpu', NULL, 5, 1),
+(13, 'header', 2, 'Cloud & DevOps Solutions', '/services#cloud-computing', 'hash', '_self', 'Cloud', NULL, 6, 1),
+(14, 'header', 2, 'Data Engineering & Analytics', '/services#data-analytics', 'hash', '_self', 'Database', NULL, 7, 1),
+(15, 'header', 2, 'Cyber Security & Compliance', '/services#cyber-security', 'hash', '_self', 'Shield', NULL, 8, 1),
+(16, 'header', 2, 'Startup Launch & Advisory', '/services#startup-tips', 'hash', '_self', 'Rocket', NULL, 9, 1),
+
+-- Pricing Dropdown Children (Parent ID: 3)
+(17, 'header', 3, 'Base Architecture', '/pricing', 'route', '_self', 'Code', 'Perfect for startups and small business websites.', 1, 1),
+(18, 'header', 3, 'Premium Experience', '/pricing', 'route', '_self', 'PenTool', 'Advanced features, integrations, and performance.', 2, 1),
+(19, 'header', 3, 'Enterprise Suite', '/pricing', 'route', '_self', 'Database', 'Custom tailored platforms for massive scale.', 3, 1),
+
+-- Footer Quick Links
+(20, 'footer_quick', NULL, 'Contact Us', '/contact', 'route', '_self', NULL, NULL, 1, 1),
+(21, 'footer_quick', NULL, 'Pricing Plans', '/pricing', 'route', '_self', NULL, NULL, 2, 1),
+(22, 'footer_quick', NULL, 'Blog', '/blog', 'route', '_self', NULL, NULL, 3, 1),
+(23, 'footer_quick', NULL, 'Careers', '/careers', 'route', '_self', NULL, NULL, 4, 1),
+(24, 'footer_quick', NULL, 'Collaboration', '/collaboration', 'route', '_self', NULL, NULL, 5, 1),
+
+-- Footer Legal Links
+(25, 'footer_legal', NULL, 'Privacy Policy', '/privacy', 'route', '_self', NULL, NULL, 1, 1),
+(26, 'footer_legal', NULL, 'Cookies', '#contact', 'hash', '_self', NULL, NULL, 2, 1),
+(27, 'footer_legal', NULL, 'Terms & Conditions', '/terms', 'route', '_self', NULL, NULL, 3, 1)
+ON DUPLICATE KEY UPDATE
+  `group_location` = VALUES(`group_location`),
+  `parent_id` = VALUES(`parent_id`),
+  `label` = VALUES(`label`),
+  `url` = VALUES(`url`),
+  `item_type` = VALUES(`item_type`),
+  `target` = VALUES(`target`),
+  `icon_name` = VALUES(`icon_name`),
+  `description` = VALUES(`description`),
+  `sort_order` = VALUES(`sort_order`),
+  `is_active` = VALUES(`is_active`);
