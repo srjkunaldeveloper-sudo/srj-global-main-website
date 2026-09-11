@@ -29,11 +29,13 @@ import {
   Eye,
   Clock,
   Building,
-  Filter
+  Filter,
+  Compass
 } from 'lucide-react';
 import api from '../../config/api';
 import { serviceCategories } from '../../data/servicesData';
 import SiteSettingsManager from './SiteSettingsManager';
+import NavigationManager from './NavigationManager';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('blogs');
@@ -1234,6 +1236,18 @@ export default function AdminDashboard() {
             >
               <Settings size={18} />
               Site Settings
+            </button>
+
+            <button
+              onClick={() => setActiveTab('navigation')}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === 'navigation' 
+                  ? 'bg-slate-900 text-white shadow-md' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Compass size={18} />
+              Navigation Manager
             </button>
           </nav>
         </div>
@@ -3433,6 +3447,10 @@ export default function AdminDashboard() {
 
             {activeTab === 'settings' && (
               <SiteSettingsManager />
+            )}
+
+            {activeTab === 'navigation' && (
+              <NavigationManager />
             )}
           </div>
         )}
