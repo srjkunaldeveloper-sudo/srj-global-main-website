@@ -18,9 +18,9 @@ export default function PricingHero() {
   };
 
   const pricingCards = [
-    { id: 'starter', title: 'Starter', desc: 'Perfect for MVPs', highlight: 'Web Development', price: 'Custom Quote', posClass: 'top-left' },
-    { id: 'professional', title: 'Professional', desc: 'Growing Businesses', highlight: 'Web + Mobile + Cloud', price: 'Most Popular', posClass: 'top-right' },
-    { id: 'enterprise', title: 'Enterprise', desc: 'Large Organizations', highlight: 'Dedicated Team', price: 'Custom Pricing', posClass: 'bottom-center' }
+    { id: 'starter', title: 'Starter Scope', desc: 'Essential Platforms', highlight: 'Web & API Foundation', price: '₹20K – ₹40K', posClass: 'top-left' },
+    { id: 'professional', title: 'Professional', desc: 'Growing Businesses', highlight: 'Web + Mobile + Cloud', price: '₹40K – ₹1L+', posClass: 'top-right' },
+    { id: 'enterprise', title: 'Custom Scope', desc: 'Enterprise Scale', highlight: 'Dedicated Engineering', price: 'Custom Pricing', posClass: 'bottom-center' }
   ];
 
   useEffect(() => {

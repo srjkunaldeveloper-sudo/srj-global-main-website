@@ -54,7 +54,9 @@ function Blog() {
             coverImage: b.image || "https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?q=80&w=2070",
             category: b.category || "General",
             publishedDate: b.created_at || new Date().toISOString(),
-            readingTime: "5 min read",
+            readingTime: b.content 
+              ? `${Math.max(1, Math.ceil(b.content.replace(/<[^>]*>/g, ' ').trim().split(/\s+/).filter(Boolean).length / 200))} min read` 
+              : "5 min read",
             views: Math.floor(Math.random() * 5000),
             likes: Math.floor(Math.random() * 500),
             authorImage: "https://ui-avatars.com/api/?name=" + encodeURIComponent(b.author || "Admin") + "&background=random",

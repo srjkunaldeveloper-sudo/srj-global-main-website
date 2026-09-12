@@ -17,7 +17,9 @@ import {
   Sparkles,
   ExternalLink,
   Layers,
-  Settings
+  Settings,
+  Compass,
+  Award
 } from 'lucide-react';
 import api from '../../config/api';
 
@@ -52,6 +54,26 @@ const GROUP_CONFIG = {
     title: 'Business Information',
     icon: Clock,
     description: 'Customer inquiry response promise SLA and operating business hours.'
+  },
+  hero: {
+    title: 'Hero Section',
+    icon: Sparkles,
+    description: 'Home page Hero section headline variants, top badge, subtitle paragraph, and CTA buttons.'
+  },
+  process: {
+    title: 'Process Section',
+    icon: Compass,
+    description: 'Home page Process section top badge, main heading, subtitle paragraph, and CTA buttons.'
+  },
+  trust: {
+    title: 'Trust & Stats Section',
+    icon: Award,
+    description: 'Home page Trust section and Achievements section headings and subtitles.'
+  },
+  services: {
+    title: 'Services Page',
+    icon: Layers,
+    description: 'Services page Hero and Directory Intro badges, headings, and descriptions.'
   }
 };
 
@@ -190,7 +212,11 @@ export default function SiteSettingsManager() {
       social: [],
       footer: [],
       seo: [],
-      business: []
+      business: [],
+      hero: [],
+      process: [],
+      trust: [],
+      services: []
     };
 
     settingsMetadata.forEach((setting) => {
@@ -334,7 +360,7 @@ export default function SiteSettingsManager() {
               : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
           }`}
         >
-          All Settings (26)
+          All Settings ({settingsMetadata.length})
         </button>
         {Object.keys(GROUP_CONFIG).map((groupKey) => {
           const groupMeta = GROUP_CONFIG[groupKey];
@@ -391,7 +417,7 @@ export default function SiteSettingsManager() {
                   const description = setting.description;
                   const val = currentSettings[key] !== undefined ? currentSettings[key] : '';
 
-                  const isTextarea = fieldType === 'textarea' || key === 'office_address' || key === 'footer_description' || key === 'global_seo_description';
+                  const isTextarea = fieldType === 'textarea' || fieldType === 'json' || key === 'hero_headings' || key === 'hero_subtitle' || key === 'office_address' || key === 'footer_description' || key === 'global_seo_description' || key === 'services_hero_subtitle' || key === 'services_intro_description';
                   const isImage = key === 'logo_url' || key === 'favicon_url' || key === 'global_og_image';
                   const SocialIcon = SOCIAL_ICONS[key];
 

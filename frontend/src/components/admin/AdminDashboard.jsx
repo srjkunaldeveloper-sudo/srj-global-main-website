@@ -30,12 +30,18 @@ import {
   Clock,
   Building,
   Filter,
-  Compass
+  Compass,
+  Award
 } from 'lucide-react';
 import api from '../../config/api';
 import { serviceCategories } from '../../data/servicesData';
 import SiteSettingsManager from './SiteSettingsManager';
 import NavigationManager from './NavigationManager';
+import PartnerLogoManager from './PartnerLogoManager';
+import ProcessManager from './ProcessManager';
+import CompanyStatsManager from './CompanyStatsManager';
+import TrustPointsManager from './TrustPointsManager';
+import AdminUserManager from './AdminUserManager';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('blogs');
@@ -114,7 +120,7 @@ export default function AdminDashboard() {
 
   // Service Form State
   const [newService, setNewService] = useState({
-    title: '', icon: '', image: '', short_description: '', full_description: '', category_id: '', price: ''
+    title: '', icon: '', image: '', short_description: '', full_description: '', category_id: '', price: '', is_home: false, tags: '', sort_order: 0
   });
   const [editServiceId, setEditServiceId] = useState(null);
   const [isEditServiceModalOpen, setIsEditServiceModalOpen] = useState(false);
@@ -274,7 +280,7 @@ export default function AdminDashboard() {
         await api.post('/services', formData);
         showNotification('success', 'Service created successfully!');
       }
-      setNewService({ title: '', icon: '', image: '', short_description: '', full_description: '', category_id: '', price: '' });
+      setNewService({ title: '', icon: '', image: '', short_description: '', full_description: '', category_id: '', price: '', is_home: false, tags: '', sort_order: 0 });
       setEditServiceId(null);
       fetchData();
     } catch (err) {
@@ -290,7 +296,10 @@ export default function AdminDashboard() {
       short_description: service.short_description || '',
       full_description: service.full_description || '',
       category_id: service.category_id || '',
-      price: service.price || ''
+      price: service.price || '',
+      is_home: Boolean(service.is_home),
+      tags: Array.isArray(service.tags) ? service.tags.join(', ') : (service.tags || ''),
+      sort_order: service.sort_order || 0
     });
     setEditServiceId(service.id);
     setIsEditServiceModalOpen(true);
@@ -993,15 +1002,51 @@ export default function AdminDashboard() {
           className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
         />
       </div>
-      <div>
-        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Icon Name (Lucide/React Icon)</label>
+
+      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
         <input
-          type="text" value={newService.icon}
-          onChange={(e) => setNewService({...newService, icon: e.target.value})}
-          placeholder="Smartphone"
+          type="checkbox"
+          id="is_home_checkbox"
+          checked={newService.is_home}
+          onChange={(e) => setNewService({...newService, is_home: e.target.checked})}
+          className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+        />
+        <label htmlFor="is_home_checkbox" className="text-sm font-semibold text-slate-700 cursor-pointer">
+          Show on Home Page Services Section
+        </label>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Home Sort Order (1-6)</label>
+          <input
+            type="number" min="0" value={newService.sort_order}
+            onChange={(e) => setNewService({...newService, sort_order: parseInt(e.target.value, 10) || 0})}
+            placeholder="1"
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Icon Name (Lucide Icon)</label>
+          <input
+            type="text" value={newService.icon}
+            onChange={(e) => setNewService({...newService, icon: e.target.value})}
+            placeholder="Lightbulb, Code, Rocket..."
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Feature Tags (Comma Separated)</label>
+        <input
+          type="text" value={newService.tags}
+          onChange={(e) => setNewService({...newService, tags: e.target.value})}
+          placeholder="Market Research, Feasibility Analysis, MVP Scope"
           className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
         />
       </div>
+
       <div>
         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Category (Optional)</label>
         <select
@@ -1248,6 +1293,54 @@ export default function AdminDashboard() {
             >
               <Compass size={18} />
               Navigation Manager
+            </button>
+
+            <button
+              onClick={() => setActiveTab('partner-logos')}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === 'partner-logos' 
+                  ? 'bg-slate-900 text-white shadow-md' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Building size={18} />
+              Partner Logos
+            </button>
+
+            <button
+              onClick={() => setActiveTab('process-steps')}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === 'process-steps' 
+                  ? 'bg-slate-900 text-white shadow-md' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Compass size={18} />
+              Process & Roadmap
+            </button>
+
+            <button
+              onClick={() => setActiveTab('company-stats')}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === 'company-stats' 
+                  ? 'bg-slate-900 text-white shadow-md' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Award size={18} />
+              Company Stats
+            </button>
+
+            <button
+              onClick={() => setActiveTab('trust-points')}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === 'trust-points' 
+                  ? 'bg-slate-900 text-white shadow-md' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <CheckCircle2 size={18} />
+              Trust Points
             </button>
           </nav>
         </div>
@@ -1657,10 +1750,20 @@ export default function AdminDashboard() {
                       }).map((s) => (
                         <div key={s.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex justify-between items-start gap-4">
                           <div>
+                            <div className="flex flex-wrap items-center gap-2 mt-1 mb-2">
+                              {s.category_id && <span className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-100">{serviceCategories.find(c => c.id === s.category_id)?.title || s.category_id}</span>}
+                              {s.is_home && <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Home Pillar #{s.sort_order}</span>}
+                            </div>
                             <h4 className="text-lg font-extrabold text-slate-900">{s.title}</h4>
-                            {s.category_id && <span className="inline-block mt-1 mb-2 px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-100">{serviceCategories.find(c => c.id === s.category_id)?.title || s.category_id}</span>}
                             <p className="text-slate-500 text-sm mt-2">{s.short_description}</p>
-                            <div className="flex items-center gap-4 mt-4">
+                            {Array.isArray(s.tags) && s.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {s.tags.map((tag, tIdx) => (
+                                  <span key={tIdx} className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-semibold text-slate-600 border border-slate-200">{tag}</span>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-4 mt-3">
                               {s.price && <span className="text-sm font-semibold text-slate-900 flex items-center gap-1"><DollarSign size={14}/> {s.price}</span>}
                               {s.icon && <span className="text-xs font-medium text-slate-500 flex items-center gap-1">Icon: {s.icon}</span>}
                             </div>
@@ -1959,82 +2062,8 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* USERS TAB */}
-            {activeTab === 'users' && (
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                {/* Add admin user form */}
-                <div className="xl:col-span-1 bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] h-fit">
-                  <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                    <UserPlus size={18} />
-                    Register Admin
-                  </h3>
-                  <form onSubmit={handleCreateUser} className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Full Name</label>
-                      <input
-                        type="text" required value={newUser.name}
-                        onChange={(e) => setNewUser({...newUser, name: e.target.value})}
-                        placeholder="John Doe"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email</label>
-                      <input
-                        type="email" required value={newUser.email}
-                        onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                        placeholder="johndoe@srjglobal.com"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Password</label>
-                      <input
-                        type="password" required value={newUser.password}
-                        onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                        placeholder="••••••••"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="w-full py-3 rounded-xl bg-slate-900 hover:bg-black font-semibold text-white transition-all cursor-pointer"
-                    >
-                      Add Admin Account
-                    </button>
-                  </form>
-                </div>
-
-                {/* Admins list */}
-                <div className="xl:col-span-2 space-y-4">
-                  <h3 className="text-lg font-bold text-slate-900">Active Database Admins ({users.length})</h3>
-                  <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.01)]">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="border-b border-slate-100 bg-slate-50/50 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                          <th className="py-4 px-6">Name</th>
-                          <th className="py-4 px-6">Email</th>
-                          <th className="py-4 px-6">Role</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {users.map((u) => (
-                          <tr key={u.id} className="border-b border-slate-100 last:border-none text-sm text-slate-600">
-                            <td className="py-4 px-6 font-semibold text-slate-900">{u.name}</td>
-                            <td className="py-4 px-6">{u.email}</td>
-                            <td className="py-4 px-6">
-                              <span className="px-2.5 py-0.5 rounded text-xs bg-slate-100 text-slate-700 font-bold uppercase">
-                                {u.role}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* USERS TAB (Super Admin Exclusive) */}
+            {activeTab === 'users' && <AdminUserManager />}
 
             {/* ANNOUNCEMENTS TAB */}
             {activeTab === 'promotions' && (
@@ -3451,6 +3480,22 @@ export default function AdminDashboard() {
 
             {activeTab === 'navigation' && (
               <NavigationManager />
+            )}
+
+            {activeTab === 'partner-logos' && (
+              <PartnerLogoManager />
+            )}
+
+            {activeTab === 'process-steps' && (
+              <ProcessManager />
+            )}
+
+            {activeTab === 'company-stats' && (
+              <CompanyStatsManager />
+            )}
+
+            {activeTab === 'trust-points' && (
+              <TrustPointsManager />
             )}
           </div>
         )}

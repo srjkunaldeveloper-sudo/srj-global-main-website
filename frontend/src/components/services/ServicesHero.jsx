@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -12,6 +12,7 @@ import {
   Layers, 
   Cpu 
 } from 'lucide-react';
+import { useSiteSettings } from '../../context/SiteSettingsContext';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -19,6 +20,13 @@ export default function ServicesHero() {
   const containerRef = useRef(null);
   const leftSideRef = useRef(null);
   const hubRef = useRef(null);
+
+  const { getSetting } = useSiteSettings();
+
+  // Dynamic Site Settings (CMS values with safe fallbacks)
+  const heroBadge = getSetting('services_hero_badge', 'Enterprise Technology Partner');
+  const heroTitleSetting = getSetting('services_hero_title', 'Technology Solutions Built for Growth.');
+  const heroSubtitle = getSetting('services_hero_subtitle', 'We build scalable web applications, enterprise software, AI-powered solutions, cloud infrastructure, and mobile applications that help startups and enterprises grow faster.');
 
   const openCalendly = () => {
     window.location.href = "/#contact";
@@ -33,8 +41,23 @@ export default function ServicesHero() {
     { id: 'backend', name: 'Backend', items: ['Node.js', '.NET', 'Express'], icon: <Server size={15} />, posClass: 'bottom-left' }
   ];
 
-  const line1 = "Technology Solutions".split(" ");
-  const line2 = "Built for Growth.".split(" ");
+  const [line1, line2] = useMemo(() => {
+    const raw = heroTitleSetting || 'Technology Solutions Built for Growth.';
+    if (raw.includes('\n')) {
+      const parts = raw.split('\n').map(p => p.trim()).filter(Boolean);
+      return [
+        (parts[0] || '').split(' ').filter(Boolean),
+        (parts[1] || '').split(' ').filter(Boolean)
+      ];
+    }
+    const words = raw.split(' ').filter(Boolean);
+    if (words.length <= 3) {
+      return [words, []];
+    }
+    const line1Words = words.slice(0, 2);
+    const line2Words = words.slice(2);
+    return [line1Words, line2Words];
+  }, [heroTitleSetting]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -173,7 +196,7 @@ export default function ServicesHero() {
           {/* Badge */}
           <div className="left-fade-badge inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-50 border border-slate-200 mb-6 w-fit">
             <span className="text-[10px] font-extrabold text-slate-800 uppercase tracking-widest">
-              Enterprise Technology Partner
+              {heroBadge}
             </span>
           </div>
 
@@ -197,7 +220,7 @@ export default function ServicesHero() {
 
           {/* Paragraph */}
           <p className="left-fade-rest text-slate-500 text-sm sm:text-base leading-relaxed mb-10 max-w-lg">
-            We build scalable web applications, enterprise software, AI-powered solutions, cloud infrastructure, and mobile applications that help startups and enterprises grow faster.
+            {heroSubtitle}
           </p>
 
           {/* Buttons */}

@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /api/
 
-Sitemap: https://srjglobaltechnology.com/api/sitemap.xml
+Sitemap: https://srjglobaltechnology.com/sitemap.xml

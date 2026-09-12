@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getServiceHref } from "../../data/servicesData";
 
 export default function ServiceCard({ service, href, index, categoryTitle }) {
   const Icon = service.icon;
@@ -8,6 +9,10 @@ export default function ServiceCard({ service, href, index, categoryTitle }) {
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
+
+  const targetUrl = service && service.id !== undefined && service.id !== null
+    ? `/services/${service.id}`
+    : (href || (service && service.title ? getServiceHref(service.title) : '/services'));
 
   // Format index as elegant 2-digit number (e.g. 01, 02)
   const elegantNumber = String((index ?? 0) + 1).padStart(2, "0");
@@ -66,7 +71,7 @@ export default function ServiceCard({ service, href, index, categoryTitle }) {
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={() => navigate(`/services/${service.id}`)}
+      onClick={() => navigate(targetUrl)}
       className="relative flex flex-col justify-between h-full p-7 bg-white rounded-[24px] select-none overflow-hidden transition-all duration-600 border border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.015)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)] hover:-translate-y-2 hover:scale-[1.02] cursor-pointer group"
       style={{
         textDecoration: "none",

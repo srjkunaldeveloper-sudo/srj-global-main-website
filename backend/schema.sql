@@ -8,9 +8,14 @@ CREATE TABLE IF NOT EXISTS `users` (
   `name` VARCHAR(255) NOT NULL,
   `email` VARCHAR(255) NOT NULL UNIQUE,
   `password` VARCHAR(255) NOT NULL,
-  `role` VARCHAR(50) DEFAULT 'user',
+  `role` VARCHAR(50) NOT NULL DEFAULT 'user',
+  `reset_password_token` VARCHAR(255) DEFAULT NULL,
+  `reset_password_expires` DATETIME DEFAULT NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX `idx_users_email` (`email`)
+  INDEX `idx_users_email` (`email`),
+  INDEX `idx_users_role` (`role`),
+  INDEX `idx_users_reset_token` (`reset_password_token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Blogs Table
@@ -57,8 +62,12 @@ CREATE TABLE IF NOT EXISTS `services` (
   `full_description` LONGTEXT NOT NULL,
   `category_id` VARCHAR(100) DEFAULT NULL,
   `price` DECIMAL(10,2) DEFAULT NULL,
+  `tags` JSON DEFAULT NULL,
+  `is_home` TINYINT(1) NOT NULL DEFAULT 0,
+  `sort_order` INT NOT NULL DEFAULT 0,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX `idx_services_created_at` (`created_at` DESC)
+  INDEX `idx_services_created_at` (`created_at` DESC),
+  INDEX `idx_services_is_home_sort` (`is_home`, `sort_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Plan Inquiries Table
@@ -248,7 +257,40 @@ INSERT INTO `site_settings` (`setting_key`, `setting_value`, `group_name`, `fiel
 
 -- Business Group
 ('response_sla', 'within 24 hours', 'business', 'text', 'Standard inquiry response SLA promise'),
-('business_hours', 'Mon - Sat: 9:00 AM - 7:00 PM IST', 'business', 'text', 'Company business operating hours')
+('business_hours', 'Mon - Sat: 9:00 AM - 7:00 PM IST', 'business', 'text', 'Company business operating hours'),
+
+-- Hero Group
+('hero_badge', 'Trusted by Leaders in Enterprise Technology', 'hero', 'text', 'Hero section top badge text'),
+('hero_headings', '["Grow Your Business with Smart Technology", "Scalable Web & App Development Solutions", "Complete Digital Growth Solutions", "Building Future-Ready Digital Experiences"]', 'hero', 'json', 'Hero section rotating headline variants'),
+('hero_subtitle', 'SRJ Global Technologies helps startups and businesses build modern websites, mobile apps, AI solutions, and scalable software.', 'hero', 'textarea', 'Hero section subtitle paragraph'),
+('hero_cta_primary_text', 'Explore Services', 'hero', 'text', 'Hero primary CTA button text'),
+('hero_cta_primary_url', '#services', 'hero', 'text', 'Hero primary CTA target URL/anchor'),
+('hero_cta_secondary_text', 'View Our Work', 'hero', 'text', 'Hero secondary CTA button text'),
+('hero_cta_secondary_url', '#portfolio', 'hero', 'text', 'Hero secondary CTA target URL/anchor'),
+
+-- Process Group
+('process_badge', 'Our Process', 'process', 'text', 'Process section top badge text'),
+('process_title', 'From Idea to Market Success', 'process', 'text', 'Process section main heading'),
+('process_subtitle', 'A clear, proven path that takes your concept from first sketch to a product your customers love — with strategy, craft, and partnership at every step.', 'process', 'textarea', 'Process section subtitle paragraph'),
+('process_cta_primary_text', 'Start Your Project', 'process', 'text', 'Process primary CTA button text'),
+('process_cta_primary_url', '#contact', 'process', 'text', 'Process primary CTA target URL/anchor'),
+('process_cta_secondary_text', 'Book a Consultation', 'process', 'text', 'Process secondary CTA button text'),
+('process_cta_secondary_url', '#contact', 'process', 'text', 'Process secondary CTA target URL/anchor'),
+('process_image_url', '/src/assets/still-life-business-roles-with-various-mechanism-pieces.jpg', 'process', 'url', 'Process illustration image asset path'),
+
+-- Trust & Stats Group
+('trust_heading', 'We Don\'t Just Deliver Software. We Build Businesses.', 'trust', 'text', 'Trust section main heading'),
+('trust_subtitle', 'Every product we ship comes with strategic thinking, business alignment, and a commitment to your long-term success.', 'trust', 'textarea', 'Trust section subtitle paragraph'),
+('stats_heading', 'Our Achievements', 'trust', 'text', 'Achievements & stats section main heading'),
+('stats_subtitle', 'Delivering high-quality IT solutions with proven success and trusted by clients worldwide.', 'trust', 'textarea', 'Achievements & stats section subtitle paragraph'),
+
+-- Services Page Group
+('services_hero_badge', 'Enterprise Technology Partner', 'services', 'text', 'Services page hero section top badge text'),
+('services_hero_heading', 'Technology Solutions Built for Growth.', 'services', 'text', 'Services page hero section main title'),
+('services_hero_subtitle', 'We build scalable web applications, enterprise software, AI-powered solutions, cloud infrastructure, and mobile applications that help startups and enterprises grow faster.', 'services', 'textarea', 'Services page hero section subtitle paragraph'),
+('services_intro_badge', 'The SRJ Ecosystem', 'services', 'text', 'Services directory section top eyebrow/badge text'),
+('services_intro_title', 'Everything You Need to Build, Scale, and Transform', 'services', 'text', 'Services directory section main heading'),
+('services_intro_description', 'Explore our complete range of technology services designed to help businesses turn ideas into powerful digital products.', 'services', 'textarea', 'Services directory section subtitle paragraph')
 ON DUPLICATE KEY UPDATE
   `group_name` = VALUES(`group_name`),
   `field_type` = VALUES(`field_type`),
@@ -324,3 +366,152 @@ ON DUPLICATE KEY UPDATE
   `description` = VALUES(`description`),
   `sort_order` = VALUES(`sort_order`),
   `is_active` = VALUES(`is_active`);
+
+-- Partner Logos Table
+CREATE TABLE IF NOT EXISTS `partner_logos` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `logo_url` VARCHAR(500) NOT NULL,
+  `website_url` VARCHAR(500) DEFAULT NULL,
+  `alt_text` VARCHAR(255) DEFAULT NULL,
+  `fallback_domain` VARCHAR(100) DEFAULT NULL,
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_partner_logos_active` (`is_active`),
+  INDEX `idx_partner_logos_sort` (`sort_order`),
+  INDEX `idx_partner_logos_active_sort` (`is_active`, `sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Initial Partner Logos Seed Data
+INSERT INTO `partner_logos` (`id`, `name`, `logo_url`, `website_url`, `alt_text`, `fallback_domain`, `sort_order`, `is_active`) VALUES
+(1, 'Adani Group', 'https://upload.wikimedia.org/wikipedia/commons/d/d4/Adani_logo_2012.svg', 'https://adani.com', 'Adani Group', 'adani.com', 1, 1),
+(2, 'Reliance Industries', 'https://upload.wikimedia.org/wikipedia/en/0/0e/Reliance_Industries.svg', 'https://ril.com', 'Reliance Industries', 'ril.com', 2, 1),
+(3, 'Maruti Suzuki', 'https://upload.wikimedia.org/wikipedia/commons/8/86/Maruti_Suzuki_logo.svg', 'https://marutisuzuki.com', 'Maruti Suzuki', 'marutisuzuki.com', 3, 1),
+(4, 'Samsung', 'https://upload.wikimedia.org/wikipedia/commons/a/a7/Samsung_logo.svg', 'https://samsung.com', 'Samsung', 'samsung.com', 4, 1),
+(5, 'LG', 'https://logo.clearbit.com/lg.com', 'https://lg.com', 'LG', 'lg.com', 5, 1),
+(6, 'Nissan', 'https://upload.wikimedia.org/wikipedia/commons/2/23/Nissan_2020_logo.svg', 'https://nissan-global.com', 'Nissan', 'nissan-global.com', 6, 1),
+(7, 'Mahindra Group', 'https://upload.wikimedia.org/wikipedia/commons/8/89/Mahindra_logo.svg', 'https://mahindra.com', 'Mahindra Group', 'mahindra.com', 7, 1),
+(8, 'Government e-Marketplace', 'https://upload.wikimedia.org/wikipedia/en/9/91/Government_e_Marketplace_Logo.png', 'https://gem.gov.in', 'Government e-Marketplace', 'gem.gov.in', 8, 1),
+(9, 'Bajaj Group', 'https://upload.wikimedia.org/wikipedia/commons/3/3b/Bajaj_Auto_logo.svg', 'https://bajajauto.com', 'Bajaj Group', 'bajajauto.com', 9, 1),
+(10, 'Reliance Jio', 'https://upload.wikimedia.org/wikipedia/commons/b/bf/Reliance_Jio_Logo.svg', 'https://jio.com', 'Reliance Jio', 'jio.com', 10, 1),
+(11, 'Infosys', 'https://upload.wikimedia.org/wikipedia/commons/9/95/Infosys_logo.svg', 'https://infosys.com', 'Infosys', 'infosys.com', 11, 1),
+(12, 'Aristocrat', 'https://upload.wikimedia.org/wikipedia/en/4/4a/Aristocrat_Leisure_logo.svg', 'https://aristocrat.com', 'Aristocrat', 'aristocrat.com', 12, 1),
+(13, 'Sun Pharma', 'https://upload.wikimedia.org/wikipedia/en/5/50/Sun_Pharma_logo.svg', 'https://sunpharma.com', 'Sun Pharma', 'sunpharma.com', 13, 1),
+(14, 'Micromax', 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Micromax_logo.svg', 'https://micromaxinfo.com', 'Micromax', 'micromaxinfo.com', 14, 1),
+(15, 'Philips', 'https://upload.wikimedia.org/wikipedia/commons/5/52/Philips_logo_new.svg', 'https://philips.com', 'Philips', 'philips.com', 15, 1),
+(16, 'TVS Motor', 'https://upload.wikimedia.org/wikipedia/en/e/e9/TVS_Motor_logo.svg', 'https://tvsmotor.com', 'TVS Motor', 'tvsmotor.com', 16, 1),
+(17, 'Hawkins Cookers', 'https://upload.wikimedia.org/wikipedia/en/f/ff/Hawkins_Cookers.svg', 'https://hawkinscookers.com', 'Hawkins Cookers', 'hawkinscookers.com', 17, 1),
+(18, 'United', 'https://upload.wikimedia.org/wikipedia/commons/0/0d/Heineken_Logo.svg', 'https://unitedbreweries.com', 'United', 'unitedbreweries.com', 18, 1),
+(19, 'Honda', 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Honda_Logo.svg', 'https://honda.com', 'Honda', 'honda.com', 19, 1),
+(20, 'ITC Limited', 'https://upload.wikimedia.org/wikipedia/commons/f/ff/ITC_Limited_Logo.svg', 'https://itcportal.com', 'ITC Limited', 'itcportal.com', 20, 1),
+(21, 'Whirlpool', 'https://upload.wikimedia.org/wikipedia/commons/9/95/Whirlpool_Corporation_Logo_(as_of_2017).svg', 'https://whirlpool.com', 'Whirlpool', 'whirlpool.com', 21, 1),
+(22, 'Kirloskar Group', 'https://upload.wikimedia.org/wikipedia/commons/5/5f/Kirloskar_Group_Logo.svg', 'https://kirloskar.com', 'Kirloskar Group', 'kirloskar.com', 22, 1)
+ON DUPLICATE KEY UPDATE
+  `name` = VALUES(`name`),
+  `logo_url` = VALUES(`logo_url`),
+  `website_url` = VALUES(`website_url`),
+  `alt_text` = VALUES(`alt_text`),
+  `fallback_domain` = VALUES(`fallback_domain`),
+  `sort_order` = VALUES(`sort_order`),
+  `is_active` = VALUES(`is_active`);
+
+-- Process Steps Table
+CREATE TABLE IF NOT EXISTS `process_steps` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(255) NOT NULL,
+  `description` TEXT NOT NULL,
+  `icon_name` VARCHAR(100) NOT NULL DEFAULT 'Lightbulb',
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_process_steps_active` (`is_active`),
+  INDEX `idx_process_steps_sort` (`sort_order`),
+  INDEX `idx_process_steps_active_sort` (`is_active`, `sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Initial Process Steps Seed Data
+INSERT INTO `process_steps` (`id`, `title`, `description`, `icon_name`, `sort_order`, `is_active`) VALUES
+(1, 'Idea', 'We start by understanding your vision, goals, and the problem you want to solve.', 'Lightbulb', 1, 1),
+(2, 'Consultation', 'Strategic sessions to align on scope, market fit, and the right technology approach.', 'Search', 2, 1),
+(3, 'Planning', 'Detailed roadmaps, architecture, and milestones that keep the build predictable.', 'Compass', 3, 1),
+(4, 'Design', 'User-centric interfaces and experiences crafted for clarity and conversion.', 'Palette', 4, 1),
+(5, 'Development', 'Clean, scalable code delivered in agile iterations with constant visibility.', 'Code2', 5, 1),
+(6, 'Testing', 'Rigorous QA across devices and edge cases to guarantee a flawless experience.', 'FlaskConical', 6, 1),
+(7, 'Launch', 'A confident go-live with monitoring, optimization, and zero surprises.', 'Send', 7, 1),
+(8, 'Growth', 'Data-driven improvements that turn a launch into measurable momentum.', 'TrendingUp', 8, 1),
+(9, 'Scaling', 'Future-proof infrastructure that grows smoothly with your business.', 'Maximize2', 9, 1)
+ON DUPLICATE KEY UPDATE
+  `title` = VALUES(`title`),
+  `description` = VALUES(`description`),
+  `icon_name` = VALUES(`icon_name`),
+  `sort_order` = VALUES(`sort_order`),
+  `is_active` = VALUES(`is_active`);
+
+-- Company Stats Table
+CREATE TABLE IF NOT EXISTS `company_stats` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `metric_key` VARCHAR(100) NOT NULL UNIQUE,
+  `target_value` INT NOT NULL DEFAULT 0,
+  `prefix` VARCHAR(20) DEFAULT NULL,
+  `suffix` VARCHAR(20) DEFAULT '+',
+  `label` VARCHAR(255) NOT NULL,
+  `icon_name` VARCHAR(100) DEFAULT 'Award',
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_company_stats_active` (`is_active`),
+  INDEX `idx_company_stats_sort` (`sort_order`),
+  INDEX `idx_company_stats_active_sort` (`is_active`, `sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Initial Company Stats Seed Data
+INSERT INTO `company_stats` (`id`, `metric_key`, `target_value`, `prefix`, `suffix`, `label`, `icon_name`, `sort_order`, `is_active`) VALUES
+(1, 'projects_completed', 18000, NULL, '+', 'Projects Completed', 'CheckCircle', 1, 1),
+(2, 'happy_clients', 6000, NULL, '+', 'Happy Clients', 'Users', 2, 1),
+(3, 'years_experience', 19, NULL, '+', 'Years Experience', 'Award', 3, 1),
+(4, 'expert_support', 24, NULL, '/7', 'Expert Support', 'Shield', 4, 1)
+ON DUPLICATE KEY UPDATE
+  `metric_key` = VALUES(`metric_key`),
+  `target_value` = VALUES(`target_value`),
+  `prefix` = VALUES(`prefix`),
+  `suffix` = VALUES(`suffix`),
+  `label` = VALUES(`label`),
+  `icon_name` = VALUES(`icon_name`),
+  `sort_order` = VALUES(`sort_order`),
+  `is_active` = VALUES(`is_active`);
+
+-- Trust Points Table
+CREATE TABLE IF NOT EXISTS `trust_points` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(255) NOT NULL,
+  `description` TEXT NOT NULL,
+  `icon_name` VARCHAR(100) NOT NULL DEFAULT 'CheckCircle2',
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_trust_points_active` (`is_active`),
+  INDEX `idx_trust_points_sort` (`sort_order`),
+  INDEX `idx_trust_points_active_sort` (`is_active`, `sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Initial Trust Points Seed Data
+INSERT INTO `trust_points` (`id`, `title`, `description`, `icon_name`, `sort_order`, `is_active`) VALUES
+(1, 'End-to-End Product Development', 'From idea validation to post-launch growth — we own the entire lifecycle.', 'CheckCircle2', 1, 1),
+(2, 'Business & Technology Consultation', 'Strategic guidance that aligns technology investments with business outcomes.', 'CheckCircle2', 2, 1),
+(3, 'Scalable & Future-Proof Solutions', 'Architecture built to grow with your business and adapt to market shifts.', 'CheckCircle2', 3, 1),
+(4, 'Long-Term Partnership', 'We don\'t disappear after delivery. We invest in your success for years.', 'CheckCircle2', 4, 1)
+ON DUPLICATE KEY UPDATE
+  `title` = VALUES(`title`),
+  `description` = VALUES(`description`),
+  `icon_name` = VALUES(`icon_name`),
+  `sort_order` = VALUES(`sort_order`),
+  `is_active` = VALUES(`is_active`);
+
+
+
+

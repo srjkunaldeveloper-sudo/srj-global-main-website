@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../../config/api';
 
 export default function AdminLogin() {
@@ -65,9 +65,14 @@ export default function AdminLogin() {
           </div>
 
           <div>
-            <label className="block text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">
-              Password
-            </label>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-slate-500 text-xs font-bold uppercase tracking-wider">
+                Password
+              </label>
+              <Link to="/admin/forgot-password" className="text-xs font-semibold text-blue-600 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
             <input
               type="password"
               required

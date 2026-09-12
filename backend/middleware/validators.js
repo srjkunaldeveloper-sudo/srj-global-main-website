@@ -45,6 +45,45 @@ exports.validateLogin = [
   handleErrors,
 ];
 
+exports.validateForgotPassword = [
+  body("email")
+    .trim()
+    .notEmpty().withMessage("Email is required")
+    .isEmail().withMessage("Must be a valid email")
+    .normalizeEmail(),
+  handleErrors,
+];
+
+exports.validateResetPassword = [
+  body("token")
+    .trim()
+    .notEmpty().withMessage("Reset token is required"),
+  body("newPassword")
+    .notEmpty().withMessage("New password is required")
+    .isLength({ min: 6, max: 128 }).withMessage("Password must be 6-128 characters"),
+  handleErrors,
+];
+
+exports.validateCreateAdmin = [
+  body("name")
+    .trim()
+    .notEmpty().withMessage("Name is required")
+    .isLength({ min: 2, max: 100 }).withMessage("Name must be 2-100 characters"),
+  body("email")
+    .trim()
+    .notEmpty().withMessage("Email is required")
+    .isEmail().withMessage("Must be a valid email")
+    .normalizeEmail(),
+  body("password")
+    .notEmpty().withMessage("Password is required")
+    .isLength({ min: 6, max: 128 }).withMessage("Password must be 6-128 characters"),
+  body("role")
+    .optional()
+    .isIn(["admin", "super_admin"]).withMessage("Role must be admin or super_admin"),
+  handleErrors,
+];
+
+
 exports.validateCreateBlog = [
   body("title")
     .trim()
@@ -147,6 +186,15 @@ exports.validateCreateService = [
     .optional({ values: "falsy" })
     .trim()
     .isLength({ max: 100 }).withMessage("Category ID must be at most 100 characters"),
+  body("is_home")
+    .optional()
+    .custom((val) => val == 0 || val == 1 || val === "true" || val === "false" || typeof val === "boolean")
+    .withMessage("is_home must be a boolean or 0/1"),
+  body("sort_order")
+    .optional()
+    .isInt().withMessage("sort_order must be an integer"),
+  body("tags")
+    .optional({ values: "falsy" }),
   handleErrors,
 ];
 
@@ -895,4 +943,196 @@ exports.validateReorderNavigation = [
     }),
   handleErrors,
 ];
+
+exports.validateCreatePartnerLogo = [
+  body("name")
+    .trim()
+    .notEmpty().withMessage("Brand name is required")
+    .isLength({ min: 1, max: 255 }).withMessage("Brand name must be 1-255 characters"),
+  body("logo_url")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("Logo URL must be at most 500 characters"),
+  body("website_url")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("Website URL must be at most 500 characters"),
+  body("alt_text")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 255 }).withMessage("Alt text must be at most 255 characters"),
+  body("fallback_domain")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 100 }).withMessage("Fallback domain must be at most 100 characters"),
+  body("sort_order")
+    .optional()
+    .isInt({ min: 0 }).withMessage("Sort order must be a non-negative integer"),
+  handleErrors,
+];
+
+exports.validateUpdatePartnerLogo = [
+  body("name")
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 255 }).withMessage("Brand name must be 1-255 characters"),
+  body("logo_url")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("Logo URL must be at most 500 characters"),
+  body("website_url")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 500 }).withMessage("Website URL must be at most 500 characters"),
+  body("alt_text")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 255 }).withMessage("Alt text must be at most 255 characters"),
+  body("fallback_domain")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 100 }).withMessage("Fallback domain must be at most 100 characters"),
+  body("sort_order")
+    .optional()
+    .isInt({ min: 0 }).withMessage("Sort order must be a non-negative integer"),
+  handleErrors,
+];
+
+exports.validateCreateProcessStep = [
+  body("title")
+    .trim()
+    .notEmpty().withMessage("Step title is required")
+    .isLength({ min: 1, max: 255 }).withMessage("Step title must be 1-255 characters"),
+  body("description")
+    .trim()
+    .notEmpty().withMessage("Step description is required"),
+  body("icon_name")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 100 }).withMessage("Icon name must be at most 100 characters"),
+  body("sort_order")
+    .optional()
+    .isInt({ min: 0 }).withMessage("Sort order must be a non-negative integer"),
+  handleErrors,
+];
+
+exports.validateUpdateProcessStep = [
+  body("title")
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 255 }).withMessage("Step title must be 1-255 characters"),
+  body("description")
+    .optional()
+    .trim(),
+  body("icon_name")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 100 }).withMessage("Icon name must be at most 100 characters"),
+  body("sort_order")
+    .optional()
+    .isInt({ min: 0 }).withMessage("Sort order must be a non-negative integer"),
+  handleErrors,
+];
+
+exports.validateCreateCompanyStat = [
+  body("metric_key")
+    .trim()
+    .notEmpty().withMessage("Metric key is required")
+    .matches(/^[a-z0-9_]+$/).withMessage("Metric key must contain only lowercase letters, numbers, and underscores")
+    .isLength({ min: 1, max: 100 }).withMessage("Metric key must be 1-100 characters"),
+  body("target_value")
+    .notEmpty().withMessage("Target value is required")
+    .isInt({ min: 0 }).withMessage("Target value must be a non-negative integer"),
+  body("prefix")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 20 }).withMessage("Prefix must be at most 20 characters"),
+  body("suffix")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 20 }).withMessage("Suffix must be at most 20 characters"),
+  body("label")
+    .trim()
+    .notEmpty().withMessage("Label is required")
+    .isLength({ min: 1, max: 255 }).withMessage("Label must be 1-255 characters"),
+  body("icon_name")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 100 }).withMessage("Icon name must be at most 100 characters"),
+  body("sort_order")
+    .optional()
+    .isInt().withMessage("Sort order must be a valid integer"),
+  handleErrors,
+];
+
+exports.validateUpdateCompanyStat = [
+  body("metric_key")
+    .optional()
+    .trim()
+    .matches(/^[a-z0-9_]+$/).withMessage("Metric key must contain only lowercase letters, numbers, and underscores")
+    .isLength({ min: 1, max: 100 }).withMessage("Metric key must be 1-100 characters"),
+  body("target_value")
+    .optional()
+    .isInt({ min: 0 }).withMessage("Target value must be a non-negative integer"),
+  body("prefix")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 20 }).withMessage("Prefix must be at most 20 characters"),
+  body("suffix")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 20 }).withMessage("Suffix must be at most 20 characters"),
+  body("label")
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 255 }).withMessage("Label must be 1-255 characters"),
+  body("icon_name")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 100 }).withMessage("Icon name must be at most 100 characters"),
+  body("sort_order")
+    .optional()
+    .isInt().withMessage("Sort order must be a valid integer"),
+  handleErrors,
+];
+
+exports.validateCreateTrustPoint = [
+  body("title")
+    .trim()
+    .notEmpty().withMessage("Title is required")
+    .isLength({ min: 1, max: 255 }).withMessage("Title must be 1-255 characters"),
+  body("description")
+    .trim()
+    .notEmpty().withMessage("Description is required"),
+  body("icon_name")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 100 }).withMessage("Icon name must be at most 100 characters"),
+  body("sort_order")
+    .optional()
+    .isInt().withMessage("Sort order must be a valid integer"),
+  handleErrors,
+];
+
+exports.validateUpdateTrustPoint = [
+  body("title")
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 255 }).withMessage("Title must be 1-255 characters"),
+  body("description")
+    .optional()
+    .trim(),
+  body("icon_name")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 100 }).withMessage("Icon name must be at most 100 characters"),
+  body("sort_order")
+    .optional()
+    .isInt().withMessage("Sort order must be a valid integer"),
+  handleErrors,
+];
+
+
+
+
 

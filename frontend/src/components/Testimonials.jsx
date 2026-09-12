@@ -144,9 +144,9 @@ export default function Testimonials() {
                     <img src={t.image} alt={t.author} className="w-10 h-10 rounded-full object-cover border border-slate-200" />
                   ) : null}
                   <div>
-                    <h4 className="font-extrabold text-slate-900 text-sm">
+                    <h3 className="font-extrabold text-slate-900 text-sm">
                       {t.author}
-                    </h4>
+                    </h3>
                     <p className="text-slate-400 text-xs mt-0.5 font-medium">
                       {t.role}{t.company && !t.role.includes(t.company) ? `, ${t.company}` : ''}
                     </p>

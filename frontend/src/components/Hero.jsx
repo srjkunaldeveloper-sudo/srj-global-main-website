@@ -1,45 +1,72 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import gsap from 'gsap';
 import { ArrowRight } from 'lucide-react';
 import logoImg from '../assets/Logo.png';
+import { useSiteSettings } from '../context/SiteSettingsContext';
 
-
-export default function Hero() {
-const containerRef = useRef(null);
-const titleRef = useRef(null);
-const descRef = useRef(null);
-const ctaRef = useRef(null);
-const rightRef = useRef(null);
-
-const [headingIdx, setHeadingIdx] = useState(0);
-const headings = [
-"Grow Your Business with Smart Technology",
-"Scalable Web & App Development Solutions",
-"Complete Digital Growth Solutions",
-"Building Future-Ready Digital Experiences"
+const DEFAULT_HEADINGS = [
+  "Grow Your Business with Smart Technology",
+  "Scalable Web & App Development Solutions",
+  "Complete Digital Growth Solutions",
+  "Building Future-Ready Digital Experiences"
 ];
 
-useEffect(() => {
-const timer = setInterval(() => {
-if (titleRef.current) {
-gsap.to(titleRef.current, {
-opacity: 0,
-y: -20,
-duration: 0.4,
-ease: 'power2.in',
-onComplete: () => {
-setHeadingIdx((prev) => (prev + 1) % headings.length);
-gsap.fromTo(titleRef.current,
-{ opacity: 0, y: 20 },
-{ opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' }
-);
-}
-});
-}
-}, 4000);
+export default function Hero() {
+  const containerRef = useRef(null);
+  const titleRef = useRef(null);
+  const descRef = useRef(null);
+  const ctaRef = useRef(null);
+  const rightRef = useRef(null);
 
-return () => clearInterval(timer);
-}, []);
+  const { getSetting } = useSiteSettings();
+
+  // Dynamic Site Settings (CMS Values)
+  const heroBadge = getSetting('hero_badge', 'Trusted by Leaders in Enterprise Technology');
+  const heroSubtitle = getSetting('hero_subtitle', 'SRJ Global Technologies helps startups and businesses build modern websites, mobile apps, AI solutions, and scalable software.');
+  const primaryCtaText = getSetting('hero_cta_primary_text', 'Explore Services');
+  const primaryCtaUrl = getSetting('hero_cta_primary_url', '#services');
+  const secondaryCtaText = getSetting('hero_cta_secondary_text', 'View Our Work');
+  const secondaryCtaUrl = getSetting('hero_cta_secondary_url', '#portfolio');
+
+  const rawHeadingsSetting = getSetting('hero_headings', '');
+  const headings = useMemo(() => {
+    if (!rawHeadingsSetting) return DEFAULT_HEADINGS;
+    if (Array.isArray(rawHeadingsSetting)) return rawHeadingsSetting;
+    if (typeof rawHeadingsSetting === 'string' && rawHeadingsSetting.trim()) {
+      try {
+        const parsed = JSON.parse(rawHeadingsSetting);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {
+        const lines = rawHeadingsSetting.split('\n').map((h) => h.trim()).filter(Boolean);
+        if (lines.length > 0) return lines;
+      }
+    }
+    return DEFAULT_HEADINGS;
+  }, [rawHeadingsSetting]);
+
+  const [headingIdx, setHeadingIdx] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (titleRef.current) {
+        gsap.to(titleRef.current, {
+          opacity: 0,
+          y: -20,
+          duration: 0.4,
+          ease: 'power2.in',
+          onComplete: () => {
+            setHeadingIdx((prev) => (prev + 1) % headings.length);
+            gsap.fromTo(titleRef.current,
+              { opacity: 0, y: 20 },
+              { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' }
+            );
+          }
+        });
+      }
+    }, 4000);
+
+    return () => clearInterval(timer);
+  }, [headings]);
 
 useEffect(() => {
 const ctx = gsap.context(() => {
@@ -310,36 +337,36 @@ className="relative min-h-screen pt-28 sm:pt-32 md:pt-36 pb-12 sm:pb-16 lg:pb-20
 <div className="lg:col-span-7 text-left flex flex-col justify-center">
 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-50 border border-slate-100 mb-6 w-fit shadow-xs max-w-full">
 <span className="w-2 h-2 rounded-full bg-slate-900 animate-pulse shrink-0" />
-<span className="text-xs font-semibold text-secondary-text tracking-wide uppercase truncate">Trusted by Leaders in Enterprise Technology</span>
+<span className="text-xs font-semibold text-secondary-text tracking-wide uppercase truncate">{heroBadge}</span>
 </div>
 
 <h1
 ref={titleRef}
 className="text-3xl sm:text-5xl lg:text-6xl text-fluid-3xl font-extrabold tracking-tight text-primary-text leading-[1.1] mb-6 min-h-[90px] sm:min-h-[120px] md:min-h-[140px] lg:min-h-[160px]"
 >
-{headings[headingIdx]}
+{headings[headingIdx % headings.length]}
 </h1>
 
 <p
 ref={descRef}
 className="text-fluid-base md:text-fluid-lg text-secondary-text leading-relaxed max-w-xl mb-8 sm:mb-10"
 >
-SRJ Global Technologies helps startups and businesses build modern websites, mobile apps, AI solutions, and scalable software.
+{heroSubtitle}
 </p>
 
 <div ref={ctaRef} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
 <a
-href="#services"
+href={primaryCtaUrl}
 className="magnetic-btn inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3.5 sm:py-4 rounded-xl bg-slate-900 hover:bg-black text-white font-semibold transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 min-h-[48px]"
 >
-Explore Services
+{primaryCtaText}
 <ArrowRight size={18} />
 </a>
 <a
-href="#portfolio"
+href={secondaryCtaUrl}
 className="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3.5 sm:py-4 rounded-xl bg-white hover:bg-slate-50 text-primary-text border border-slate-200 font-semibold transition-all duration-200 hover:-translate-y-0.5 min-h-[48px]"
 >
-View Our Work
+{secondaryCtaText}
 </a>
 </div>
 </div>

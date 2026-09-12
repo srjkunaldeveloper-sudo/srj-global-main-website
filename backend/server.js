@@ -35,9 +35,14 @@ const teamRoutes = require("./routes/teamRoutes");
 const subscriberRoutes = require("./routes/subscriberRoutes");
 const siteSettingRoutes = require("./routes/siteSettingRoutes");
 const navigationRoutes = require("./routes/navigationRoutes");
+const partnerLogoRoutes = require("./routes/partnerLogoRoutes");
+const processStepRoutes = require("./routes/processStepRoutes");
+const companyStatsRoutes = require("./routes/companyStatsRoutes");
+const trustPointRoutes = require("./routes/trustPointRoutes");
 const { generateSitemap } = require("./controllers/sitemapController");
 
 const app = express();
+
 
 
 app.set("trust proxy", 1);
@@ -148,8 +153,13 @@ app.use("/api/team", teamRoutes);
 app.use("/api/subscribers", subscriberRoutes);
 app.use("/api/settings", siteSettingRoutes);
 app.use("/api/navigation", navigationRoutes);
+app.use("/api/partner-logos", partnerLogoRoutes);
+app.use("/api/process-steps", processStepRoutes);
+app.use("/api/company-stats", companyStatsRoutes);
+app.use("/api/trust-points", trustPointRoutes);
 app.use("/api", sendMeetingRoute);
 
+app.get("/sitemap.xml", generateSitemap);
 app.get("/api/sitemap.xml", generateSitemap);
 
 app.use((req, res) => {

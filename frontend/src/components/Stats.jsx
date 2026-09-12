@@ -1,40 +1,129 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { CheckCircle, Users, Award, Shield } from 'lucide-react';
+import {
+  CheckCircle,
+  Users,
+  Award,
+  Shield,
+  Clock,
+  Sparkles,
+  TrendingUp,
+  BarChart2,
+  Star,
+  Target,
+  Zap,
+  Briefcase,
+  Layers,
+  Heart,
+  Globe,
+  Smile
+} from 'lucide-react';
+import api from '../config/api';
+import { useSiteSettings } from '../context/SiteSettingsContext';
 
 gsap.registerPlugin(ScrollTrigger);
+
+const ICON_MAP = {
+  checkcircle: CheckCircle,
+  users: Users,
+  award: Award,
+  shield: Shield,
+  clock: Clock,
+  sparkles: Sparkles,
+  trendingup: TrendingUp,
+  barchart2: BarChart2,
+  star: Star,
+  target: Target,
+  zap: Zap,
+  briefcase: Briefcase,
+  layers: Layers,
+  heart: Heart,
+  globe: Globe,
+  smile: Smile
+};
+
+const COLOR_CLASSES = [
+  'text-emerald-500',
+  'text-blue-500',
+  'text-amber-500',
+  'text-violet-500',
+  'text-rose-500',
+  'text-cyan-500'
+];
+
+const renderStatIcon = (iconName, index) => {
+  const normalized = (iconName || '').toLowerCase().trim();
+  const IconComp = ICON_MAP[normalized] || Award;
+  const colorClass = COLOR_CLASSES[index % COLOR_CLASSES.length];
+  return <IconComp className={`${colorClass} w-6 h-6 mb-4`} />;
+};
+
+const STATIC_FALLBACK_STATS = [
+  {
+    id: 1,
+    metric_key: 'projects_completed',
+    target_value: 18000,
+    prefix: null,
+    suffix: '+',
+    label: 'Projects Completed',
+    icon_name: 'CheckCircle'
+  },
+  {
+    id: 2,
+    metric_key: 'happy_clients',
+    target_value: 6000,
+    prefix: null,
+    suffix: '+',
+    label: 'Happy Clients',
+    icon_name: 'Users'
+  },
+  {
+    id: 3,
+    metric_key: 'years_experience',
+    target_value: 19,
+    prefix: null,
+    suffix: '+',
+    label: 'Years Experience',
+    icon_name: 'Award'
+  },
+  {
+    id: 4,
+    metric_key: 'expert_support',
+    target_value: 24,
+    prefix: null,
+    suffix: '/7',
+    label: 'Expert Support',
+    icon_name: 'Shield'
+  }
+];
 
 export default function Stats() {
   const containerRef = useRef(null);
   const gridRef = useRef(null);
 
-  const stats = [
-    { 
-      target: 18000, 
-      suffix: '+', 
-      label: 'Projects Completed', 
-      icon: <CheckCircle className="text-emerald-500 w-6 h-6 mb-4" /> 
-    },
-    { 
-      target: 6000, 
-      suffix: '+', 
-      label: 'Happy Clients', 
-      icon: <Users className="text-blue-500 w-6 h-6 mb-4" /> 
-    },
-    { 
-      target: 19, 
-      suffix: '+', 
-      label: 'Years Experience', 
-      icon: <Award className="text-amber-500 w-6 h-6 mb-4" /> 
-    },
-    { 
-      target: 24, 
-      suffix: '/7', 
-      label: 'Expert Support', 
-      icon: <Shield className="text-violet-500 w-6 h-6 mb-4" /> 
-    },
-  ];
+  const { getSetting } = useSiteSettings();
+  const [statsList, setStatsList] = useState(STATIC_FALLBACK_STATS);
+
+  const statsHeading = getSetting('stats_heading', 'Our Achievements');
+  const statsSubtitle = getSetting('stats_subtitle', 'Delivering high-quality IT solutions with proven success and trusted by clients worldwide.');
+
+  useEffect(() => {
+    let isMounted = true;
+    api.get('/company-stats')
+      .then(res => {
+        if (isMounted && res.data && res.data.success && Array.isArray(res.data.stats) && res.data.stats.length > 0) {
+          setStatsList(res.data.stats);
+        }
+      })
+      .catch(err => {
+        console.warn('Using static fallback for company stats:', err.message);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -71,13 +160,14 @@ export default function Stats() {
       );
 
       // Counter numbers animation
-      stats.forEach((stat, idx) => {
+      statsList.forEach((stat, idx) => {
         const counterEl = document.querySelector(`.counter-num-${idx}`);
         if (!counterEl) return;
 
+        const targetVal = parseInt(stat.target_value, 10) || 0;
         const obj = { val: 0 };
         gsap.to(obj, {
-          val: stat.target,
+          val: targetVal,
           duration: 2,
           ease: 'power2.out',
           scrollTrigger: {
@@ -90,10 +180,12 @@ export default function Stats() {
           },
         });
       });
+
+      ScrollTrigger.refresh();
     }, containerRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [statsList]);
 
   return (
     <section
@@ -105,24 +197,25 @@ export default function Stats() {
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="achieve-header-el text-3xl sm:text-4xl md:text-[38px] font-black text-slate-900 leading-tight mb-4 tracking-tight">
-            Our Achievements
+            {statsHeading}
           </h2>
           <p className="achieve-header-el text-slate-500 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-            Delivering high-quality IT solutions with proven success and trusted by clients worldwide.
+            {statsSubtitle}
           </p>
         </div>
 
         {/* Stats Grid */}
         <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, idx) => (
+          {statsList.map((stat, idx) => (
             <div 
-              key={idx} 
+              key={stat.id || stat.metric_key || idx} 
               className="stat-card flex flex-col items-center justify-center p-8 bg-white border border-slate-150 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.01)] hover:shadow-xl hover:shadow-slate-900/[0.03] hover:border-slate-350 transition-all duration-300"
             >
-              {stat.icon}
+              {renderStatIcon(stat.icon_name, idx)}
               <div className="text-4xl font-extrabold text-slate-900 mb-2 font-sans tracking-tight">
+                {stat.prefix && <span>{stat.prefix}</span>}
                 <span className={`counter-num-${idx}`}>0</span>
-                <span>{stat.suffix}</span>
+                {stat.suffix && <span>{stat.suffix}</span>}
               </div>
               <p className="text-xs font-semibold text-slate-500 leading-normal">
                 {stat.label}

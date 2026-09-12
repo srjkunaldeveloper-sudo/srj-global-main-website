@@ -28,6 +28,7 @@ import {
 import "../../styles/Pricing.css";
 import { plans, addOns } from "../../config/pricing";
 import PricingHero from "./PricingHero";
+import SEO from "../SEO";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import axios from 'axios';
@@ -375,6 +376,29 @@ const Pricing = () => {
 
   return (
     <div className="pricing-page pt-4">
+      <SEO 
+        title="B2B Software & IT Consulting Pricing"
+        description="Explore transparent, flexible investment models for custom web development, mobile apps, enterprise software, and AI solutions."
+        keywords="IT consulting pricing, software development cost, custom web app pricing, enterprise software quote, SRJ Global pricing"
+        url="https://srjglobaltechnology.com/pricing"
+        extraSchema={{
+          "@type": "OfferCatalog",
+          "@id": "https://srjglobaltechnology.com/pricing#catalog",
+          "name": "SRJ Global Technology Engagement Models",
+          "description": "Flexible B2B investment ranges for enterprise software, custom web applications, mobile apps, and AI solutions.",
+          "itemListElement": plans.map((p, idx) => ({
+            "@type": "Offer",
+            "position": idx + 1,
+            "name": p.displayName || p.name,
+            "description": p.description || p.features.join(", "),
+            "priceSpecification": {
+              "@type": "PriceSpecification",
+              "name": p.pricingLabel || "Estimated Investment",
+              "description": p.priceDisplay
+            }
+          }))
+        }}
+      />
       
       <PricingHero />
 
@@ -385,13 +409,13 @@ const Pricing = () => {
 
         <motion.div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col items-center text-center mb-16" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
           <span className="inline-block px-4 py-1.5 rounded-full border border-slate-200 bg-white text-[10px] font-bold tracking-widest text-slate-800 uppercase shadow-sm mb-6">
-            CHOOSE YOUR FOUNDATION
+            ENGAGEMENT MODELS
           </span>
           <h2 className="text-4xl md:text-5xl font-black text-black tracking-tight mb-4">
             Select Base Architecture
           </h2>
-          <p className="text-slate-500 text-base md:text-lg">
-            Choose the foundation of your software project.
+          <p className="text-slate-500 text-base md:text-lg max-w-2xl">
+            Choose the foundation for your project. Displayed figures reflect typical investment ranges based on scope.
           </p>
         </motion.div>
         
@@ -419,7 +443,7 @@ const Pricing = () => {
                 
                 {isPremium && (
                   <div className="absolute top-6 right-6 border border-slate-200 bg-white text-slate-800 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5 shadow-sm">
-                    <FaGem size={10} /> Premium
+                    <FaGem size={10} /> Custom Scope
                   </div>
                 )}
                 
@@ -429,11 +453,17 @@ const Pricing = () => {
                 </div>
                 
                 {/* Plan Details */}
-                <h3 className="text-xl font-bold text-black mb-2">{plan.name}</h3>
+                <h3 className="text-xl font-bold text-black mb-1">{plan.displayName || plan.name}</h3>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3 block">
+                  {plan.pricingLabel || "Estimated Investment"}
+                </span>
+                
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-3xl font-black text-black">₹{plan.price.toLocaleString()}</span>
+                  <span className="text-2xl lg:text-3xl font-black text-black leading-none">{plan.priceDisplay}</span>
                 </div>
-                <span className="text-sm font-medium text-slate-400 mb-6">/ project</span>
+                <p className="text-xs text-slate-500 mb-6 min-h-[32px] leading-relaxed">
+                  {plan.description}
+                </p>
                 
                 {/* Divider */}
                 <div className="w-full h-px bg-slate-100 mb-6" />
@@ -442,7 +472,7 @@ const Pricing = () => {
                 <ul className="flex flex-col gap-4 mb-10 flex-grow">
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-3 text-[13px] font-semibold text-slate-600">
-                      <div className="bg-black rounded-full p-0.5 mt-0.5">
+                      <div className="bg-black rounded-full p-0.5 mt-0.5 shrink-0">
                         <CheckCircle2 size={12} className="text-white fill-black" strokeWidth={3} />
                       </div>
                       {feature}
@@ -451,12 +481,12 @@ const Pricing = () => {
                 </ul>
                 
                 {/* Action Button */}
-                <button className={`w-full py-3.5 rounded-xl font-bold text-sm flex justify-center items-center gap-2 transition-all duration-300 ${
+                <button className={`w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider flex justify-center items-center gap-2 transition-all duration-300 ${
                   isSelected 
                     ? 'bg-black text-white hover:bg-black/90' 
                     : 'bg-white text-black border border-slate-200 hover:bg-slate-50'
                 }`}>
-                  {isSelected ? "Selected" : "Choose Plan"}
+                  {plan.ctaText || (isSelected ? "Selected" : "Choose Plan")}
                   <FaArrowRight size={12} className={isSelected ? "text-white" : "text-slate-400"} />
                 </button>
               </motion.div>
@@ -464,12 +494,15 @@ const Pricing = () => {
           })}
         </motion.div>
         
-        {/* Bottom Guarantee */}
-        <motion.div className="relative z-10 flex justify-center mt-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-          <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
+        {/* Bottom Guarantee & Disclaimer */}
+        <motion.div className="relative z-10 flex flex-col items-center gap-2 mt-12 text-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
             <Shield size={16} className="text-slate-700" />
-            All plans include 30 days support and 100% satisfaction guarantee.
+            All engagement models include dedicated QA, 30 days post-launch support & NDA protection.
           </div>
+          <p className="text-xs text-slate-400 max-w-2xl">
+            * Final pricing depends on project scope, features, integrations, complexity, timeline, and business requirements.
+          </p>
         </motion.div>
       </section>
 
@@ -480,7 +513,7 @@ const Pricing = () => {
         <div ref={addonsHeaderRef} className="luxury-section-header">
           <span className="luxury-pill">POWERFUL INTEGRATIONS</span>
           <h2 className="luxury-heading">Add-on Modules</h2>
-          <p className="luxury-subtitle">Supercharge your application with these powerful integrations.</p>
+          <p className="luxury-subtitle">Supercharge your application with these optional scope integrations.</p>
         </div>
 
         <div className="luxury-addon-grid">
@@ -500,21 +533,9 @@ const Pricing = () => {
                   <div className="luxury-addon-content">
                     <h4 className="luxury-addon-title">{addon.name}</h4>
                     <p className="luxury-addon-desc">
-                      {addon.name === "Chatbot (Web/App)" && "AI-powered customer support"}
-                      {addon.name === "WhatsApp Automation" && "Send notifications & alerts"}
-                      {addon.name === "Payment Gateway Integration" && "Secure online payments"}
-                      {addon.name === "Admin Panel" && "Complete admin dashboard"}
-                      {addon.name === "Hosting + Domain (1 yr)" && "Premium hosting & domain"}
-                      {addon.name === "Content Writing (per page)" && "SEO-friendly content writing"}
-                      {addon.name === "Email Setup + SMTP" && "Professional email setup"}
-                      {addon.name === "SEO Optimization & Analytics" && "Boost ranking & track performance"}
-                      {addon.name === "Multi-Language Support" && "Add multiple languages"}
-                      {addon.name === "Third-party API Integration" && "Custom API integrations"}
-                      {addon.name === "Mobile App (Basic)" && "Android/iOS basic app"}
-                      {addon.name === "Priority Support (1 yr)" && "Priority assistance & support"}
-                      {!["Chatbot (Web/App)", "WhatsApp Automation", "Payment Gateway Integration", "Admin Panel", "Hosting + Domain (1 yr)", "Content Writing (per page)", "Email Setup + SMTP", "SEO Optimization & Analytics", "Multi-Language Support", "Third-party API Integration", "Mobile App (Basic)", "Priority Support (1 yr)"].includes(addon.name) && "Enterprise-grade integration"}
+                      {addon.description || "Enterprise-grade integration"}
                     </p>
-                    <p className="luxury-addon-price">+₹{addon.price.toLocaleString()}</p>
+                    <p className="luxury-addon-price">{addon.priceDisplay}</p>
                   </div>
                 </div>
                 <div className="luxury-addon-right">
@@ -534,7 +555,7 @@ const Pricing = () => {
           
           {/* Timeline Section */}
           <div ref={timelineSectionRef} className="luxury-timeline-wrapper">
-            <h3 className="luxury-section-title">Delivery Timeline</h3>
+            <h3 className="luxury-section-title">Delivery Timeline Preference</h3>
             <div className="luxury-timeline-container">
               <div className="luxury-progress-line-bg"></div>
               <div 
@@ -566,45 +587,50 @@ const Pricing = () => {
           <div className="luxury-summary-grid">
             {/* Project Summary Left */}
             <div ref={summaryLeftRef} className="luxury-summary-left">
-              <h3 className="luxury-section-title">Project Summary</h3>
+              <h3 className="luxury-section-title">Scope & Investment Summary</h3>
               <div className="luxury-invoice-list">
                 <div className="luxury-invoice-row">
-                  <span>Base Plan ({selectedPlan.name})</span>
-                  <span className="amount">₹{basePrice.toLocaleString()}</span>
+                  <span>Selected Model</span>
+                  <span className="amount">{selectedPlan.displayName || selectedPlan.name}</span>
+                </div>
+                <div className="luxury-invoice-row">
+                  <span>Base Investment Range</span>
+                  <span className="amount">{selectedPlan.priceDisplay}</span>
                 </div>
                 <div className="luxury-invoice-row">
                   <span>Selected Add-on Modules ({selectedAddons.length})</span>
-                  <span className="amount">+₹{addonsTotal.toLocaleString()}</span>
+                  <span className="amount">{selectedAddons.length ? `${selectedAddons.length} Module(s)` : 'None'}</span>
                 </div>
-                {timeline.multiplier > 1.0 && (
-                  <div className="luxury-invoice-row rush-delivery">
-                    <span>Rush Delivery ({timeline.label})</span>
-                    <span className="amount">+₹{((subtotal * timeline.multiplier) - subtotal).toLocaleString()}</span>
-                  </div>
-                )}
+                <div className="luxury-invoice-row">
+                  <span>Target Delivery</span>
+                  <span className="amount">{timeline.label}</span>
+                </div>
                 <div className="luxury-invoice-row total-row">
-                  <span>Estimated Total</span>
-                  <span className="amount">₹{finalTotal.toLocaleString()}</span>
+                  <span>Estimated Investment</span>
+                  <span className="amount">{selectedPlan.priceDisplay}</span>
                 </div>
               </div>
             </div>
             
             {/* Live Estimate Card Right */}
             <div ref={estimateCardRef} className="luxury-estimate-card">
-              <div className="luxury-estimate-badge">LIVE ESTIMATE</div>
-              <p className="luxury-estimate-label">Your Project Total</p>
-              <div className="luxury-final-price">
-                ₹{finalTotal.toLocaleString()}
+              <div className="luxury-estimate-badge">INVESTMENT ESTIMATE</div>
+              <p className="luxury-estimate-label">Typical Investment Range</p>
+              <div className="luxury-final-price text-3xl font-black my-2">
+                {selectedPlan.priceDisplay}
               </div>
+              <p className="text-[11px] text-slate-400 leading-tight mb-4">
+                * Final quotation provided after detailed scope consultation.
+              </p>
               
               <ul className="luxury-features-list">
-                <li><FaCheckCircle /> 30 Days Support</li>
-                <li><FaCheckCircle /> Secure Payments</li>
-                <li><FaCheckCircle /> 100% Satisfaction</li>
+                <li><FaCheckCircle /> 30 Days Post-Launch Support</li>
+                <li><FaCheckCircle /> NDA & Code Ownership</li>
+                <li><FaCheckCircle /> Agile Delivery Milestones</li>
               </ul>
               
               <button ref={ctaBtnRef} className="luxury-cta-btn" onClick={() => setShowInquiryModal(true)}>
-                <span>Request Official Proposal</span>
+                <span>Discuss Your Project</span>
                 <FaArrowRight className="arrow-icon" />
               </button>
             </div>
@@ -751,7 +777,7 @@ const Pricing = () => {
             </button>
             <div>
               <h3 className="text-2xl font-extrabold text-white">Request Proposal</h3>
-              <p className="text-sm text-slate-400 mt-1">Submit configuration details for {selectedPlan.name} (₹{finalTotal.toLocaleString()}).</p>
+              <p className="text-sm text-slate-400 mt-1">Submit configuration details for {selectedPlan.displayName || selectedPlan.name} ({selectedPlan.priceDisplay}).</p>
             </div>
 
             <form onSubmit={async (e) => {
@@ -759,19 +785,20 @@ const Pricing = () => {
               setSubmittingInquiry(true);
               try {
                 const requirementsList = [
+                  `Selected Model: ${selectedPlan.displayName || selectedPlan.name}`,
+                  `Estimated Investment Range: ${selectedPlan.priceDisplay}`,
                   `Selected Addons: ${selectedAddons.map(a => a.name).join(', ') || 'None'}`,
-                  `Timeline: ${timeline.label}`,
-                  `Total Estimated Price: ₹${finalTotal.toLocaleString()}`
+                  `Target Timeline: ${timeline.label}`
                 ].join('\n');
 
                 const response = await axios.post(`${API_BASE_URL}/plans`, {
-                  plan_name: selectedPlan.name,
+                  plan_name: selectedPlan.displayName || selectedPlan.name,
                   full_name: inquiryForm.fullName,
                   email: inquiryForm.email,
                   phone: inquiryForm.phone,
                   company_name: inquiryForm.companyName,
-                  project_type: selectedPlan.name,
-                  budget: `₹${finalTotal.toLocaleString()}`,
+                  project_type: selectedPlan.displayName || selectedPlan.name,
+                  budget: selectedPlan.priceDisplay,
                   requirements: requirementsList
                 });
 

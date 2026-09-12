@@ -111,12 +111,12 @@ export default function Footer() {
               className="w-14 object-contain filter"
             />
             <div>
-              <h1 className="margin-0 text-[20px] font-black tracking-wide leading-tight text-slate-900">
+              <div className="margin-0 text-[20px] font-black tracking-wide leading-tight text-slate-900">
                 {firstWord} <span className="text-slate-500 font-light">{middleWords}</span>
-              </h1>
-              <h2 className="margin-0 text-[14px] font-bold text-slate-500 tracking-widest leading-none mt-0.5 uppercase">
+              </div>
+              <div className="margin-0 text-[14px] font-bold text-slate-500 tracking-widest leading-none mt-0.5 uppercase">
                 {lastWord}
-              </h2>
+              </div>
             </div>
           </div>
           

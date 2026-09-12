@@ -47,13 +47,29 @@ export default function ServicesPage() {
     fetchServices();
   }, []);
 
+  const canonicalBase = "https://srjglobaltechnology.com";
+
+  const itemListSchema = dbServices.length > 0 ? {
+    "@type": "ItemList",
+    "name": "SRJ Global Technology Services",
+    "description": "Explore our complete range of software development, artificial intelligence, cloud, and IT consulting services.",
+    "numberOfItems": dbServices.length,
+    "itemListElement": dbServices.map((s, idx) => ({
+      "@type": "ListItem",
+      "position": idx + 1,
+      "name": s.title,
+      "url": `${canonicalBase}/services/${s.id}`
+    }))
+  } : null;
+
   return (
     <div className="services-page pt-4">
       <SEO 
         title="Our Services"
         description="Explore our wide range of software development and IT consulting services designed to accelerate your business growth."
         keywords="software services, web development, app development, IT consulting, SRJ Global Technologies services"
-        url="https://srjglobaltechnology.com/services"
+        url={`${canonicalBase}/services`}
+        extraSchema={itemListSchema}
       />
 
       {/* 1. HERO */}

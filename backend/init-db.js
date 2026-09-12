@@ -26,9 +26,9 @@ async function initDatabase() {
     
     // Split SQL file by semicolon, ignoring comments and empty lines
     const statements = sqlContent
-      .split(/;(?=(?:[^'"`]*['"`][^'"`]*['"`])*[^'"`]*$)/)
+      .split(/;\s*$/m)
       .map(stmt => stmt.trim())
-      .filter(stmt => stmt.length > 0);
+      .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
 
     console.log(`Executing ${statements.length} SQL statements...`);
 
@@ -41,16 +41,23 @@ async function initDatabase() {
 
     console.log("Database initialized successfully!");
 
-    // Seed default admin user if none exists
-    const [userRows] = await connection.query("SELECT COUNT(*) as count FROM `srj_db`.`users`");
-    if (userRows[0].count === 0) {
-      const bcrypt = require("bcryptjs");
-      const hash = await bcrypt.hash("admin123", 10);
-      await connection.query(
-        "INSERT INTO `srj_db`.`users` (name, email, password, role) VALUES (?, ?, ?, ?)",
-        ["Default Admin", "admin@gmail.com", hash, "admin"]
-      );
-      console.log("Seeded default admin user: admin@gmail.com / admin123");
+    // Seed initial Super Admin user if no super_admin account exists
+    const [superRows] = await connection.query("SELECT COUNT(*) as count FROM `srj_db`.`users` WHERE role = 'super_admin'");
+    if (superRows[0].count === 0) {
+      const superEmail = process.env.SUPERADMIN_EMAIL || "superadmin@srjglobal.com";
+      const superPassword = process.env.SUPERADMIN_PASSWORD;
+      
+      if (superPassword) {
+        const bcrypt = require("bcryptjs");
+        const hash = await bcrypt.hash(superPassword, 10);
+        await connection.query(
+          "INSERT INTO `srj_db`.`users` (name, email, password, role, is_active) VALUES (?, ?, ?, ?, ?)",
+          ["Super Admin", superEmail, hash, "super_admin", 1]
+        );
+        console.log(`Initialized Super Admin account for: ${superEmail}`);
+      } else {
+        console.log("Notice: SUPERADMIN_PASSWORD env var not provided; initial Super Admin creation deferred to manual setup or .env configuration.");
+      }
     }
   } catch (error) {
     console.error("Failed to initialize database:", error);

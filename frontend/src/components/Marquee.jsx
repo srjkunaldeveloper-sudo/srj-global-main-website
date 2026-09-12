@@ -1,155 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../config/api';
 
-const brands = [
-  { 
-    id: "adani", 
-    domain: "adani.com", 
-    alt: "Adani Group",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/commons/d/d4/Adani_logo_2012.svg",
-    customStyle: { transform: "scale(1.0)" }
-  },
-  { 
-    id: "reliance", 
-    domain: "ril.com", 
-    alt: "Reliance Industries",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/en/0/0e/Reliance_Industries.svg"
-  },
-  { 
-    id: "maruti-suzuki", 
-    domain: "marutisuzuki.com", 
-    alt: "Maruti Suzuki",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/commons/8/86/Maruti_Suzuki_logo.svg",
-    customStyle: { transform: "scale(1.15)" } 
-  },
-  { 
-    id: "samsung", 
-    domain: "samsung.com", 
-    alt: "Samsung",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/commons/a/a7/Samsung_logo.svg",
-    customStyle: { transform: "scale(1.7)" }
-  },
-  { id: "lg", domain: "lg.com", alt: "LG" },
-  { 
-    id: "nissan", 
-    domain: "nissan-global.com", 
-    alt: "Nissan",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/commons/2/23/Nissan_2020_logo.svg",
-    customStyle: { transform: "scale(1.15)" }
-  },
-  { 
-    id: "mahindra", 
-    domain: "mahindra.com", 
-    alt: "Mahindra Group",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/commons/8/89/Mahindra_logo.svg" 
-  },
-  { 
-    id: "gem", 
-    domain: "gem.gov.in", 
-    alt: "Government e-Marketplace",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/en/9/91/Government_e_Marketplace_Logo.png",
-    customStyle: { mixBlendMode: "multiply", transform: "scale(1.2)" }
-  },
-  { 
-    id: "bajaj", 
-    domain: "bajajauto.com", 
-    alt: "Bajaj Group",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/commons/3/3b/Bajaj_Auto_logo.svg",
-    customStyle: { transform: "scale(1.15)" }
-  },
-  { 
-    id: "jio", 
-    domain: "jio.com", 
-    alt: "Reliance Jio",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/commons/b/bf/Reliance_Jio_Logo.svg"
-  },
-  { 
-    id: "infosys", 
-    domain: "infosys.com", 
-    alt: "Infosys",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/commons/9/95/Infosys_logo.svg"
-  },
-  { 
-    id: "aristocrat", 
-    domain: "aristocrat.com", 
-    alt: "Aristocrat",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/en/4/4a/Aristocrat_Leisure_logo.svg" 
-  },
-  { 
-    id: "sun-pharma", 
-    domain: "sunpharma.com", 
-    alt: "Sun Pharma",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/en/5/50/Sun_Pharma_logo.svg"
-  },
-  { 
-    id: "micromax", 
-    domain: "micromaxinfo.com", 
-    alt: "Micromax",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/commons/2/2e/Micromax_logo.svg"
-  },
-  { 
-    id: "philips", 
-    domain: "philips.com", 
-    alt: "Philips",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/commons/5/52/Philips_logo_new.svg" 
-  },
-  { 
-    id: "tvs", 
-    domain: "tvsmotor.com", 
-    alt: "TVS Motor",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/en/e/e9/TVS_Motor_logo.svg"
-  },
-  { 
-    id: "hawkins", 
-    domain: "hawkinscookers.com", 
-    alt: "Hawkins Cookers",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/en/f/ff/Hawkins_Cookers.svg"
-  },
-  { 
-    id: "united", 
-    domain: "unitedbreweries.com", 
-    alt: "United",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/commons/0/0d/Heineken_Logo.svg"
-  },
-  { 
-    id: "honda", 
-    domain: "honda.com", 
-    alt: "Honda",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/commons/7/7b/Honda_Logo.svg",
-    customStyle: { transform: "scale(1.15)" }
-  },
-  { 
-    id: "itc", 
-    domain: "itcportal.com", 
-    alt: "ITC Limited",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/commons/f/ff/ITC_Limited_Logo.svg",
-    customStyle: { transform: "scale(1.15)" }
-  },
-  { 
-    id: "whirlpool", 
-    domain: "whirlpool.com", 
-    alt: "Whirlpool",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/commons/9/95/Whirlpool_Corporation_Logo_(as_of_2017).svg",
-    customStyle: { transform: "scale(1.15)" }
-  },
-  { 
-    id: "kirloskar", 
-    domain: "kirloskar.com", 
-    alt: "Kirloskar Group",
-    forceUrl: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Kirloskar_Group_Logo.svg",
-    customStyle: { transform: "scale(1.3)" }
-  },
-];
-
-export function BrandLogo({ domain, id, alt, lazy, forceUrl, customStyle }) {
+export function BrandLogo({ logoUrl, fallbackDomain, altText, lazy, customStyle }) {
   const sources = [
-    ...(forceUrl ? [forceUrl] : []),
-    `https://logo.clearbit.com/${domain}`,
-    `https://vectorlogo.zone/logos/${id}/default.svg`,
-    `https://logo.uplead.com/${domain}`,
-    `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://${domain}&size=128`
-  ];
-  
+    ...(logoUrl ? [logoUrl] : []),
+    ...(fallbackDomain ? [
+      `https://logo.clearbit.com/${fallbackDomain}`,
+      `https://logo.uplead.com/${fallbackDomain}`,
+      `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://${fallbackDomain}&size=128`
+    ] : [])
+  ].filter(Boolean);
+
   const [currentIdx, setCurrentIdx] = useState(0);
+
+  // Reset index if logoUrl changes
+  useEffect(() => {
+    setCurrentIdx(0);
+  }, [logoUrl, fallbackDomain]);
 
   const handleError = () => {
     if (currentIdx < sources.length - 1) {
@@ -159,8 +26,8 @@ export function BrandLogo({ domain, id, alt, lazy, forceUrl, customStyle }) {
 
   return (
     <img
-      src={sources[currentIdx]}
-      alt={alt}
+      src={sources[currentIdx] || logoUrl}
+      alt={altText || 'Partner Logo'}
       onError={handleError}
       loading={lazy ? "lazy" : "eager"}
       decoding="async"
@@ -182,9 +49,37 @@ export default function Marquee({
   speed = 40,
   dark = false,
 }) {
+  const [brands, setBrands] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchLogos = async () => {
+      try {
+        const res = await api.get('/partner-logos');
+        if (isMounted && res.data && res.data.success && Array.isArray(res.data.logos)) {
+          setBrands(res.data.logos);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError('Unable to load partner logos');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchLogos();
+    return () => { isMounted = false; };
+  }, []);
+
   const bgColor = dark ? "#000000" : "#ffffff";
   const textColor = dark ? "#ffffff" : "#0F172A";
   const maskColor = dark ? "black" : "white";
+
   return (
     <section
       aria-label="Trusted by Industry Leaders"
@@ -239,45 +134,64 @@ export default function Marquee({
             `linear-gradient(to right, transparent 0%, ${maskColor} 15%, ${maskColor} 85%, transparent 100%)`,
         }}
       >
-        <div
-          className="tm-track"
-          style={{
-            display: "flex",
-            gap: "24px",
-            width: "max-content",
-            alignItems: "center",
-            padding: "20px 0",
-          }}
-        >
-          {[...brands, ...brands].map((brand, i) => (
-            <div
-              key={`${brand.id}-${i}`}
-              className="tm-logo-cell"
-              title={brand.alt}
-              style={{
-                flexShrink: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "110px",
-                width: "220px",
-                transition: "transform 0.3s ease, filter 0.3s ease",
-                willChange: "transform",
-                cursor: "pointer",
-                padding: "28px",
-              }}
-            >
-              <BrandLogo 
-                domain={brand.domain} 
-                id={brand.id} 
-                alt={brand.alt} 
-                lazy={i >= brands.length} 
-                forceUrl={brand.forceUrl}
-                customStyle={brand.customStyle}
+        {isLoading ? (
+          <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', padding: '20px 0' }}>
+            {[1, 2, 3, 4, 5, 6].map((sk) => (
+              <div
+                key={`skeleton-${sk}`}
+                style={{
+                  width: '220px',
+                  height: '110px',
+                  borderRadius: '12px',
+                  background: dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                  animation: 'pulse 1.5s infinite ease-in-out'
+                }}
               />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : error || brands.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: textColor, opacity: 0.5, fontSize: '14px' }}>
+            {error || 'No partner logos available.'}
+          </div>
+        ) : (
+          <div
+            className="tm-track"
+            style={{
+              display: "flex",
+              gap: "24px",
+              width: "max-content",
+              alignItems: "center",
+              padding: "20px 0",
+            }}
+          >
+            {[...brands, ...brands].map((brand, i) => (
+              <div
+                key={`${brand.id}-${i}`}
+                className="tm-logo-cell"
+                title={brand.alt_text || brand.name}
+                style={{
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "110px",
+                  width: "220px",
+                  transition: "transform 0.3s ease, filter 0.3s ease",
+                  willChange: "transform",
+                  cursor: "pointer",
+                  padding: "28px",
+                }}
+              >
+                <BrandLogo
+                  logoUrl={brand.logo_url}
+                  fallbackDomain={brand.fallback_domain}
+                  altText={brand.alt_text || brand.name}
+                  lazy={i >= brands.length}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <style>{`
@@ -303,6 +217,11 @@ export default function Marquee({
         @keyframes tm-scroll {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.8; }
         }
 
         @media (prefers-reduced-motion: reduce) {

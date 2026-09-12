@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import api from '../config/api';
 
 export default function Faq() {
@@ -39,8 +40,34 @@ export default function Faq() {
     return null;
   }
 
+  // Filter valid active FAQ items safely for JSON-LD schema
+  const validFaqs = Array.isArray(faqs) 
+    ? faqs.filter(f => (f.question || f.q) && (f.answer || f.a)) 
+    : [];
+
+  const faqSchema = validFaqs.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": validFaqs.map(f => ({
+      "@type": "Question",
+      "name": f.question || f.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": f.answer || f.a
+      }
+    }))
+  } : null;
+
   return (
-    <section id="faq" className="py-24 bg-section-bg px-6 border-b border-slate-100">
+    <>
+      {faqSchema && (
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify(faqSchema)}
+          </script>
+        </Helmet>
+      )}
+      <section id="faq" className="py-24 bg-section-bg px-6 border-b border-slate-100">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-800 font-semibold text-xs uppercase tracking-wider mb-4 border border-slate-200">
@@ -101,6 +128,7 @@ export default function Faq() {
         </div>
       </div>
     </section>
+    </>
   );
 }
 

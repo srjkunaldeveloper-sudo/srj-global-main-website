@@ -2,15 +2,32 @@ const db = require("../config/db");
 
 const generateSitemap = async (req, res) => {
   try {
-    const baseUrl = "https://srjglobaltechnology.com";
+    let baseUrl = "https://srjglobaltechnology.com";
 
-    // 1. Define Static Routes
+    try {
+      const [settings] = await db.query(
+        "SELECT setting_value FROM site_settings WHERE setting_key = 'canonical_url' LIMIT 1"
+      );
+      if (settings && settings.length > 0 && settings[0].setting_value) {
+        baseUrl = settings[0].setting_value.replace(/\/+$/, "");
+      }
+    } catch (settingErr) {
+      console.warn("Could not query canonical_url setting for sitemap, using fallback:", settingErr.message);
+    }
+
+    // 1. Define Static Routes (All Public Pages)
     const staticRoutes = [
       { url: "/", changefreq: "weekly", priority: 1.0 },
       { url: "/about", changefreq: "monthly", priority: 0.8 },
       { url: "/services", changefreq: "weekly", priority: 0.9 },
-      { url: "/blog", changefreq: "weekly", priority: 0.9 },
+      { url: "/pricing", changefreq: "monthly", priority: 0.8 },
+      { url: "/collaboration", changefreq: "monthly", priority: 0.8 },
+      { url: "/industries", changefreq: "monthly", priority: 0.8 },
       { url: "/contact", changefreq: "yearly", priority: 0.7 },
+      { url: "/blog", changefreq: "weekly", priority: 0.9 },
+      { url: "/careers", changefreq: "monthly", priority: 0.7 },
+      { url: "/privacy", changefreq: "monthly", priority: 0.5 },
+      { url: "/terms", changefreq: "monthly", priority: 0.5 },
     ];
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;

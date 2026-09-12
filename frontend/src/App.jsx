@@ -35,6 +35,8 @@ const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
 const TermsConditions = lazy(() => import('./components/TermsConditions'));
 const AdminLogin = lazy(() => import('./components/admin/AdminLogin'));
 const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
+const ForgotPassword = lazy(() => import('./components/admin/ForgotPassword'));
+const ResetPassword = lazy(() => import('./components/admin/ResetPassword'));
 
 // A sleek fallback loading state while chunks are fetched
 const PageLoader = () => (
@@ -96,6 +98,8 @@ export default function App() {
                   
                   {/* Admin Portal Routes */}
                   <Route path="/admin/login" element={<AdminLogin />} />
+                  <Route path="/admin/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/admin/reset-password" element={<ResetPassword />} />
                   <Route path="/admin" element={<AdminDashboard />} />
                   </Routes>
               </Suspense>

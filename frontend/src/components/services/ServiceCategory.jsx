@@ -93,7 +93,7 @@ export default function ServiceCategory({ category }) {
             <div key={service.title} className="category-card-fade opacity-0 h-full">
               <ServiceCard
                 service={service}
-                href={getServiceHref(service.title)}
+                href={service.id ? `/services/${service.id}` : getServiceHref(service.title)}
                 index={index}
                 categoryTitle={category.title}
               />

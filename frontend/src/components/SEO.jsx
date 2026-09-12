@@ -9,7 +9,8 @@ export default function SEO({
   image, 
   url,
   isArticle = false,
-  articleData = null
+  articleData = null,
+  extraSchema = null
 }) {
   const { getSetting } = useSiteSettings();
 
@@ -78,28 +79,100 @@ export default function SEO({
     }
   }, [faviconUrl]);
 
-  // Structured Data Schemas
-  const orgSchema = {
-    "@context": "https://schema.org",
+  // Brand Logo & OG Share Image resolution
+  const logoSetting = getSetting('logo_url', '/src/assets/Logo.png');
+  const finalLogo = resolveUrl(logoSetting, globalCanonicalUrl);
+
+  // Contact & Social Site Settings
+  const contactEmail = getSetting('contact_email', '');
+  const contactPhone = getSetting('contact_phone', '');
+  const officeAddress = getSetting('office_address', '');
+
+  // Filter valid social profiles for sameAs array
+  const sameAsLinks = [
+    getSetting('social_linkedin', ''),
+    getSetting('social_twitter', ''),
+    getSetting('social_facebook', ''),
+    getSetting('social_instagram', ''),
+    getSetting('social_youtube', ''),
+    getSetting('social_pinterest', '')
+  ].filter(link => link && typeof link === 'string' && link.trim().startsWith('http'));
+
+  // Entity IDs for single coherent @graph architecture
+  const orgId = `${globalCanonicalUrl}/#organization`;
+  const websiteId = `${globalCanonicalUrl}/#website`;
+  const serviceProviderId = `${globalCanonicalUrl}/#professional-service`;
+
+  // 1. Organization Entity
+  const orgEntity = {
     "@type": "Organization",
+    "@id": orgId,
     "name": companyName,
     "url": globalCanonicalUrl,
-    "logo": finalImage,
-    "description": globalDescription
+    "logo": finalLogo,
+    "description": globalDescription,
+    ...(contactEmail ? { "email": contactEmail } : {}),
+    ...(contactPhone ? { "telephone": contactPhone } : {}),
+    ...(officeAddress ? { "address": officeAddress } : {}),
+    ...(sameAsLinks.length > 0 ? { "sameAs": sameAsLinks } : {})
   };
 
-  const articleSchema = isArticle && articleData ? {
-    "@context": "https://schema.org",
+  // 2. WebSite Entity
+  const websiteEntity = {
+    "@type": "WebSite",
+    "@id": websiteId,
+    "url": globalCanonicalUrl,
+    "name": companyName,
+    "description": globalDescription,
+    "publisher": {
+      "@id": orgId
+    }
+  };
+
+  // 3. ProfessionalService Entity (IT & Software Solutions Agency)
+  const serviceEntity = {
+    "@type": "ProfessionalService",
+    "@id": serviceProviderId,
+    "name": companyName,
+    "url": globalCanonicalUrl,
+    "logo": finalLogo,
+    "description": globalDescription,
+    "parentOrganization": {
+      "@id": orgId
+    },
+    ...(contactEmail ? { "email": contactEmail } : {}),
+    ...(contactPhone ? { "telephone": contactPhone } : {}),
+    ...(officeAddress ? { "address": officeAddress } : {}),
+    ...(sameAsLinks.length > 0 ? { "sameAs": sameAsLinks } : {})
+  };
+
+  // Article entity if article props provided
+  const articleEntity = isArticle && articleData ? {
     "@type": "Article",
     "headline": articleData.title || title || companyName,
     "image": [finalImage],
     "datePublished": articleData.datePublished || new Date().toISOString(),
     "author": [{
-        "@type": "Organization",
-        "name": companyName,
-        "url": globalCanonicalUrl
-      }]
+      "@type": "Organization",
+      "@id": orgId
+    }]
   } : null;
+
+  // Single coherent JSON-LD @graph architecture
+  const extraSchemaArray = extraSchema
+    ? (Array.isArray(extraSchema) ? extraSchema : [extraSchema])
+    : [];
+
+  const graphSchema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      orgEntity,
+      websiteEntity,
+      serviceEntity,
+      ...(articleEntity ? [articleEntity] : []),
+      ...extraSchemaArray
+    ]
+  };
 
   return (
     <Helmet>
@@ -126,15 +199,10 @@ export default function SEO({
       <meta property="twitter:description" content={finalDescription} />
       <meta property="twitter:image" content={finalImage} />
 
-      {/* Structured Data (JSON-LD Schema) */}
+      {/* Structured Data (JSON-LD Schema Graph) */}
       <script type="application/ld+json">
-        {JSON.stringify(orgSchema)}
+        {JSON.stringify(graphSchema)}
       </script>
-      {isArticle && articleSchema && (
-        <script type="application/ld+json">
-          {JSON.stringify(articleSchema)}
-        </script>
-      )}
     </Helmet>
   );
 }

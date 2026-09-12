@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Tag, DollarSign } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config/api';
 import SEO from '../SEO';
@@ -52,19 +53,52 @@ export default function ServiceDetail() {
     );
   }
 
+  // Dynamic Lucide Icon Resolver
+  const renderServiceIcon = (iconName) => {
+    if (!iconName) return null;
+    if (typeof iconName === 'function' || typeof iconName === 'object') {
+      const IconComponent = iconName;
+      return <IconComponent size={16} />;
+    }
+    if (typeof iconName === 'string') {
+      const IconComponent = LucideIcons[iconName] || LucideIcons.Layers;
+      return <IconComponent size={16} />;
+    }
+    return null;
+  };
+
+  // Service JSON-LD Schema
+  const canonicalBase = 'https://srjglobaltechnology.com';
+  const serviceCanonicalUrl = `${canonicalBase}/services/${id}`;
+  const categoryName = typeof service.category === 'object' && service.category ? service.category.title : service.category;
+
+  const serviceSchema = {
+    "@type": "Service",
+    "@id": `${serviceCanonicalUrl}#service`,
+    "name": service.title,
+    "description": service.short_description || service.description || `Expert ${service.title} services by SRJ Global Technologies.`,
+    "url": serviceCanonicalUrl,
+    "provider": {
+      "@id": `${canonicalBase}/#organization`
+    },
+    ...(service.image ? { "image": service.image } : {}),
+    ...(categoryName ? { "serviceType": categoryName } : {})
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 pt-24 pb-24">
       <SEO 
         title={service.title}
         description={service.short_description || service.description || `Expert ${service.title} services by SRJ Global Technologies.`}
         image={service.image}
-        url={`https://srjglobaltechnology.com/services/${id}`}
+        url={serviceCanonicalUrl}
+        extraSchema={serviceSchema}
       />
 
       <div className="max-w-5xl mx-auto px-6">
         <button 
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-medium mb-10 transition-colors"
+          className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-medium mb-10 transition-colors cursor-pointer"
         >
           <ArrowLeft size={18} /> Back
         </button>
@@ -76,17 +110,48 @@ export default function ServiceDetail() {
           className="bg-white rounded-[32px] p-8 md:p-16 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100"
         >
           <div className="mb-10">
-            {service.category && (
-              <span className="inline-block px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase text-blue-600 bg-blue-50 mb-6">
-                {service.category.title || service.category}
-              </span>
-            )}
+            {/* Header Badges: Category, Icon & Price */}
+            <div className="flex flex-wrap items-center gap-3 mb-6">
+              {categoryName && (
+                <span className="inline-block px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase text-blue-600 bg-blue-50">
+                  {categoryName}
+                </span>
+              )}
+              {service.icon && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 bg-slate-100 border border-slate-200">
+                  {renderServiceIcon(service.icon)}
+                  <span>{typeof service.icon === 'string' ? service.icon : 'Feature'}</span>
+                </span>
+              )}
+              {service.price && (
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200">
+                  <DollarSign size={14} className="text-emerald-600" />
+                  <span>{String(service.price).includes('$') ? service.price : `$${service.price}`}</span>
+                </span>
+              )}
+            </div>
+
             <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-6">
               {service.title}
             </h1>
-            <p className="text-xl text-slate-600 leading-relaxed max-w-3xl">
+            <p className="text-xl text-slate-600 leading-relaxed max-w-3xl mb-6">
               {service.short_description || service.description}
             </p>
+
+            {/* Tags Pills */}
+            {Array.isArray(service.tags) && service.tags.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 pt-2">
+                <Tag size={14} className="text-slate-400 mr-1" />
+                {service.tags.map((tag, idx) => (
+                  <span 
+                    key={idx} 
+                    className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200/80"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {service.image && (
@@ -114,7 +179,7 @@ export default function ServiceDetail() {
             </div>
             <button 
               onClick={() => navigate('/contact')}
-              className="px-8 py-4 bg-slate-900 hover:bg-blue-600 text-white rounded-full font-semibold transition-colors w-full sm:w-auto text-center"
+              className="px-8 py-4 bg-slate-900 hover:bg-blue-600 text-white rounded-full font-semibold transition-colors w-full sm:w-auto text-center cursor-pointer"
             >
               Get a Proposal
             </button>
