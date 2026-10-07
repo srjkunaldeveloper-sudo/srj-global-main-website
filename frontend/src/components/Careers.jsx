@@ -17,6 +17,7 @@ import {
 import axios from 'axios';
 import { API_BASE_URL } from '../config/api';
 import '../styles/Careers.css';
+import Faq from './Faq';
 
 const Careers = () => {
   const containerRef = useRef(null);
@@ -82,7 +83,10 @@ const Careers = () => {
 
   const displayJobs = dbJobs;
 
-  const categories = ['All', 'Engineering', 'Product & Design', 'Operations', 'Marketing', 'Customer Experience'];
+  const standardCategories = ['Engineering', 'Product & Design', 'Operations', 'Marketing', 'Customer Experience'];
+  const allCategoriesFromJobs = dbJobs.map(job => job.category).filter(Boolean);
+  const uniqueCategories = Array.from(new Set([...standardCategories, ...allCategoriesFromJobs]));
+  const categories = ['All', ...uniqueCategories];
 
   const filteredJobs = displayJobs.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -286,7 +290,14 @@ const Careers = () => {
               transition={{ duration: 0.4, delay: (i % 3) * 0.1 }}
             >
               <div className="job-card-header">
-                <h3>{job.title}</h3>
+                <div>
+                  {job.category && (
+                    <span className="inline-block text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md mb-1.5 uppercase tracking-wider">
+                      {job.category}
+                    </span>
+                  )}
+                  <h3>{job.title}</h3>
+                </div>
                 <span className="job-salary-badge">{job.salary}</span>
               </div>
               
@@ -412,6 +423,13 @@ const Careers = () => {
           </div>
         </motion.div>
       </section>
+
+      <Faq 
+        category="Careers"
+        badge="Careers FAQs"
+        title="Careers & Recruitment FAQs"
+        subtitle="Frequently asked questions about interviewing, life at SRJ Global, and engineering perks."
+      />
 
       {/* Modern Job Application Modal */}
       {showModal && (

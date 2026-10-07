@@ -5,15 +5,21 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowUpRight } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
+import { useSiteSettings } from '../context/SiteSettingsContext';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Services() {
+  const { getSetting } = useSiteSettings();
   const sectionRef = useRef(null);
   const gridRef = useRef(null);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const badge = getSetting('home_services_badge', 'Capabilities');
+  const title = getSetting('home_services_title', 'Premium Engineering Services');
+  const subtitle = getSetting('home_services_subtitle', 'We deliver state-of-the-art technological solutions built to drive growth and efficiency.');
 
   useEffect(() => {
     let isMounted = true;
@@ -98,13 +104,13 @@ export default function Services() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-800 font-semibold text-xs uppercase tracking-wider mb-4 border border-slate-200">
-            Capabilities
+            {badge}
           </div>
           <h2 className="text-2xl sm:text-4xl text-fluid-2xl font-extrabold text-primary-text tracking-tight mb-4">
-            Premium Engineering Services
+            {title}
           </h2>
           <p className="text-secondary-text text-fluid-base">
-            We deliver state-of-the-art technological solutions built to drive growth and efficiency.
+            {subtitle}
           </p>
         </div>
 

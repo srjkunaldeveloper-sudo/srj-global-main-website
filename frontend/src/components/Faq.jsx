@@ -3,34 +3,51 @@ import { ChevronDown } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import api from '../config/api';
 
-export default function Faq() {
+export default function Faq({
+  category = 'General',
+  badge = 'Help Center',
+  title = 'Frequently Asked Questions',
+  subtitle = null,
+  sectionId = 'faq'
+}) {
   const [faqs, setFaqs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [openIdx, setOpenIdx] = useState(null);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchFaqs = async () => {
       try {
-        const res = await api.get('/faqs?category=General');
-        if (res.data && res.data.success && Array.isArray(res.data.faqs)) {
-          setFaqs(res.data.faqs);
-        } else if (Array.isArray(res.data)) {
-          setFaqs(res.data);
-        } else {
-          setFaqs([]);
+        setLoading(true);
+        const res = await api.get(`/faqs?category=${encodeURIComponent(category)}`);
+        if (isMounted) {
+          if (res.data && res.data.success && Array.isArray(res.data.faqs)) {
+            setFaqs(res.data.faqs);
+          } else if (Array.isArray(res.data)) {
+            setFaqs(res.data);
+          } else {
+            setFaqs([]);
+          }
         }
       } catch (err) {
-        console.error('Error fetching General FAQs:', err);
-        setError(true);
-        setFaqs([]);
+        console.error(`Error fetching ${category} FAQs:`, err);
+        if (isMounted) {
+          setError(true);
+          setFaqs([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchFaqs();
-  }, []);
+    return () => {
+      isMounted = false;
+    };
+  }, [category]);
 
   const toggleFaq = (idx) => {
     setOpenIdx(openIdx === idx ? null : idx);
@@ -67,15 +84,22 @@ export default function Faq() {
           </script>
         </Helmet>
       )}
-      <section id="faq" className="py-24 bg-section-bg px-6 border-b border-slate-100">
+      <section id={sectionId} className="py-24 bg-section-bg px-6 border-b border-slate-100">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-800 font-semibold text-xs uppercase tracking-wider mb-4 border border-slate-200">
-            Help Center
-          </div>
+          {badge && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-800 font-semibold text-xs uppercase tracking-wider mb-4 border border-slate-200">
+              {badge}
+            </div>
+          )}
           <h2 className="text-3xl sm:text-4xl font-extrabold text-primary-text tracking-tight mb-2">
-            Frequently Asked Questions
+            {title}
           </h2>
+          {subtitle && (
+            <p className="text-slate-500 text-sm max-w-xl mx-auto mt-2">
+              {subtitle}
+            </p>
+          )}
         </div>
 
         <div className="space-y-4">

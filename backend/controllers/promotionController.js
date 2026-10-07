@@ -9,7 +9,7 @@ exports.createPromotion = asyncHandler(async (req, res) => {
   const [result] = await db.query(
     `INSERT INTO promotions (title, description, cta_text, cta_link, image_url, is_active)
      VALUES (?, ?, ?, ?, ?, 0)`,
-    [title, description, cta_text || 'Learn More', cta_link, image_url]
+    [title, description, cta_text || 'Learn More', cta_link || '', image_url]
   );
 
   res.status(201).json({
@@ -62,13 +62,25 @@ exports.togglePromotion = asyncHandler(async (req, res) => {
 exports.updatePromotion = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { title, description, cta_text, cta_link } = req.body;
-  const image_url = req.file ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}` : req.body.image_url;
+
+  let image_url = req.body.image_url;
+  if (req.file) {
+    image_url = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+  }
+
+  // If no new file and image_url is undefined, keep existing image
+  if (image_url === undefined) {
+    const [existing] = await db.query("SELECT image_url FROM promotions WHERE id = ?", [id]);
+    if (existing.length > 0) {
+      image_url = existing[0].image_url;
+    }
+  }
 
   await db.query(
     `UPDATE promotions 
      SET title = ?, description = ?, cta_text = ?, cta_link = ?, image_url = ?
      WHERE id = ?`,
-    [title, description, cta_text || 'Learn More', cta_link, image_url, id]
+    [title, description, cta_text || 'Learn More', cta_link || '', image_url || null, id]
   );
 
   res.json({

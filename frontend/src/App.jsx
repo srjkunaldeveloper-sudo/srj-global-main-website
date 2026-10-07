@@ -27,6 +27,7 @@ const Pricing = lazy(() => import('./components/pricing/PricingPage'));
 const About = lazy(() => import('./components/About'));
 const Collaboration = lazy(() => import('./components/Collaboration'));
 const Industries = lazy(() => import('./components/Industries'));
+const IndustryDetail = lazy(() => import('./components/industries/IndustryDetail'));
 const Contact = lazy(() => import('./components/Contact'));
 const Blog = lazy(() => import('./components/Blog'));
 const BlogDetail = lazy(() => import('./components/blog/BlogDetail'));
@@ -89,6 +90,7 @@ export default function App() {
                   <Route path="/about" element={<About />} />
                   <Route path="/collaboration" element={<Collaboration />} />
                   <Route path="/industries" element={<Industries />} />
+                  <Route path="/industries/:id" element={<IndustryDetail />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:id" element={<BlogDetail />} />

@@ -12,6 +12,7 @@ import ServiceCard from "./ServiceCard";
 import TechnologyStrip from "./TechnologyStrip";
 import { serviceCategories } from "../../data/servicesData";
 import SEO from "../SEO";
+import Faq from "../Faq";
 
 export default function ServicesPage() {
   const location = useLocation();
@@ -132,6 +133,13 @@ export default function ServicesPage() {
 
       {/* 5. TECHNOLOGY STRIP */}
       <TechnologyStrip />
+
+      <Faq 
+        category="Services" 
+        badge="Services FAQs" 
+        title="Frequently Asked Questions" 
+        subtitle="Common questions about our software development lifecycle, technology stacks, and SLAs." 
+      />
     </div>
   );
 }

@@ -3,16 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Check, ArrowRight } from 'lucide-react';
+import { useSiteSettings } from '../context/SiteSettingsContext';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function CollabHero() {
   const navigate = useNavigate();
+  const { settings } = useSiteSettings();
   const containerRef = useRef(null);
   const leftSideRef = useRef(null);
   const hubRef = useRef(null);
 
-  const headingText = "Build The Future Together.";
+  const heroBadge = settings?.collab_hero_badge || "Partnership Hub";
+  const headingText = settings?.collab_hero_title || "Build The Future Together.";
+  const heroSubtitle = settings?.collab_hero_subtitle || "We don't just write code; we build businesses. Explore how we partner with you at every stage of your digital journey to ensure scalable and sustainable success.";
+  const ctaPrimary = settings?.collab_cta_btn_primary || "Discuss Your Project";
+  const ctaSecondary = settings?.collab_cta_btn_secondary || "Explore Services";
   const words = headingText.split(" ");
 
   const openCalendly = () => {
@@ -135,7 +141,7 @@ export default function CollabHero() {
         <div ref={leftSideRef} className="lg:col-span-5 flex flex-col justify-center text-left">
           <div className="left-fade-badge inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-50 border border-slate-200 mb-6 w-fit">
             <span className="text-[10px] font-extrabold text-slate-800 uppercase tracking-widest">
-              Partnership Hub
+              {heroBadge}
             </span>
           </div>
 
@@ -158,7 +164,7 @@ export default function CollabHero() {
           </h1>
 
           <p className="left-fade-rest text-slate-500 text-sm sm:text-base leading-relaxed mb-10 max-w-lg">
-            We don't just write code; we build businesses. Explore how we partner with you at every stage of your digital journey to ensure scalable and sustainable success.
+            {heroSubtitle}
           </p>
 
           <div className="left-fade-rest flex flex-wrap items-center gap-4 mb-12">
@@ -166,14 +172,14 @@ export default function CollabHero() {
               onClick={openCalendly}
               className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-black hover:bg-black/90 text-white text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 shadow-md shadow-slate-900/10"
             >
-              Discuss Your Project
+              {ctaPrimary}
               <ArrowRight size={14} />
             </button>
             <button 
               onClick={() => navigate('/services')}
               className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-black text-sm border border-slate-200 font-bold transition-all duration-200 hover:-translate-y-0.5"
             >
-              Explore Services
+              {ctaSecondary}
             </button>
           </div>
 

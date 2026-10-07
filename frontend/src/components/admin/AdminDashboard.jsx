@@ -31,7 +31,10 @@ import {
   Building,
   Filter,
   Compass,
-  Award
+  Award,
+  Save,
+  ExternalLink,
+  Handshake
 } from 'lucide-react';
 import api from '../../config/api';
 import { serviceCategories } from '../../data/servicesData';
@@ -42,6 +45,9 @@ import ProcessManager from './ProcessManager';
 import CompanyStatsManager from './CompanyStatsManager';
 import TrustPointsManager from './TrustPointsManager';
 import AdminUserManager from './AdminUserManager';
+import PricingPlanManager from './PricingPlanManager';
+import IndustryManager from './IndustryManager';
+import CollaborationManager from './CollaborationManager';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('blogs');
@@ -77,6 +83,10 @@ export default function AdminDashboard() {
     question: '', answer: '', category: 'General', sort_order: 0, is_active: 1
   });
   const [editFaqId, setEditFaqId] = useState(null);
+  const [faqCategoryFilter, setFaqCategoryFilter] = useState('all');
+  const [faqSearchQuery, setFaqSearchQuery] = useState('');
+  const [isCustomFaqCategory, setIsCustomFaqCategory] = useState(false);
+  const [customFaqCategory, setCustomFaqCategory] = useState('');
 
   // Industry Form State
   const [industries, setIndustries] = useState([]);
@@ -105,12 +115,28 @@ export default function AdminDashboard() {
   
   // Services Category Tab State
   const [activeServiceTab, setActiveServiceTab] = useState('all');
+  const [serviceViewMode, setServiceViewMode] = useState('home');
+  const [homeServicesSettings, setHomeServicesSettings] = useState({
+    badge: 'CAPABILITIES',
+    title: 'Premium Engineering Services',
+    subtitle: 'We deliver state-of-the-art technological solutions built to drive growth and efficiency.'
+  });
+  const [savingHomeSettings, setSavingHomeSettings] = useState(false);
   
   // Job Form State
+  const standardJobCategories = [
+    'Engineering',
+    'Product & Design',
+    'Operations',
+    'Marketing',
+    'Customer Experience'
+  ];
   const [newJob, setNewJob] = useState({
     title: '', location: '', experience: '', type: '', salary: '', category: '', tags: ''
   });
   const [editJobId, setEditJobId] = useState(null);
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
   
   // Blog Form State
   const [newBlog, setNewBlog] = useState({
@@ -129,6 +155,8 @@ export default function AdminDashboard() {
   const [newPromotion, setNewPromotion] = useState({
     title: '', description: '', cta_text: 'Learn More', cta_link: '', image: null
   });
+  const [editPromotionId, setEditPromotionId] = useState(null);
+  const [promotionImagePreview, setPromotionImagePreview] = useState(null);
 
   // User/Admin Form State
   const [newUser, setNewUser] = useState({
@@ -171,8 +199,18 @@ export default function AdminDashboard() {
         const res = await api.get('/blogs');
         setBlogs(res.data.blogs || res.data || []);
       } else if (activeTab === 'services') {
-        const res = await api.get('/services');
-        setServices(res.data.services || res.data || []);
+        const [servicesRes, settingsRes] = await Promise.all([
+          api.get('/services'),
+          api.get('/settings').catch(() => ({ data: {} }))
+        ]);
+        setServices(servicesRes.data.services || servicesRes.data || []);
+        if (settingsRes.data) {
+          setHomeServicesSettings({
+            badge: settingsRes.data.home_services_badge || 'CAPABILITIES',
+            title: settingsRes.data.home_services_title || 'Premium Engineering Services',
+            subtitle: settingsRes.data.home_services_subtitle || 'We deliver state-of-the-art technological solutions built to drive growth and efficiency.'
+          });
+        }
       } else if (activeTab === 'contacts') {
         const res = await api.get('/contact');
         setContacts(res.data.contacts || res.data || []);
@@ -204,10 +242,26 @@ export default function AdminDashboard() {
         const res = await api.get('/subscribers/admin');
         setSubscribers(res.data.subscribers || res.data || []);
       } else if (activeTab === 'careers') {
-        const res = await api.get('/jobs');
-        setJobs(res.data || []);
-        const appRes = await api.get('/jobs/applications');
-        setApplications(appRes.data || []);
+        const [jobsRes, appsRes] = await Promise.allSettled([
+          api.get('/jobs'),
+          api.get('/jobs/applications')
+        ]);
+
+        if (jobsRes.status === 'fulfilled') {
+          setJobs(Array.isArray(jobsRes.value.data) ? jobsRes.value.data : (jobsRes.value.data?.jobs || []));
+        } else {
+          console.error('Failed to load jobs:', jobsRes.reason);
+        }
+
+        if (appsRes.status === 'fulfilled') {
+          setApplications(Array.isArray(appsRes.value.data) ? appsRes.value.data : (appsRes.value.data?.applications || []));
+        } else {
+          console.error('Failed to load applications:', appsRes.reason);
+        }
+
+        if (jobsRes.status === 'rejected' && appsRes.status === 'rejected') {
+          throw jobsRes.reason || appsRes.reason;
+        }
       }
     } catch (err) {
       console.error(err);
@@ -305,6 +359,36 @@ export default function AdminDashboard() {
     setIsEditServiceModalOpen(true);
   };
 
+  const handleSaveHomeServicesSettings = async (e) => {
+    if (e) e.preventDefault();
+    setSavingHomeSettings(true);
+    try {
+      await api.put('/settings/bulk', {
+        settings: {
+          home_services_badge: homeServicesSettings.badge.trim(),
+          home_services_title: homeServicesSettings.title.trim(),
+          home_services_subtitle: homeServicesSettings.subtitle.trim()
+        }
+      });
+      showNotification('success', 'Homepage Capabilities header updated successfully!');
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to update homepage settings');
+    } finally {
+      setSavingHomeSettings(false);
+    }
+  };
+
+  const handleToggleHomeService = async (service) => {
+    try {
+      const newStatus = service.is_home ? 0 : 1;
+      await api.put(`/services/${service.id}`, { is_home: newStatus });
+      setServices(prev => prev.map(s => s.id === service.id ? { ...s, is_home: Boolean(newStatus) } : s));
+      showNotification('success', service.is_home ? `Removed "${service.title}" from Home Page` : `Added "${service.title}" to Home Page`);
+    } catch (err) {
+      showNotification('error', 'Failed to toggle home visibility');
+    }
+  };
+
   const handleCreateUser = async (e) => {
     e.preventDefault();
     try {
@@ -322,25 +406,46 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const formData = new FormData();
-      formData.append('title', newPromotion.title);
-      formData.append('description', newPromotion.description);
-      formData.append('cta_text', newPromotion.cta_text);
-      formData.append('cta_link', newPromotion.cta_link);
-      if (newPromotion.image) {
+      formData.append('title', (newPromotion.title || '').trim());
+      formData.append('description', (newPromotion.description || '').trim());
+      formData.append('cta_text', (newPromotion.cta_text || 'Learn More').trim());
+      formData.append('cta_link', (newPromotion.cta_link || '').trim());
+      if (newPromotion.image instanceof File) {
         formData.append('image', newPromotion.image);
+      } else if (typeof newPromotion.image === 'string' && newPromotion.image) {
+        formData.append('image_url', newPromotion.image);
       }
 
-      await api.post('/promotions', formData);
-      const res = await api.get('/promotions');
-      setPromotions(res.data.promotions || res.data || []);
+      if (editPromotionId) {
+        await api.put(`/promotions/${editPromotionId}`, formData);
+        showNotification('success', 'Announcement updated successfully!');
+      } else {
+        await api.post('/promotions', formData);
+        showNotification('success', 'Announcement created successfully!');
+      }
+
       setNewPromotion({ title: '', description: '', cta_text: 'Learn More', cta_link: '', image: null });
-      setSuccessMessage('Promotion created successfully');
+      setEditPromotionId(null);
+      setPromotionImagePreview(null);
       fetchData();
     } catch (err) {
-      showNotification('error', err.response?.data?.message || 'Failed to create promotion');
+      showNotification('error', err.response?.data?.message || err.message || 'Failed to save announcement');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditPromotion = (p) => {
+    setNewPromotion({
+      title: p.title || '',
+      description: p.description || '',
+      cta_text: p.cta_text || 'Learn More',
+      cta_link: p.cta_link || '',
+      image: p.image_url || null
+    });
+    setPromotionImagePreview(p.image_url || null);
+    setEditPromotionId(p.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleTogglePromotion = async (id, currentStatus) => {
@@ -502,6 +607,10 @@ export default function AdminDashboard() {
     try {
       await api.delete(`/portfolio/${id}`);
       showNotification('success', 'Portfolio project deleted successfully!');
+      if (editPortfolioId === id) {
+        setEditPortfolioId(null);
+        setNewPortfolio({ title: '', category: '', tags: '', project_url: '', description: '', sort_order: 0, image: null, is_active: 1 });
+      }
       fetchData();
     } catch (err) {
       showNotification('error', err.response?.data?.message || 'Failed to delete portfolio project');
@@ -520,12 +629,16 @@ export default function AdminDashboard() {
       return;
     }
 
+    const selectedCategory = isCustomFaqCategory
+      ? (customFaqCategory && customFaqCategory.trim() ? customFaqCategory.trim() : 'General')
+      : (newFaq.category && newFaq.category.trim() ? newFaq.category.trim() : 'General');
+
     setLoading(true);
     try {
       const payload = {
         question: newFaq.question.trim(),
         answer: newFaq.answer.trim(),
-        category: newFaq.category && newFaq.category.trim() ? newFaq.category.trim() : 'General',
+        category: selectedCategory,
         sort_order: parseInt(newFaq.sort_order, 10) || 0,
         is_active: parseInt(newFaq.is_active, 10) === 1 ? 1 : 0
       };
@@ -539,6 +652,8 @@ export default function AdminDashboard() {
       }
 
       setNewFaq({ question: '', answer: '', category: 'General', sort_order: 0, is_active: 1 });
+      setIsCustomFaqCategory(false);
+      setCustomFaqCategory('');
       setEditFaqId(null);
       fetchData();
     } catch (err) {
@@ -549,10 +664,13 @@ export default function AdminDashboard() {
   };
 
   const handleEditFaq = (item) => {
+    const isStandard = ['General', 'Pricing', 'Blog', 'About', 'Services', 'Careers'].includes(item.category);
+    setIsCustomFaqCategory(!isStandard);
+    setCustomFaqCategory(!isStandard ? (item.category || '') : '');
     setNewFaq({
       question: item.question || '',
       answer: item.answer || '',
-      category: item.category || 'General',
+      category: isStandard ? (item.category || 'General') : 'custom',
       sort_order: item.sort_order !== undefined ? item.sort_order : 0,
       is_active: item.is_active !== undefined ? item.is_active : 1
     });
@@ -923,7 +1041,13 @@ export default function AdminDashboard() {
   const handleCreateJob = async (e) => {
     e.preventDefault();
     try {
-      const payload = { ...newJob };
+      const finalCategory = isCustomCategory ? customCategory.trim() : (newJob.category || '').trim();
+      if (!finalCategory) {
+        showNotification('error', 'Please select or enter a job category');
+        return;
+      }
+
+      const payload = { ...newJob, category: finalCategory };
       if (typeof payload.tags === 'string') {
         payload.tags = payload.tags.split(',').map(tag => tag.trim()).filter(t => t);
       }
@@ -936,14 +1060,20 @@ export default function AdminDashboard() {
         showNotification('success', 'Job created successfully!');
       }
       setNewJob({ title: '', location: '', experience: '', type: '', salary: '', category: '', tags: '' });
+      setIsCustomCategory(false);
+      setCustomCategory('');
       setEditJobId(null);
       fetchData();
     } catch (err) {
-      showNotification('error', err.response?.data?.message || 'Failed to save job');
+      showNotification('error', err.response?.data?.message || err.message || 'Failed to save job');
     }
   };
 
   const handleEditJob = (job) => {
+    const isCustom = Boolean(job.category && !standardJobCategories.includes(job.category));
+    setIsCustomCategory(isCustom);
+    setCustomCategory(isCustom ? (job.category || '') : '');
+
     setNewJob({
       title: job.title || '',
       location: job.location || '',
@@ -1160,7 +1290,19 @@ export default function AdminDashboard() {
               }`}
             >
               <DollarSign size={18} />
-              Plan Quotes
+              Pricing & Plans
+            </button>
+
+            <button
+              onClick={() => setActiveTab('collaboration')}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === 'collaboration' 
+                  ? 'bg-slate-900 text-white shadow-md' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Handshake size={18} />
+              Collaboration
             </button>
 
             <button
@@ -1400,6 +1542,8 @@ export default function AdminDashboard() {
                       <button 
                         onClick={() => {
                           setEditJobId(null);
+                          setIsCustomCategory(false);
+                          setCustomCategory('');
                           setNewJob({ title: '', location: '', experience: '', type: '', salary: '', category: '', tags: '' });
                         }}
                         className="text-xs font-semibold text-slate-500 hover:text-slate-800"
@@ -1435,14 +1579,46 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Category</label>
-                      <select required value={newJob.category} onChange={(e) => setNewJob({...newJob, category: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900">
+                      <select 
+                        required 
+                        value={isCustomCategory ? 'Other' : newJob.category} 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === 'Other') {
+                            setIsCustomCategory(true);
+                            setNewJob(prev => ({ ...prev, category: customCategory || '' }));
+                          } else {
+                            setIsCustomCategory(false);
+                            setNewJob(prev => ({ ...prev, category: val }));
+                          }
+                        }} 
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900"
+                      >
                         <option value="">Select Category</option>
-                        <option value="Engineering">Engineering</option>
-                        <option value="Product & Design">Product & Design</option>
-                        <option value="Operations">Operations</option>
-                        <option value="Marketing">Marketing</option>
-                        <option value="Customer Experience">Customer Experience</option>
+                        {standardJobCategories.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                        <option value="Other">Other</option>
                       </select>
+
+                      {isCustomCategory && (
+                        <div className="mt-2.5">
+                          <label className="block text-xs font-bold text-blue-600 uppercase tracking-wider mb-1.5">
+                            Mention Category Name
+                          </label>
+                          <input 
+                            type="text" 
+                            required 
+                            value={customCategory} 
+                            onChange={(e) => {
+                              setCustomCategory(e.target.value);
+                              setNewJob(prev => ({ ...prev, category: e.target.value }));
+                            }} 
+                            placeholder="e.g. Cyber Security, Human Resources, Sales" 
+                            className="w-full px-4 py-2.5 rounded-xl border border-blue-400 bg-blue-50/30 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white shadow-sm" 
+                          />
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tags (Comma Separated)</label>
@@ -1678,118 +1854,392 @@ export default function AdminDashboard() {
 
             {/* SERVICES TAB */}
             {activeTab === 'services' && (
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                {/* Form to Create Service */}
-                <div className="xl:col-span-1 bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] h-fit">
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                      <Plus size={18} />
-                      New Service
-                    </h3>
+              <div className="space-y-6">
+                {/* Header and View Mode Switcher */}
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.015)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 mb-2">
+                      <Sparkles size={13} /> Engineering Capabilities & Services CMS
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                      Services & Capabilities Manager
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Manage the 6 Pillar Capabilities displayed on the Homepage, plus the entire technical service catalog.
+                    </p>
                   </div>
-                  {renderServiceForm()}
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <a
+                      href="/#services"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200 transition cursor-pointer"
+                    >
+                      <ExternalLink size={13} /> View on Homepage
+                    </a>
+                  </div>
                 </div>
 
-                {/* List of Services */}
-                <div className="xl:col-span-2 space-y-4">
-                  <div className="flex flex-col gap-3">
-                    <h3 className="text-lg font-bold text-slate-900">Active Services ({services.length})</h3>
-                    
-                    {/* Category Tabs */}
-                    <div className="flex gap-2 overflow-x-auto pb-2 w-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                      <button
-                        onClick={() => setActiveServiceTab('all')}
-                        className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
-                          activeServiceTab === 'all'
-                            ? 'bg-slate-900 text-white'
-                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                        }`}
-                      >
-                        All Services
-                      </button>
-                      {serviceCategories.map(cat => (
+                {/* Sub-tab Pills */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  <button
+                    onClick={() => setServiceViewMode('home')}
+                    className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                      serviceViewMode === 'home'
+                        ? 'bg-slate-900 text-white shadow-sm'
+                        : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                    }`}
+                  >
+                    <Sparkles size={14} className={serviceViewMode === 'home' ? 'text-amber-400' : 'text-slate-400'} />
+                    🏠 Home Capabilities (Premium Engineering Services)
+                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500 text-white font-extrabold ml-1">
+                      {services.filter(s => s.is_home).length} Active Pillars
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => setServiceViewMode('all')}
+                    className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                      serviceViewMode === 'all'
+                        ? 'bg-slate-900 text-white shadow-sm'
+                        : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                    }`}
+                  >
+                    <Layers size={14} />
+                    ⚙️ All Services Directory ({services.length})
+                  </button>
+                </div>
+
+                {/* SUB-TAB 1: HOME CAPABILITIES SECTION (The exact section on Homepage) */}
+                {serviceViewMode === 'home' && (
+                  <div className="space-y-6">
+                    {/* Header CMS Editor */}
+                    <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)]">
+                      <div className="border-b border-slate-100 pb-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                            <Sparkles size={18} className="text-blue-600" />
+                            Homepage Capabilities Section Header (CMS)
+                          </h3>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            Controls the Badge, Title, and Subtitle shown above the cards on the Homepage.
+                          </p>
+                        </div>
+                        <span className="text-[11px] font-mono text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+                          Target: /#services
+                        </span>
+                      </div>
+
+                      <form onSubmit={handleSaveHomeServicesSettings} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                              Section Eyebrow / Badge Label *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={homeServicesSettings.badge}
+                              onChange={(e) => setHomeServicesSettings({ ...homeServicesSettings, badge: e.target.value })}
+                              placeholder="CAPABILITIES"
+                              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-extrabold text-slate-900 focus:outline-none focus:border-slate-900 uppercase"
+                            />
+                            <p className="text-[10px] text-slate-400 mt-1">Default: CAPABILITIES</p>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                              Main Section Heading *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={homeServicesSettings.title}
+                              onChange={(e) => setHomeServicesSettings({ ...homeServicesSettings, title: e.target.value })}
+                              placeholder="Premium Engineering Services"
+                              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:border-slate-900"
+                            />
+                            <p className="text-[10px] text-slate-400 mt-1">Default: Premium Engineering Services</p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                            Subtitle Description *
+                          </label>
+                          <textarea
+                            rows={2}
+                            required
+                            value={homeServicesSettings.subtitle}
+                            onChange={(e) => setHomeServicesSettings({ ...homeServicesSettings, subtitle: e.target.value })}
+                            placeholder="We deliver state-of-the-art technological solutions built to drive growth and efficiency."
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-900 resize-none leading-relaxed"
+                          />
+                        </div>
+
+                        <div className="flex justify-end pt-2">
+                          <button
+                            type="submit"
+                            disabled={savingHomeSettings}
+                            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs transition shadow-md cursor-pointer disabled:bg-slate-400"
+                          >
+                            <Save size={14} />
+                            {savingHomeSettings ? 'Saving...' : 'Save Header Content'}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+
+                    {/* Featured Home Cards Manager */}
+                    <div className="space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 md:p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)]">
+                        <div>
+                          <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                            <Layers size={18} className="text-emerald-600" />
+                            Featured Home Capability Cards ({services.filter(s => s.is_home).length} Pillars)
+                          </h3>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            These cards appear in a 3-column grid directly under &quot;Premium Engineering Services&quot; on the Homepage.
+                          </p>
+                        </div>
+
                         <button
-                          key={cat.id}
-                          onClick={() => setActiveServiceTab(cat.id)}
-                          className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
-                            activeServiceTab === cat.id
-                              ? 'bg-slate-900 text-white'
-                              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                          }`}
+                          onClick={() => {
+                            const homeCount = services.filter(s => s.is_home).length;
+                            setNewService({
+                              title: '',
+                              icon: 'Lightbulb',
+                              image: '',
+                              short_description: '',
+                              full_description: '',
+                              category_id: '',
+                              price: '',
+                              is_home: true,
+                              tags: '',
+                              sort_order: homeCount + 1
+                            });
+                            setEditServiceId(null);
+                            setIsEditServiceModalOpen(true);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs transition shadow-xs cursor-pointer shrink-0"
                         >
-                          {cat.title}
+                          <Plus size={15} /> Add Home Capability Card
                         </button>
-                      ))}
-                      <button
-                        onClick={() => setActiveServiceTab('uncategorized')}
-                        className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
-                          activeServiceTab === 'uncategorized'
-                            ? 'bg-slate-900 text-white'
-                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                        }`}
-                      >
-                        Custom / Uncategorized
-                      </button>
+                      </div>
+
+                      {/* Home Cards Grid */}
+                      {services.filter(s => s.is_home).length === 0 ? (
+                        <div className="bg-white p-12 rounded-3xl border border-slate-100 text-center text-slate-400">
+                          <Layers size={36} className="mx-auto mb-2 text-slate-300" />
+                          <p className="font-bold text-slate-600">No services currently featured on the Home Page</p>
+                          <p className="text-xs text-slate-400 mt-1">
+                            Click &quot;Add Home Capability Card&quot; above, or switch to &quot;All Services Directory&quot; and toggle &quot;Show on Home&quot; on any service.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                          {services
+                            .filter(s => s.is_home)
+                            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                            .map((s, idx) => (
+                              <div
+                                key={s.id}
+                                className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.015)] hover:shadow-md hover:border-slate-200 transition-all flex flex-col justify-between group"
+                              >
+                                <div>
+                                  {/* Top Bar of Card */}
+                                  <div className="flex items-center justify-between gap-2 mb-4">
+                                    <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-bold text-xs">
+                                      #{s.sort_order || idx + 1}
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        Pillar #{s.sort_order || idx + 1}
+                                      </span>
+                                      {s.icon && (
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-100 text-slate-500">
+                                          {s.icon}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <h4 className="text-base font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors mb-2">
+                                    {s.title}
+                                  </h4>
+
+                                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-3 mb-4">
+                                    {s.short_description}
+                                  </p>
+
+                                  {/* Feature Tags / Chips */}
+                                  {Array.isArray(s.tags) && s.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 mb-4">
+                                      {s.tags.map((tag, tIdx) => (
+                                        <span
+                                          key={tIdx}
+                                          className="px-2.5 py-0.5 rounded-lg bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-semibold"
+                                        >
+                                          {tag}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Actions Bar */}
+                                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                  <button
+                                    onClick={() => handleToggleHomeService(s)}
+                                    className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-red-50 text-slate-600 hover:text-red-600 border border-slate-200 text-xs font-bold transition cursor-pointer"
+                                    title="Remove from Homepage capabilities"
+                                  >
+                                    Remove from Home
+                                  </button>
+
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      onClick={() => handleEditService(s)}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition cursor-pointer shadow-xs"
+                                    >
+                                      <Edit size={13} /> Edit Card
+                                    </button>
+
+                                    <button
+                                      onClick={() => handleDeleteService(s.id)}
+                                      className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition cursor-pointer"
+                                      title="Delete Service"
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      )}
                     </div>
                   </div>
+                )}
 
-                  {services.filter(s => {
-                    if (activeServiceTab === 'all') return true;
-                    if (activeServiceTab === 'uncategorized') return !s.category_id;
-                    return s.category_id === activeServiceTab;
-                  }).length === 0 ? (
-                    <div className="bg-white p-8 rounded-3xl border border-slate-100 text-center text-slate-400">
-                      No services found for this category.
+                {/* SUB-TAB 2: ALL SERVICES DIRECTORY (General Catalog) */}
+                {serviceViewMode === 'all' && (
+                  <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                    {/* Form to Create Service */}
+                    <div className="xl:col-span-1 bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] h-fit">
+                      <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                          <Plus size={18} />
+                          New Service
+                        </h3>
+                      </div>
+                      {renderServiceForm()}
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-4">
+
+                    {/* List of Services */}
+                    <div className="xl:col-span-2 space-y-4">
+                      <div className="flex flex-col gap-3">
+                        <h3 className="text-lg font-bold text-slate-900">Active Services ({services.length})</h3>
+                        
+                        {/* Category Tabs */}
+                        <div className="flex gap-2 overflow-x-auto pb-2 w-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                          <button
+                            onClick={() => setActiveServiceTab('all')}
+                            className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
+                              activeServiceTab === 'all'
+                                ? 'bg-slate-900 text-white'
+                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            All Services
+                          </button>
+                          {serviceCategories.map(cat => (
+                            <button
+                              key={cat.id}
+                              onClick={() => setActiveServiceTab(cat.id)}
+                              className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
+                                activeServiceTab === cat.id
+                                  ? 'bg-slate-900 text-white'
+                                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                              }`}
+                            >
+                              {cat.title}
+                            </button>
+                          ))}
+                          <button
+                            onClick={() => setActiveServiceTab('uncategorized')}
+                            className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
+                              activeServiceTab === 'uncategorized'
+                                ? 'bg-slate-900 text-white'
+                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            Custom / Uncategorized
+                          </button>
+                        </div>
+                      </div>
+
                       {services.filter(s => {
                         if (activeServiceTab === 'all') return true;
                         if (activeServiceTab === 'uncategorized') return !s.category_id;
                         return s.category_id === activeServiceTab;
-                      }).map((s) => (
-                        <div key={s.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex justify-between items-start gap-4">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2 mt-1 mb-2">
-                              {s.category_id && <span className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-100">{serviceCategories.find(c => c.id === s.category_id)?.title || s.category_id}</span>}
-                              {s.is_home && <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Home Pillar #{s.sort_order}</span>}
-                            </div>
-                            <h4 className="text-lg font-extrabold text-slate-900">{s.title}</h4>
-                            <p className="text-slate-500 text-sm mt-2">{s.short_description}</p>
-                            {Array.isArray(s.tags) && s.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {s.tags.map((tag, tIdx) => (
-                                  <span key={tIdx} className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-semibold text-slate-600 border border-slate-200">{tag}</span>
-                                ))}
-                              </div>
-                            )}
-                            <div className="flex items-center gap-4 mt-3">
-                              {s.price && <span className="text-sm font-semibold text-slate-900 flex items-center gap-1"><DollarSign size={14}/> {s.price}</span>}
-                              {s.icon && <span className="text-xs font-medium text-slate-500 flex items-center gap-1">Icon: {s.icon}</span>}
-                            </div>
-                          </div>
-                          {s.image && (
-                            <img src={s.image} alt={s.title} className="w-16 h-16 object-cover rounded-lg border border-slate-200" />
-                          )}
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEditService(s)}
-                              className="p-2.5 rounded-xl hover:bg-blue-50 text-slate-400 hover:text-blue-600 border border-slate-100 hover:border-blue-100 transition cursor-pointer"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteService(s.id)}
-                              className="p-2.5 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-100 hover:border-red-100 transition cursor-pointer"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
+                      }).length === 0 ? (
+                        <div className="bg-white p-8 rounded-3xl border border-slate-100 text-center text-slate-400">
+                          No services found for this category.
                         </div>
-                      ))}
+                      ) : (
+                        <div className="grid grid-cols-1 gap-4">
+                          {services.filter(s => {
+                            if (activeServiceTab === 'all') return true;
+                            if (activeServiceTab === 'uncategorized') return !s.category_id;
+                            return s.category_id === activeServiceTab;
+                          }).map((s) => (
+                            <div key={s.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex justify-between items-start gap-4">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-2 mt-1 mb-2">
+                                  {s.category_id && <span className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-100">{serviceCategories.find(c => c.id === s.category_id)?.title || s.category_id}</span>}
+                                  {s.is_home && <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Home Pillar #{s.sort_order}</span>}
+                                </div>
+                                <h4 className="text-lg font-extrabold text-slate-900">{s.title}</h4>
+                                <p className="text-slate-500 text-sm mt-2">{s.short_description}</p>
+                                {Array.isArray(s.tags) && s.tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {s.tags.map((tag, tIdx) => (
+                                      <span key={tIdx} className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-semibold text-slate-600 border border-slate-200">{tag}</span>
+                                    ))}
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-4 mt-3">
+                                  {s.price && <span className="text-sm font-semibold text-slate-900 flex items-center gap-1"><DollarSign size={14}/> {s.price}</span>}
+                                  {s.icon && <span className="text-xs font-medium text-slate-500 flex items-center gap-1">Icon: {s.icon}</span>}
+                                </div>
+                              </div>
+                              {s.image && (
+                                <img src={s.image} alt={s.title} className="w-16 h-16 object-cover rounded-lg border border-slate-200" />
+                              )}
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEditService(s)}
+                                  className="p-2.5 rounded-xl hover:bg-blue-50 text-slate-400 hover:text-blue-600 border border-slate-100 hover:border-blue-100 transition cursor-pointer"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteService(s.id)}
+                                  className="p-2.5 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-100 hover:border-red-100 transition cursor-pointer"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -2016,50 +2466,14 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* PLAN QUOTES TAB */}
+            {/* PRICING & PLANS TAB */}
             {activeTab === 'plans' && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold text-slate-900">Enterprise Plan Quotes ({plans.length})</h3>
-                {plans.length === 0 ? (
-                  <div className="bg-white p-8 rounded-3xl border border-slate-100 text-center text-slate-400">
-                    No plan inquiries registered in the database.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {plans.map((p) => (
-                      <div key={p.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)]">
-                        <div className="flex justify-between items-start border-b border-slate-100 pb-4 mb-4">
-                          <div>
-                            <h4 className="font-extrabold text-slate-900 text-base">{p.full_name}</h4>
-                            <p className="text-xs text-slate-400 mt-1">{p.email} | {p.phone}</p>
-                          </div>
-                          <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-slate-100 text-slate-700">
-                            {p.plan_name}
-                          </span>
-                        </div>
-                        
-                        <div className="grid grid-cols-3 gap-2 mb-4 text-xs font-medium">
-                          <div>
-                            <span className="text-slate-400 block">Company:</span>
-                            <span className="text-slate-800">{p.company_name || 'N/A'}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400 block">Project:</span>
-                            <span className="text-slate-800">{p.project_type || 'N/A'}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400 block">Budget:</span>
-                            <span className="text-slate-900 font-extrabold">{p.budget || 'N/A'}</span>
-                          </div>
-                        </div>
+              <PricingPlanManager inquiries={plans} />
+            )}
 
-                        <p className="text-slate-600 text-sm leading-relaxed border-t border-slate-100 pt-4 whitespace-pre-line">{p.requirements}</p>
-                        <span className="text-[10px] text-slate-400 block mt-4 font-semibold">{new Date(p.created_at).toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+            {/* COLLABORATION TAB */}
+            {activeTab === 'collaboration' && (
+              <CollaborationManager />
             )}
 
             {/* USERS TAB (Super Admin Exclusive) */}
@@ -2068,12 +2482,26 @@ export default function AdminDashboard() {
             {/* ANNOUNCEMENTS TAB */}
             {activeTab === 'promotions' && (
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                {/* Form to Create Promotion */}
+                {/* Form to Create/Edit Promotion */}
                 <div className="xl:col-span-1 bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] h-fit">
-                  <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                    <Plus size={18} />
-                    New Launch Banner
-                  </h3>
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                      <Plus size={18} />
+                      {editPromotionId ? 'Edit Announcement' : 'New Launch Banner'}
+                    </h3>
+                    {editPromotionId && (
+                      <button
+                        onClick={() => {
+                          setEditPromotionId(null);
+                          setPromotionImagePreview(null);
+                          setNewPromotion({ title: '', description: '', cta_text: 'Learn More', cta_link: '', image: null });
+                        }}
+                        className="text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
+                  </div>
                   <form onSubmit={handleCreatePromotion} className="space-y-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Launch Title</label>
@@ -2113,17 +2541,29 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">Banner Image (Optional)</label>
+                      {promotionImagePreview && (
+                        <div className="mb-2 relative w-fit">
+                          <img src={promotionImagePreview} alt="Preview" className="h-16 w-32 object-cover rounded-lg border border-slate-200" />
+                          <span className="text-[10px] text-slate-400 block mt-0.5">Current Banner Image</span>
+                        </div>
+                      )}
                       <input
                         type="file" accept="image/*"
-                        onChange={(e) => setNewPromotion({...newPromotion, image: e.target.files[0]})}
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            setNewPromotion({...newPromotion, image: file});
+                            setPromotionImagePreview(URL.createObjectURL(file));
+                          }
+                        }}
                         className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/5 transition-all text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800"
                       />
                     </div>
                     <button
                       type="submit"
-                      className="w-full py-3 rounded-xl bg-slate-900 hover:bg-black font-semibold text-white transition-all cursor-pointer"
+                      className="w-full py-3 rounded-xl bg-slate-900 hover:bg-black font-semibold text-white transition-all cursor-pointer shadow-md"
                     >
-                      Create Announcement
+                      {editPromotionId ? 'Update Announcement' : 'Create Announcement'}
                     </button>
                   </form>
                 </div>
@@ -2145,21 +2585,32 @@ export default function AdminDashboard() {
                               <h4 className="text-lg font-extrabold text-slate-900">{p.title}</h4>
                               <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold border ${
                                 p.is_active 
-                                  ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                                  : 'bg-slate-100 text-slate-400 border-slate-200'
+                                   ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                   : 'bg-slate-100 text-slate-400 border-slate-200'
                               }`}>
                                 {p.is_active ? 'ACTIVE' : 'INACTIVE'}
                               </span>
                             </div>
                             <p className="text-slate-500 text-sm mt-2 line-clamp-2">{p.description}</p>
+                            {p.cta_link && (
+                              <p className="text-xs text-blue-500 mt-1 truncate">Link: {p.cta_link}</p>
+                            )}
                           </div>
                           
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleEditPromotion(p)}
+                              className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-900 border border-slate-200 hover:border-slate-300 transition cursor-pointer"
+                              title="Edit Announcement"
+                            >
+                              <Edit size={16} />
+                            </button>
+
                             <button
                               onClick={() => handleTogglePromotion(p.id, p.is_active)}
-                              className={`px-4 py-2 text-xs font-bold rounded-xl border transition cursor-pointer ${
+                              className={`px-3.5 py-2 text-xs font-bold rounded-xl border transition cursor-pointer ${
                                 p.is_active
-                                  ? 'bg-slate-50 border-slate-200 text-slate-650 hover:bg-slate-100'
+                                  ? 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                                   : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-600'
                               }`}
                             >
@@ -2169,6 +2620,7 @@ export default function AdminDashboard() {
                             <button
                               onClick={() => handleDeletePromotion(p.id)}
                               className="p-2.5 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-100 hover:border-red-100 transition cursor-pointer"
+                              title="Delete Announcement"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -2482,33 +2934,73 @@ export default function AdminDashboard() {
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Project Image (Optional)</label>
                       <input
                         type="file" accept="image/*"
-                        onChange={(e) => setNewPortfolio({...newPortfolio, image: e.target.files[0]})}
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            setNewPortfolio({...newPortfolio, image: file});
+                          }
+                        }}
                         className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/5 transition-all text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800"
                       />
-                      {typeof newPortfolio.image === 'string' && newPortfolio.image && (
-                        <div className="flex items-center justify-between text-xs text-slate-500 mt-2">
-                          <span>Current Image: <a href={newPortfolio.image} target="_blank" rel="noreferrer" className="text-blue-500 underline">View Image</a></span>
+                      {newPortfolio.image instanceof File && (
+                        <div className="flex items-center justify-between text-xs text-slate-700 mt-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                          <span className="truncate max-w-[200px] font-medium">Selected: {newPortfolio.image.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => setNewPortfolio({...newPortfolio, image: null})}
+                            className="text-red-500 hover:text-red-700 font-bold cursor-pointer ml-2"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      )}
+                      {typeof newPortfolio.image === 'string' && newPortfolio.image && newPortfolio.image !== 'REMOVE' && (
+                        <div className="flex items-center justify-between text-xs text-slate-600 mt-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                          <span>Current Image: <a href={newPortfolio.image} target="_blank" rel="noreferrer" className="text-blue-500 underline font-semibold">View Image</a></span>
                           <button
                             type="button"
                             onClick={() => setNewPortfolio({...newPortfolio, image: 'REMOVE'})}
-                            className="text-red-500 hover:underline font-bold cursor-pointer"
+                            className="text-red-500 hover:text-red-700 font-bold cursor-pointer ml-2"
                           >
                             Remove Image
                           </button>
                         </div>
                       )}
                       {newPortfolio.image === 'REMOVE' && (
-                        <p className="text-xs text-amber-600 font-semibold mt-2">
-                          Image will be removed upon saving.
-                        </p>
+                        <div className="flex items-center justify-between text-xs text-amber-700 mt-2 bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                          <span>Image will be removed upon saving.</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const existingItem = portfolio.find(p => p.id === editPortfolioId);
+                              setNewPortfolio({...newPortfolio, image: existingItem?.image || null});
+                            }}
+                            className="text-slate-600 hover:underline font-bold cursor-pointer ml-2"
+                          >
+                            Undo
+                          </button>
+                        </div>
                       )}
                     </div>
-                    <button
-                      type="submit"
-                      className="w-full py-3 rounded-xl bg-slate-900 hover:bg-black font-semibold text-white transition-all cursor-pointer"
-                    >
-                      {editPortfolioId ? 'Save Changes' : 'Create Project'}
-                    </button>
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        type="submit"
+                        className="flex-1 py-3 rounded-xl bg-slate-900 hover:bg-black font-semibold text-white transition-all cursor-pointer shadow-md"
+                      >
+                        {editPortfolioId ? 'Save Changes' : 'Create Project'}
+                      </button>
+                      {editPortfolioId && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePortfolio(editPortfolioId)}
+                          className="px-4 py-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                          title="Delete this portfolio project permanently"
+                        >
+                          <Trash2 size={16} />
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </form>
                 </div>
 
@@ -2570,7 +3062,7 @@ export default function AdminDashboard() {
                             )}
                           </div>
                           
-                          <div className="flex items-center gap-2 self-end md:self-center">
+                          <div className="flex items-center gap-2 self-end md:self-center flex-wrap">
                             <button
                               onClick={() => handleTogglePortfolio(p.id, p.is_active)}
                               className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition cursor-pointer ${
@@ -2584,18 +3076,20 @@ export default function AdminDashboard() {
 
                             <button
                               onClick={() => handleEditPortfolio(p)}
-                              className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition cursor-pointer"
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs transition cursor-pointer"
                               title="Edit Portfolio Project"
                             >
-                              <Edit size={16} />
+                              <Edit size={14} />
+                              Edit
                             </button>
                             
                             <button
                               onClick={() => handleDeletePortfolio(p.id)}
-                              className="p-2 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-100 hover:border-red-100 transition cursor-pointer"
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold text-xs transition cursor-pointer"
                               title="Delete Portfolio Project"
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={14} />
+                              Delete
                             </button>
                           </div>
                         </div>
@@ -2620,6 +3114,8 @@ export default function AdminDashboard() {
                       <button
                         onClick={() => {
                           setEditFaqId(null);
+                          setIsCustomFaqCategory(false);
+                          setCustomFaqCategory('');
                           setNewFaq({ question: '', answer: '', category: 'General', sort_order: 0, is_active: 1 });
                         }}
                         className="text-xs text-slate-400 hover:text-red-500 font-bold cursor-pointer"
@@ -2635,43 +3131,112 @@ export default function AdminDashboard() {
                         required value={newFaq.question} rows={2}
                         onChange={(e) => setNewFaq({...newFaq, question: e.target.value})}
                         placeholder="e.g. What is your typical project timeline?"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 resize-none"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 resize-none text-sm"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Answer *</label>
                       <textarea
-                        required value={newFaq.answer} rows={5}
+                        required value={newFaq.answer} rows={4}
                         onChange={(e) => setNewFaq({...newFaq, answer: e.target.value})}
                         placeholder="Detailed answer explanation..."
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 resize-none"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 resize-none text-sm"
                       />
                     </div>
+
+                    {/* Target Page / Category Selection */}
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Category</label>
-                      <input
-                        type="text" value={newFaq.category}
-                        onChange={(e) => setNewFaq({...newFaq, category: e.target.value})}
-                        placeholder="General / Pricing / Services"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
-                      />
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Target Page / Placement *
+                      </label>
+                      <select
+                        value={isCustomFaqCategory ? 'custom' : newFaq.category}
+                        onChange={(e) => {
+                          if (e.target.value === 'custom') {
+                            setIsCustomFaqCategory(true);
+                            setNewFaq({ ...newFaq, category: 'custom' });
+                          } else {
+                            setIsCustomFaqCategory(false);
+                            setNewFaq({ ...newFaq, category: e.target.value });
+                          }
+                        }}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 font-medium text-xs focus:outline-none focus:border-slate-900"
+                      >
+                        <optgroup label="🌐 Main Pages">
+                          <option value="General">🏠 Home Page (General FAQs)</option>
+                          <option value="Pricing">🏷️ Pricing Page FAQs</option>
+                          <option value="Blog">📰 Blog Page FAQs</option>
+                          <option value="About">🏢 About Us Page FAQs</option>
+                          <option value="Services">⚙️ Services Page FAQs</option>
+                          <option value="Careers">💼 Careers Page FAQs</option>
+                        </optgroup>
+                        <optgroup label="🏢 Industry Official Pages">
+                          {industries.map(ind => (
+                            <option key={ind.id} value={`Industry - ${ind.title}`}>
+                              🚀 {ind.title} Official Page (/industries/{ind.id})
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="🧩 Custom Topic">
+                          <option value="custom">➕ Custom Topic / Page</option>
+                        </optgroup>
+                      </select>
+
+                      {isCustomFaqCategory && (
+                        <div className="mt-2.5">
+                          <label className="block text-[11px] font-bold text-slate-500 mb-1">
+                            Custom Topic Name * (e.g. Security, AI, Mobile)
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={customFaqCategory}
+                            onChange={(e) => setCustomFaqCategory(e.target.value)}
+                            placeholder="Enter custom category name..."
+                            className="w-full px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-900 text-xs focus:outline-none focus:border-slate-900"
+                          />
+                        </div>
+                      )}
+
+                      {/* Placement helper badge */}
+                      <div className="mt-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-[11px] text-slate-600 font-medium">
+                        <span className="font-bold text-blue-600">📍 Displayed on:</span>
+                        {isCustomFaqCategory
+                          ? `Custom Page/Component with category="${customFaqCategory || 'Custom'}"`
+                          : newFaq.category?.startsWith('Industry - ')
+                            ? `${newFaq.category.replace('Industry - ', '')} Official Landing Page (/industries/...)`
+                            : newFaq.category === 'General'
+                              ? 'Home Page Help Center (/)'
+                              : newFaq.category === 'Pricing'
+                                ? 'Pricing Page (/pricing)'
+                                : newFaq.category === 'Blog'
+                                  ? 'Blog Page (/blog)'
+                                  : newFaq.category === 'About'
+                                    ? 'About Us Page (/about)'
+                                    : newFaq.category === 'Services'
+                                      ? 'Services Page (/services)'
+                                      : newFaq.category === 'Careers'
+                                        ? 'Careers Page (/careers)'
+                                        : newFaq.category}
+                      </div>
                     </div>
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Sort Order</label>
                         <input
                           type="number" value={newFaq.sort_order}
                           onChange={(e) => setNewFaq({...newFaq, sort_order: parseInt(e.target.value, 10) || 0})}
-                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900"
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900 text-xs"
                         />
-                        <p className="text-[10px] text-slate-400 mt-1">Lower number = appears earlier</p>
+                        <p className="text-[10px] text-slate-400 mt-1">Lower = appears first</p>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Status</label>
                         <select
                           value={newFaq.is_active}
                           onChange={(e) => setNewFaq({...newFaq, is_active: parseInt(e.target.value, 10)})}
-                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900"
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900 text-xs"
                         >
                           <option value={1}>Active</option>
                           <option value={0}>Inactive</option>
@@ -2681,323 +3246,186 @@ export default function AdminDashboard() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full py-3 rounded-xl bg-slate-900 hover:bg-black disabled:bg-slate-400 font-semibold text-white transition-all cursor-pointer"
+                      className="w-full py-3 rounded-xl bg-slate-900 hover:bg-black disabled:bg-slate-400 font-semibold text-white transition-all cursor-pointer text-xs"
                     >
                       {editFaqId ? 'Save Changes' : 'Create FAQ'}
                     </button>
                   </form>
                 </div>
 
-                {/* List of FAQs */}
+                {/* List of FAQs with Page Filters */}
                 <div className="xl:col-span-2 space-y-4">
-                  <h3 className="text-lg font-bold text-slate-900">Frequently Asked Questions ({faqs.length})</h3>
-                  {faqs.length === 0 ? (
-                    <div className="bg-white p-8 rounded-3xl border border-slate-100 text-center text-slate-400">
-                      No FAQs found in database. Use the form on the left to create your first FAQ entry.
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-100">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">
+                        Frequently Asked Questions ({faqs.length})
+                      </h3>
+                      <p className="text-xs text-slate-400">Filter FAQs by target page or search keywords</p>
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-4">
-                      {faqs.map((f) => (
-                        <div key={f.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 flex-wrap mb-2">
-                              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{f.category || 'General'}</span>
-                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold border ml-auto md:ml-0 ${
-                                f.is_active 
-                                  ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                                  : 'bg-slate-100 text-slate-400 border-slate-200'
-                              }`}>
-                                {f.is_active ? 'ACTIVE' : 'INACTIVE'}
-                              </span>
-                              <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600">
-                                Order: {f.sort_order || 0}
-                              </span>
-                            </div>
 
-                            <h4 className="text-base font-extrabold text-slate-900 mb-2">{f.question}</h4>
-                            <p className="text-slate-600 text-sm whitespace-pre-line leading-relaxed">{f.answer}</p>
-                          </div>
-                          
-                          <div className="flex items-center gap-2 self-end md:self-center shrink-0">
-                            <button
-                              onClick={() => handleToggleFaq(f.id)}
-                              className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition cursor-pointer ${
-                                f.is_active
-                                  ? 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-                                  : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-600'
-                              }`}
-                            >
-                              {f.is_active ? 'Deactivate' : 'Activate'}
-                            </button>
+                    {/* Search Bar */}
+                    <div className="relative w-full sm:w-64">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        value={faqSearchQuery}
+                        onChange={(e) => setFaqSearchQuery(e.target.value)}
+                        placeholder="Search questions or answers..."
+                        className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white"
+                      />
+                    </div>
+                  </div>
 
-                            <button
-                              onClick={() => handleEditFaq(f)}
-                              className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition cursor-pointer"
-                              title="Edit FAQ"
-                            >
-                              <Edit size={16} />
-                            </button>
-                            
-                            <button
-                              onClick={() => handleDeleteFaq(f.id)}
-                              className="p-2 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-100 hover:border-red-100 transition cursor-pointer"
-                              title="Delete FAQ"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
+                  {/* Category Filter Tabs */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                    {[
+                      { id: 'all', label: `All (${faqs.length})` },
+                      { id: 'General', label: `🏠 Home (${faqs.filter(f => f.category === 'General').length})` },
+                      { id: 'Pricing', label: `🏷️ Pricing (${faqs.filter(f => f.category === 'Pricing').length})` },
+                      { id: 'Blog', label: `📰 Blog (${faqs.filter(f => f.category === 'Blog').length})` },
+                      { id: 'About', label: `🏢 About (${faqs.filter(f => f.category === 'About').length})` },
+                      { id: 'Services', label: `⚙️ Services (${faqs.filter(f => f.category === 'Services').length})` },
+                      { id: 'Careers', label: `💼 Careers (${faqs.filter(f => f.category === 'Careers').length})` },
+                      { id: 'custom', label: `🧩 Custom (${faqs.filter(f => !['General', 'Pricing', 'Blog', 'About', 'Services', 'Careers'].includes(f.category)).length})` }
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setFaqCategoryFilter(tab.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                          faqCategoryFilter === tab.id
+                            ? 'bg-slate-900 text-white shadow-sm'
+                            : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* FAQ Items Grid */}
+                  {(() => {
+                    const filteredFaqs = faqs.filter(f => {
+                      const matchesCategory = faqCategoryFilter === 'all'
+                        ? true
+                        : faqCategoryFilter === 'custom'
+                          ? !['General', 'Pricing', 'Blog', 'About', 'Services', 'Careers'].includes(f.category)
+                          : f.category?.toLowerCase() === faqCategoryFilter.toLowerCase();
+                      
+                      const matchesSearch = !faqSearchQuery.trim()
+                        ? true
+                        : (f.question && f.question.toLowerCase().includes(faqSearchQuery.toLowerCase())) ||
+                          (f.answer && f.answer.toLowerCase().includes(faqSearchQuery.toLowerCase())) ||
+                          (f.category && f.category.toLowerCase().includes(faqSearchQuery.toLowerCase()));
+
+                      return matchesCategory && matchesSearch;
+                    });
+
+                    if (filteredFaqs.length === 0) {
+                      return (
+                        <div className="bg-white p-8 rounded-3xl border border-slate-100 text-center text-slate-400">
+                          {faqSearchQuery || faqCategoryFilter !== 'all'
+                            ? 'No FAQs found matching the selected filter/search.'
+                            : 'No FAQs found in database. Use the form on the left to create your first FAQ entry.'}
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      );
+                    }
+
+                    const getCategoryPill = (cat) => {
+                      switch (cat) {
+                        case 'General':
+                          return { text: '🏠 Home Page', badgeClass: 'bg-blue-50 text-blue-700 border-blue-200' };
+                        case 'Pricing':
+                          return { text: '🏷️ Pricing Page', badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' };
+                        case 'Blog':
+                          return { text: '📰 Blog Page', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+                        case 'About':
+                          return { text: '🏢 About Us Page', badgeClass: 'bg-cyan-50 text-cyan-700 border-cyan-200' };
+                        case 'Services':
+                          return { text: '⚙️ Services Page', badgeClass: 'bg-amber-50 text-amber-700 border-amber-200' };
+                        case 'Careers':
+                          return { text: '💼 Careers Page', badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' };
+                        default:
+                          return { text: `🧩 Custom: ${cat || 'General'}`, badgeClass: 'bg-slate-100 text-slate-700 border-slate-200' };
+                      }
+                    };
+
+                    return (
+                      <div className="grid grid-cols-1 gap-4">
+                        {filteredFaqs.map((f) => {
+                          const catPill = getCategoryPill(f.category);
+                          return (
+                            <div key={f.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2.5 flex-wrap mb-2">
+                                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black border ${catPill.badgeClass}`}>
+                                    {catPill.text}
+                                  </span>
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ml-auto md:ml-0 ${
+                                    f.is_active 
+                                      ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                      : 'bg-slate-100 text-slate-400 border-slate-200'
+                                  }`}>
+                                    {f.is_active ? 'ACTIVE' : 'INACTIVE'}
+                                  </span>
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600">
+                                    Order: #{f.sort_order || 0}
+                                  </span>
+                                </div>
+
+                                <h4 className="text-base font-extrabold text-slate-900 mb-2">{f.question}</h4>
+                                <p className="text-slate-600 text-xs whitespace-pre-line leading-relaxed">{f.answer}</p>
+                              </div>
+                              
+                              <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                                <button
+                                  onClick={() => handleToggleFaq(f.id)}
+                                  className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition cursor-pointer ${
+                                    f.is_active
+                                      ? 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                                      : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-600'
+                                  }`}
+                                >
+                                  {f.is_active ? 'Deactivate' : 'Activate'}
+                                </button>
+
+                                <button
+                                  onClick={() => handleEditFaq(f)}
+                                  className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition cursor-pointer"
+                                  title="Edit FAQ"
+                                >
+                                  <Edit size={16} />
+                                </button>
+                                
+                                <button
+                                  onClick={() => handleDeleteFaq(f.id)}
+                                  className="p-2 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-100 hover:border-red-100 transition cursor-pointer"
+                                  title="Delete FAQ"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}
 
-            {/* INDUSTRIES TAB */}
+            {/* INDUSTRIES TAB (CMS) */}
             {activeTab === 'industries' && (
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                {/* Form to Create/Edit Industry */}
-                <div className="xl:col-span-1 bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] h-fit">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                      <Plus size={18} />
-                      {editIndustryId ? 'Edit Industry' : 'New Industry'}
-                    </h3>
-                    {editIndustryId && (
-                      <button
-                        onClick={() => {
-                          setEditIndustryId(null);
-                          setNewIndustry({
-                            id: '', title: '', subtitle: '', icon: '', color: '#3B82F6', description: '', badge: '', features: '', benefits: '', sort_order: 0, is_active: 1
-                          });
-                        }}
-                        className="text-xs text-slate-400 hover:text-red-500 font-bold cursor-pointer"
-                      >
-                        Cancel Edit
-                      </button>
-                    )}
-                  </div>
-                  <form onSubmit={handleCreateIndustry} className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Industry ID / Slug *</label>
-                      <input
-                        type="text" required value={newIndustry.id}
-                        disabled={!!editIndustryId}
-                        onChange={(e) => setNewIndustry({...newIndustry, id: e.target.value})}
-                        placeholder="e.g. ecommerce (lowercase, hyphens)"
-                        className={`w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 ${
-                          editIndustryId ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''
-                        }`}
-                      />
-                      {editIndustryId && (
-                        <p className="text-[10px] text-slate-400 mt-1">ID / Slug cannot be changed during edit.</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Title *</label>
-                      <input
-                        type="text" required value={newIndustry.title}
-                        onChange={(e) => setNewIndustry({...newIndustry, title: e.target.value})}
-                        placeholder="e.g. E-Commerce Solutions"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Subtitle / Tagline *</label>
-                      <input
-                        type="text" required value={newIndustry.subtitle}
-                        onChange={(e) => setNewIndustry({...newIndustry, subtitle: e.target.value})}
-                        placeholder="e.g. Scalable Digital Stores & Payment Gateway Integration"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Icon Name *</label>
-                        <input
-                          type="text" required value={newIndustry.icon}
-                          onChange={(e) => setNewIndustry({...newIndustry, icon: e.target.value})}
-                          placeholder="FaStore / FaRocket"
-                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Theme Color *</label>
-                        <div className="flex gap-2">
-                          <input
-                            type="color" value={newIndustry.color}
-                            onChange={(e) => setNewIndustry({...newIndustry, color: e.target.value})}
-                            className="w-10 h-10 rounded-xl border border-slate-200 bg-white p-1 cursor-pointer"
-                          />
-                          <input
-                            type="text" required value={newIndustry.color}
-                            onChange={(e) => setNewIndustry({...newIndustry, color: e.target.value})}
-                            placeholder="#3B82F6"
-                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 font-mono text-xs placeholder-slate-400 focus:outline-none focus:border-slate-900"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Badge Label *</label>
-                      <input
-                        type="text" required value={newIndustry.badge}
-                        onChange={(e) => setNewIndustry({...newIndustry, badge: e.target.value})}
-                        placeholder="e.g. Retail & Sales"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Description *</label>
-                      <textarea
-                        required value={newIndustry.description} rows={4}
-                        onChange={(e) => setNewIndustry({...newIndustry, description: e.target.value})}
-                        placeholder="Detailed overview of industry capabilities and target value proposition..."
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 resize-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Features (Comma-separated) *</label>
-                      <textarea
-                        required value={newIndustry.features} rows={3}
-                        onChange={(e) => setNewIndustry({...newIndustry, features: e.target.value})}
-                        placeholder="Feature 1, Feature 2, Feature 3"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 resize-none text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Benefits (Comma-separated) *</label>
-                      <textarea
-                        required value={newIndustry.benefits} rows={3}
-                        onChange={(e) => setNewIndustry({...newIndustry, benefits: e.target.value})}
-                        placeholder="Benefit 1, Benefit 2, Benefit 3"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 resize-none text-xs"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Sort Order</label>
-                        <input
-                          type="number" value={newIndustry.sort_order}
-                          onChange={(e) => setNewIndustry({...newIndustry, sort_order: parseInt(e.target.value, 10) || 0})}
-                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Status</label>
-                        <select
-                          value={newIndustry.is_active}
-                          onChange={(e) => setNewIndustry({...newIndustry, is_active: parseInt(e.target.value, 10)})}
-                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-900"
-                        >
-                          <option value={1}>Active</option>
-                          <option value={0}>Inactive</option>
-                        </select>
-                      </div>
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full py-3 rounded-xl bg-slate-900 hover:bg-black disabled:bg-slate-400 font-semibold text-white transition-all cursor-pointer"
-                    >
-                      {editIndustryId ? 'Save Changes' : 'Create Industry'}
-                    </button>
-                  </form>
-                </div>
-
-                {/* List of Industries */}
-                <div className="xl:col-span-2 space-y-4">
-                  <h3 className="text-lg font-bold text-slate-900">Industries Modules ({industries.length})</h3>
-                  {industries.length === 0 ? (
-                    <div className="bg-white p-8 rounded-3xl border border-slate-100 text-center text-slate-400">
-                      No industries found in database. Use the form on the left to create your first industry record.
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-4">
-                      {industries.map((ind) => (
-                        <div key={ind.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 flex-wrap mb-2">
-                              <span
-                                className="w-3.5 h-3.5 rounded-full shrink-0 border border-slate-200"
-                                style={{ backgroundColor: ind.color || '#3B82F6' }}
-                                title={`Color: ${ind.color}`}
-                              />
-                              <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-                                {ind.id}
-                              </span>
-                              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                {ind.badge}
-                              </span>
-                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold border ml-auto md:ml-0 ${
-                                ind.is_active 
-                                  ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                                  : 'bg-slate-100 text-slate-400 border-slate-200'
-                              }`}>
-                                {ind.is_active ? 'ACTIVE' : 'INACTIVE'}
-                              </span>
-                              <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600">
-                                Order: {ind.sort_order || 0}
-                              </span>
-                            </div>
-
-                            <h4 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                              {ind.title}
-                              <span className="text-xs font-mono font-normal text-slate-400">({ind.icon})</span>
-                            </h4>
-                            <p className="text-xs font-semibold text-slate-500 mb-2">{ind.subtitle}</p>
-                            <p className="text-slate-600 text-sm whitespace-pre-line leading-relaxed line-clamp-3 mb-3">{ind.description}</p>
-
-                            {/* Features & Benefits Pills */}
-                            <div className="flex flex-wrap gap-2 text-xs">
-                              {Array.isArray(ind.features) && ind.features.length > 0 && (
-                                <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-medium">
-                                  {ind.features.length} Features
-                                </span>
-                              )}
-                              {Array.isArray(ind.benefits) && ind.benefits.length > 0 && (
-                                <span className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-medium">
-                                  {ind.benefits.length} Benefits
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-2 self-end md:self-center shrink-0">
-                            <button
-                              onClick={() => handleToggleIndustry(ind.id)}
-                              className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition cursor-pointer ${
-                                ind.is_active
-                                  ? 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-                                  : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-600'
-                              }`}
-                            >
-                              {ind.is_active ? 'Deactivate' : 'Activate'}
-                            </button>
-
-                            <button
-                              onClick={() => handleEditIndustry(ind)}
-                              className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition cursor-pointer"
-                              title="Edit Industry"
-                            >
-                              <Edit size={16} />
-                            </button>
-                            
-                            <button
-                              onClick={() => handleDeleteIndustry(ind.id)}
-                              className="p-2 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-100 hover:border-red-100 transition cursor-pointer"
-                              title="Delete Industry"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <IndustryManager
+                onJumpToFaq={(categoryName) => {
+                  setActiveTab('faqs');
+                  if (categoryName) {
+                    setCustomFaqCategory(categoryName);
+                    setIsCustomFaqCategory(true);
+                    setNewFaq(prev => ({ ...prev, category: categoryName }));
+                  }
+                }}
+              />
             )}
 
             {/* TEAM TAB */}

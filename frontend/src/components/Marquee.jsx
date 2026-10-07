@@ -5,9 +5,9 @@ export function BrandLogo({ logoUrl, fallbackDomain, altText, lazy, customStyle 
   const sources = [
     ...(logoUrl ? [logoUrl] : []),
     ...(fallbackDomain ? [
-      `https://logo.clearbit.com/${fallbackDomain}`,
-      `https://logo.uplead.com/${fallbackDomain}`,
-      `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://${fallbackDomain}&size=128`
+      `https://unavatar.io/${fallbackDomain}`,
+      `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${fallbackDomain}&size=128`,
+      `https://icons.duckduckgo.com/ip3/${fallbackDomain}.ico`
     ] : [])
   ].filter(Boolean);
 

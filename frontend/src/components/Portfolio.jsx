@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/api';
 import gsap from 'gsap';
@@ -86,13 +87,13 @@ export default function Portfolio() {
               Discover how we architected scalable solutions that helped partners optimize workflow and grow revenue.
             </p>
           </div>
-          <a
-            href="#contact"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-800 hover:text-black transition-colors shrink-0 group border-b border-slate-800 pb-1"
+          <Link
+            to="/contact"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-800 hover:text-black transition-colors shrink-0 group border-b border-slate-800 pb-1 cursor-pointer"
           >
             Start a project with us
             <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-          </a>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

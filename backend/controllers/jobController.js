@@ -5,13 +5,18 @@ const asyncHandler = require("../utils/asyncHandler");
 exports.getJobs = asyncHandler(async (req, res) => {
   const [rows] = await db.query("SELECT * FROM jobs ORDER BY id DESC");
   
-  // Format tags back from JSON string or comma-separated to array if needed
+  // Format tags back from JSON string or comma-separated to array
   const formattedJobs = rows.map(job => {
     let parsedTags = [];
-    try {
-      parsedTags = JSON.parse(job.tags);
-    } catch {
-      parsedTags = job.tags ? job.tags.split(",").map(t => t.trim()) : [];
+    if (job.tags) {
+      try {
+        const parsed = JSON.parse(job.tags);
+        parsedTags = Array.isArray(parsed) ? parsed : [String(parsed)];
+      } catch {
+        parsedTags = typeof job.tags === "string" 
+          ? job.tags.split(",").map(t => t.trim()).filter(Boolean) 
+          : [];
+      }
     }
     return {
       ...job,
@@ -26,7 +31,7 @@ exports.getJobs = asyncHandler(async (req, res) => {
 exports.createJob = asyncHandler(async (req, res) => {
   const { title, location, experience, type, salary, category, tags } = req.body;
 
-  if (!title || !location || !experience || !type || !salary || !category) {
+  if (!title?.trim() || !location?.trim() || !experience?.trim() || !type?.trim() || !salary?.trim() || !category?.trim()) {
     return res.status(400).json({
       success: false,
       message: "All fields are required"
@@ -37,7 +42,7 @@ exports.createJob = asyncHandler(async (req, res) => {
 
   const [result] = await db.query(
     "INSERT INTO jobs (title, location, experience, type, salary, category, tags) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    [title, location, experience, type, salary, category, tagsString]
+    [title.trim(), location.trim(), experience.trim(), type.trim(), salary.trim(), category.trim(), tagsString]
   );
 
   res.status(201).json({
@@ -62,7 +67,7 @@ exports.updateJob = asyncHandler(async (req, res) => {
   const { title, location, experience, type, salary, category, tags } = req.body;
   const jobId = req.params.id;
 
-  if (!title || !location || !experience || !type || !salary || !category) {
+  if (!title?.trim() || !location?.trim() || !experience?.trim() || !type?.trim() || !salary?.trim() || !category?.trim()) {
     return res.status(400).json({
       success: false,
       message: "All fields are required"
@@ -73,7 +78,7 @@ exports.updateJob = asyncHandler(async (req, res) => {
 
   await db.query(
     "UPDATE jobs SET title = ?, location = ?, experience = ?, type = ?, salary = ?, category = ?, tags = ? WHERE id = ?",
-    [title, location, experience, type, salary, category, tagsString, jobId]
+    [title.trim(), location.trim(), experience.trim(), type.trim(), salary.trim(), category.trim(), tagsString, jobId]
   );
 
   res.json({

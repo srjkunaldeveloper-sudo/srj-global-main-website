@@ -54,6 +54,17 @@ export const SiteSettingsProvider = ({ children }) => {
     return fallback;
   };
 
+  const refreshSettings = async () => {
+    try {
+      const res = await api.get('/settings');
+      if (res.data && res.data.success && res.data.settings) {
+        setSettings(res.data.settings);
+      }
+    } catch (err) {
+      console.error('Failed to refresh site settings:', err);
+    }
+  };
+
   return (
     <SiteSettingsContext.Provider
       value={{
@@ -61,6 +72,7 @@ export const SiteSettingsProvider = ({ children }) => {
         loading,
         error,
         getSetting,
+        refreshSettings,
       }}
     >
       {children}

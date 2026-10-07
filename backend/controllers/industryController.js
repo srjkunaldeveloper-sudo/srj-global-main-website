@@ -34,12 +34,37 @@ const normalizeListInput = (input) => {
   return "[]";
 };
 
+const normalizeStatsInput = (input) => {
+  if (!input || input === "null" || input === "undefined") return "[]";
+  if (Array.isArray(input)) {
+    const cleaned = input
+      .filter(item => item && (item.number || item.label || item.value))
+      .map(item => ({
+        number: String(item.number || item.value || "").trim(),
+        label: String(item.label || "").trim()
+      }));
+    return JSON.stringify(cleaned);
+  }
+  if (typeof input === "string") {
+    const trimmed = input.trim();
+    if (!trimmed) return "[]";
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return normalizeStatsInput(parsed);
+    } catch (e) {
+      return "[]";
+    }
+  }
+  return "[]";
+};
+
 // Helper function to safely format database row and parse features/benefits into JS arrays
 const formatIndustryRow = (row) => {
   if (!row) return null;
 
   let parsedFeatures = [];
   let parsedBenefits = [];
+  let parsedStats = [];
 
   if (row.features) {
     if (Array.isArray(row.features)) {
@@ -67,10 +92,28 @@ const formatIndustryRow = (row) => {
     }
   }
 
+  if (row.stats) {
+    if (Array.isArray(row.stats)) {
+      parsedStats = row.stats;
+    } else if (typeof row.stats === "string") {
+      try {
+        parsedStats = JSON.parse(row.stats);
+        if (!Array.isArray(parsedStats)) parsedStats = [];
+      } catch (e) {
+        parsedStats = [];
+      }
+    }
+  }
+
   return {
     ...row,
     features: parsedFeatures,
-    benefits: parsedBenefits
+    benefits: parsedBenefits,
+    stats: parsedStats,
+    cta_title: row.cta_title || null,
+    cta_subtitle: row.cta_subtitle || null,
+    cta_button_text: row.cta_button_text || null,
+    cta_button_url: row.cta_button_url || null
   };
 };
 
@@ -114,7 +157,11 @@ exports.getAdminIndustries = asyncHandler(async (req, res) => {
 
 // Admin API: Create a new industry
 exports.createIndustry = asyncHandler(async (req, res) => {
-  const { id, title, subtitle, icon, color, description, badge, features, benefits, sort_order, is_active } = req.body;
+  const { 
+    id, title, subtitle, icon, color, description, badge, 
+    features, benefits, stats, cta_title, cta_subtitle, cta_button_text, cta_button_url,
+    sort_order, is_active 
+  } = req.body;
 
   const slug = id.trim().toLowerCase();
 
@@ -126,12 +173,16 @@ exports.createIndustry = asyncHandler(async (req, res) => {
 
   const normalizedFeatures = normalizeListInput(features);
   const normalizedBenefits = normalizeListInput(benefits);
+  const normalizedStats = normalizeStatsInput(stats);
   const activeStatus = is_active !== undefined ? (is_active == 1 || is_active === "true" || is_active === true ? 1 : 0) : 1;
   const order = sort_order !== undefined ? parseInt(sort_order, 10) : 0;
 
   await db.query(
-    `INSERT INTO industries (id, title, subtitle, icon, color, description, badge, features, benefits, is_active, sort_order)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO industries (
+      id, title, subtitle, icon, color, description, badge, 
+      features, benefits, stats, cta_title, cta_subtitle, cta_button_text, cta_button_url,
+      is_active, sort_order
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       slug,
       title.trim(),
@@ -142,6 +193,11 @@ exports.createIndustry = asyncHandler(async (req, res) => {
       badge.trim(),
       normalizedFeatures,
       normalizedBenefits,
+      normalizedStats,
+      cta_title ? cta_title.trim() : null,
+      cta_subtitle ? cta_subtitle.trim() : null,
+      cta_button_text ? cta_button_text.trim() : null,
+      cta_button_url ? cta_button_url.trim() : null,
       activeStatus,
       order
     ]
@@ -164,7 +220,11 @@ exports.updateIndustry = asyncHandler(async (req, res) => {
   }
   const existing = existingRows[0];
 
-  const { title, subtitle, icon, color, description, badge, features, benefits, sort_order, is_active } = req.body;
+  const { 
+    title, subtitle, icon, color, description, badge, 
+    features, benefits, stats, cta_title, cta_subtitle, cta_button_text, cta_button_url,
+    sort_order, is_active 
+  } = req.body;
 
   const updatedTitle = title !== undefined ? title.trim() : existing.title;
   const updatedSubtitle = subtitle !== undefined ? subtitle.trim() : existing.subtitle;
@@ -174,12 +234,19 @@ exports.updateIndustry = asyncHandler(async (req, res) => {
   const updatedBadge = badge !== undefined ? badge.trim() : existing.badge;
   const updatedFeatures = features !== undefined ? normalizeListInput(features) : existing.features;
   const updatedBenefits = benefits !== undefined ? normalizeListInput(benefits) : existing.benefits;
+  const updatedStats = stats !== undefined ? normalizeStatsInput(stats) : (existing.stats || "[]");
+  const updatedCtaTitle = cta_title !== undefined ? (cta_title ? cta_title.trim() : null) : existing.cta_title;
+  const updatedCtaSubtitle = cta_subtitle !== undefined ? (cta_subtitle ? cta_subtitle.trim() : null) : existing.cta_subtitle;
+  const updatedCtaButtonText = cta_button_text !== undefined ? (cta_button_text ? cta_button_text.trim() : null) : existing.cta_button_text;
+  const updatedCtaButtonUrl = cta_button_url !== undefined ? (cta_button_url ? cta_button_url.trim() : null) : existing.cta_button_url;
   const updatedSortOrder = sort_order !== undefined ? parseInt(sort_order, 10) : existing.sort_order;
   const updatedIsActive = is_active !== undefined ? (is_active == 1 || is_active === "true" || is_active === true ? 1 : 0) : existing.is_active;
 
   await db.query(
     `UPDATE industries 
-     SET title = ?, subtitle = ?, icon = ?, color = ?, description = ?, badge = ?, features = ?, benefits = ?, sort_order = ?, is_active = ?
+     SET title = ?, subtitle = ?, icon = ?, color = ?, description = ?, badge = ?, 
+         features = ?, benefits = ?, stats = ?, cta_title = ?, cta_subtitle = ?, cta_button_text = ?, cta_button_url = ?,
+         sort_order = ?, is_active = ?
      WHERE id = ?`,
     [
       updatedTitle,
@@ -190,6 +257,11 @@ exports.updateIndustry = asyncHandler(async (req, res) => {
       updatedBadge,
       updatedFeatures,
       updatedBenefits,
+      updatedStats,
+      updatedCtaTitle,
+      updatedCtaSubtitle,
+      updatedCtaButtonText,
+      updatedCtaButtonUrl,
       updatedSortOrder,
       updatedIsActive,
       id

@@ -19,9 +19,12 @@ import {
   Layers,
   Settings,
   Compass,
-  Award
+  Award,
+  DollarSign,
+  Handshake
 } from 'lucide-react';
 import api from '../../config/api';
+import { useSiteSettings } from '../../context/SiteSettingsContext';
 
 // Defined Group Metadata
 const GROUP_CONFIG = {
@@ -74,6 +77,21 @@ const GROUP_CONFIG = {
     title: 'Services Page',
     icon: Layers,
     description: 'Services page Hero and Directory Intro badges, headings, and descriptions.'
+  },
+  pricing: {
+    title: 'Pricing Page Content',
+    icon: DollarSign,
+    description: 'Pricing page Hero section badge, headline, subtitle paragraph, and Bottom CTA banner configuration.'
+  },
+  home: {
+    title: 'Home Capabilities (Services)',
+    icon: Sparkles,
+    description: 'Home page Capabilities ("Premium Engineering Services") section top badge, main heading, and subtitle paragraph.'
+  },
+  collaboration: {
+    title: 'Collaboration Page Content',
+    icon: Handshake,
+    description: 'Collaboration page Hero section badge, headline, subtitle paragraph, offerings header, and conversion CTA configuration.'
   }
 };
 
@@ -88,6 +106,7 @@ const SOCIAL_ICONS = {
 };
 
 export default function SiteSettingsManager() {
+  const { refreshSettings } = useSiteSettings();
   const [savedSettings, setSavedSettings] = useState({});
   const [currentSettings, setCurrentSettings] = useState({});
   const [settingsMetadata, setSettingsMetadata] = useState([]);
@@ -179,6 +198,10 @@ export default function SiteSettingsManager() {
         const updatedSavedMap = { ...savedSettings, ...changedPayload };
         setSavedSettings(updatedSavedMap);
         setCurrentSettings(updatedSavedMap);
+
+        if (refreshSettings) {
+          refreshSettings();
+        }
 
         setSuccessMessage(res.data.message || 'Site settings updated successfully!');
         setTimeout(() => setSuccessMessage(null), 5000);
@@ -484,11 +507,75 @@ export default function SiteSettingsManager() {
                     </div>
                   );
                 })}
+                {/* Card Bottom Quick Save Action */}
+                <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-2">
+                  <span className="text-xs text-slate-400 font-medium">
+                    {isDirty ? 'Unsaved changes in settings' : 'All changes in this section are up to date.'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={!isDirty || isSaving}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-sm ${
+                      isDirty && !isSaving
+                        ? 'bg-slate-900 hover:bg-black text-white shadow-md'
+                        : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                    }`}
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={14} />
+                        Save {groupMeta.title}
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* Sticky Bottom Floating Bar when modifications exist */}
+      {isDirty && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-3.5 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-5">
+          <div className="flex items-center gap-2.5 text-xs font-semibold">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>You have unsaved changes</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleDiscard}
+              disabled={isSaving}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition cursor-pointer"
+            >
+              Discard
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="px-5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-md"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" /> Saving...
+                </>
+              ) : (
+                <>
+                  <Save size={14} /> Save Now
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

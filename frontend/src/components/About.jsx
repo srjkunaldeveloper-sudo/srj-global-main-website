@@ -5,6 +5,7 @@ import OurJourney from "./about/OurJourney";
 import TeamSection from "./about/TeamSection";
 import ClientReviews from "./about/ClientReviews";
 import Stats from "./Stats";
+import Faq from "./Faq";
 
 import { motion } from "framer-motion";
 import { ArrowRight, Globe, Users, Trophy, Target, Shield, Zap, Code, Cpu } from "lucide-react";
@@ -79,6 +80,13 @@ export default function About() {
       <TeamSection />
 
       <ClientReviews />
+
+      <Faq 
+        category="About" 
+        badge="About Us FAQs" 
+        title="Frequently Asked Questions" 
+        subtitle="Common questions regarding our organization, leadership, and engineering standards." 
+      />
 
     </div>
   );

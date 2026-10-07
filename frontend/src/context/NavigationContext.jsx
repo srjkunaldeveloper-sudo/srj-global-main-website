@@ -14,10 +14,11 @@ const EMERGENCY_FALLBACK_ITEMS = [
   { id: 1, group_location: 'header', parent_id: null, label: 'Home', url: '/', item_type: 'route', target: '_self', sort_order: 1, is_active: 1 },
   { id: 2, group_location: 'header', parent_id: null, label: 'Services', url: '/services', item_type: 'route', target: '_self', sort_order: 2, is_active: 1 },
   { id: 3, group_location: 'header', parent_id: null, label: 'Pricing', url: '/pricing', item_type: 'route', target: '_self', sort_order: 3, is_active: 1 },
-  { id: 4, group_location: 'header', parent_id: null, label: 'Collaboration', url: '/collaboration', item_type: 'route', target: '_self', sort_order: 4, is_active: 1 },
-  { id: 5, group_location: 'header', parent_id: null, label: 'Industries', url: '/industries', item_type: 'route', target: '_self', sort_order: 5, is_active: 1 },
-  { id: 6, group_location: 'header', parent_id: null, label: 'About Us', url: '/about', item_type: 'route', target: '_self', sort_order: 6, is_active: 1 },
-  { id: 7, group_location: 'header', parent_id: null, label: 'Contact Us', url: '/contact', item_type: 'route', target: '_self', sort_order: 7, is_active: 1 },
+  { id: 51, group_location: 'header', parent_id: null, label: 'Careers', url: '/careers', item_type: 'route', target: '_self', sort_order: 4, is_active: 1 },
+  { id: 4, group_location: 'header', parent_id: null, label: 'Collaboration', url: '/collaboration', item_type: 'route', target: '_self', sort_order: 5, is_active: 1 },
+  { id: 5, group_location: 'header', parent_id: null, label: 'Industries', url: '/industries', item_type: 'route', target: '_self', sort_order: 6, is_active: 1 },
+  { id: 6, group_location: 'header', parent_id: null, label: 'About Us', url: '/about', item_type: 'route', target: '_self', sort_order: 7, is_active: 1 },
+  { id: 7, group_location: 'header', parent_id: null, label: 'Contact Us', url: '/contact', item_type: 'route', target: '_self', sort_order: 8, is_active: 1 },
 
   // Services Submenu Children (under parent_id = 2)
   { id: 8, group_location: 'header', parent_id: 2, label: 'Game Development', url: '/services#game-development', item_type: 'hash', target: '_self', icon_name: 'Rocket', description: 'Immersive 2D/3D games for mobile, PC & console', sort_order: 1, is_active: 1 },
@@ -39,8 +40,7 @@ const EMERGENCY_FALLBACK_ITEMS = [
   { id: 20, group_location: 'footer_quick', parent_id: null, label: 'Contact Us', url: '/contact', item_type: 'route', target: '_self', sort_order: 1, is_active: 1 },
   { id: 21, group_location: 'footer_quick', parent_id: null, label: 'Pricing Plans', url: '/pricing', item_type: 'route', target: '_self', sort_order: 2, is_active: 1 },
   { id: 22, group_location: 'footer_quick', parent_id: null, label: 'Blog', url: '/blog', item_type: 'route', target: '_self', sort_order: 3, is_active: 1 },
-  { id: 23, group_location: 'footer_quick', parent_id: null, label: 'Careers', url: '/careers', item_type: 'route', target: '_self', sort_order: 4, is_active: 1 },
-  { id: 24, group_location: 'footer_quick', parent_id: null, label: 'Collaboration', url: '/collaboration', item_type: 'route', target: '_self', sort_order: 5, is_active: 1 },
+  { id: 24, group_location: 'footer_quick', parent_id: null, label: 'Collaboration', url: '/collaboration', item_type: 'route', target: '_self', sort_order: 4, is_active: 1 },
 
   // Footer Legal Links
   { id: 25, group_location: 'footer_legal', parent_id: null, label: 'Privacy Policy', url: '/privacy', item_type: 'route', target: '_self', sort_order: 1, is_active: 1 },

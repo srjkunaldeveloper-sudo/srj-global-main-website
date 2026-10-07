@@ -33,6 +33,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import axios from 'axios';
 import api, { API_BASE_URL } from "../../config/api";
+import { useSiteSettings } from "../../context/SiteSettingsContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -61,14 +62,17 @@ const PARTNER_POINTS = [
 // FAQ_DATA replaced by API data (/api/faqs?category=Pricing)
 
 const Pricing = () => {
+  const { getSetting } = useSiteSettings();
   const navigate = useNavigate();
   const openCalendly = () => {
     window.location.href = "/#contact";
   };
   
   // State
+  const [plansList, setPlansList] = useState(plans);
+  const [addonsList, setAddonsList] = useState(addOns);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState(plans[1]); // Default to Standard
+  const [selectedPlan, setSelectedPlan] = useState(plans[1] || plans[0]); // Default to Standard
   const [selectedAddons, setSelectedAddons] = useState([]);
   const [timeline, setTimeline] = useState(TIMELINE_OPTIONS[1]); // Default 8 weeks
   const [activeFaq, setActiveFaq] = useState(null);
@@ -79,6 +83,27 @@ const Pricing = () => {
   const [faqsError, setFaqsError] = useState(false);
 
   useEffect(() => {
+    const fetchPricingData = async () => {
+      try {
+        const res = await api.get('/pricing/public');
+        if (res.data && res.data.success) {
+          if (Array.isArray(res.data.plans) && res.data.plans.length > 0) {
+            setPlansList(res.data.plans);
+            const standardOrFirst = res.data.plans.find(p => p.name === 'Standard') || res.data.plans[0];
+            setSelectedPlan(prev => {
+              const matched = res.data.plans.find(p => p.id === prev?.id || p.name === prev?.name);
+              return matched || standardOrFirst;
+            });
+          }
+          if (Array.isArray(res.data.addOns) && res.data.addOns.length > 0) {
+            setAddonsList(res.data.addOns);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching live pricing plans:', err);
+      }
+    };
+
     const fetchPricingFaqs = async () => {
       try {
         const res = await api.get('/faqs?category=Pricing');
@@ -98,6 +123,7 @@ const Pricing = () => {
       }
     };
 
+    fetchPricingData();
     fetchPricingFaqs();
   }, []);
   
@@ -386,11 +412,11 @@ const Pricing = () => {
           "@id": "https://srjglobaltechnology.com/pricing#catalog",
           "name": "SRJ Global Technology Engagement Models",
           "description": "Flexible B2B investment ranges for enterprise software, custom web applications, mobile apps, and AI solutions.",
-          "itemListElement": plans.map((p, idx) => ({
+          "itemListElement": plansList.map((p, idx) => ({
             "@type": "Offer",
             "position": idx + 1,
             "name": p.displayName || p.name,
-            "description": p.description || p.features.join(", "),
+            "description": p.description || p.features?.join(", "),
             "priceSpecification": {
               "@type": "PriceSpecification",
               "name": p.pricingLabel || "Estimated Investment",
@@ -420,10 +446,10 @@ const Pricing = () => {
         </motion.div>
         
         <motion.div className="relative z-10 w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}>
-          {plans.map((plan, idx) => {
-            const isStandard = plan.name === "Standard";
+          {plansList.map((plan, idx) => {
+            const isStandard = plan.name === "Standard" || plan.is_popular;
             const isPremium = plan.name === "Premium";
-            const isSelected = selectedPlan.name === plan.name;
+            const isSelected = selectedPlan?.id ? selectedPlan.id === plan.id : selectedPlan?.name === plan.name;
             
             return (
               <motion.div 
@@ -517,7 +543,7 @@ const Pricing = () => {
         </div>
 
         <div className="luxury-addon-grid">
-          {addOns.map((addon, index) => {
+          {addonsList.map((addon, index) => {
             const isSelected = selectedAddons.some(a => a.name === addon.name);
             return (
               <div 
@@ -748,16 +774,25 @@ const Pricing = () => {
       <section className="pricing-section" style={{ textAlign: 'center', padding: '75px 5%', backgroundColor: '#ffffff' }}>
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
           <h2 style={{ fontSize: 'clamp(2.2rem, 4vw, 42px)', fontWeight: '800', marginBottom: '16px', color: '#000000' }}>
-            Let's Build Something Amazing
+            {getSetting('pricing_cta_title', "Need a custom enterprise architecture?")}
           </h2>
           <p style={{ color: '#475569', fontSize: '1.25rem', maxWidth: '600px', margin: '0 auto 28px' }}>
-            Our experts will help you choose the perfect solution for your business.
+            {getSetting('pricing_cta_subtitle', "Talk to our senior architects to structure a custom proposal, dedicated pod, or RFP evaluation.")}
           </p>
           <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="search-btn" style={{ boxShadow: 'none', color: '#ffffff' }} onClick={() => openCalendly()}>
-              Request Proposal
+            <button className="search-btn cursor-pointer" style={{ boxShadow: 'none', color: '#ffffff' }} onClick={() => {
+              const targetUrl = getSetting('pricing_cta_button_url', '/#contact');
+              if (targetUrl.startsWith('#')) {
+                window.location.hash = targetUrl;
+              } else if (targetUrl.startsWith('/')) {
+                navigate(targetUrl);
+              } else {
+                window.open(targetUrl, '_blank', 'noopener,noreferrer');
+              }
+            }}>
+              {getSetting('pricing_cta_button_text', 'Book Architectural Review')}
             </button>
-            <button className="search-btn" style={{ background: 'transparent', border: '1px solid rgba(0,0,0,0.2)', boxShadow: 'none', color: '#000000' }} onClick={() => navigate('/services')}>
+            <button className="search-btn cursor-pointer" style={{ background: 'transparent', border: '1px solid rgba(0,0,0,0.2)', boxShadow: 'none', color: '#000000' }} onClick={() => navigate('/services')}>
               Explore Services
             </button>
           </div>

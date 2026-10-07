@@ -2,19 +2,31 @@ import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Check, ArrowRight, ShieldCheck, HeartHandshake, Layers, Users } from 'lucide-react';
+import { useSiteSettings } from '../../context/SiteSettingsContext';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function PricingHero() {
+  const { getSetting } = useSiteSettings();
   const containerRef = useRef(null);
   const leftSideRef = useRef(null);
   const hubRef = useRef(null);
 
-  const headingText = "Flexible Pricing That Grows With You";
+  const badgeText = getSetting('pricing_hero_badge', 'Transparent Pricing');
+  const headingText = getSetting('pricing_hero_title', 'Flexible Pricing That Grows With You');
+  const subtitleText = getSetting('pricing_hero_subtitle', 'Choose the engagement model that fits your business. From startups to enterprise organizations, we provide scalable software solutions with transparent pricing and no hidden costs.');
+  const ctaText = getSetting('pricing_hero_cta_text', 'Schedule Consultation');
+  const ctaUrl = getSetting('pricing_hero_cta_url', '/#contact');
   const words = headingText.split(" ");
 
   const openCalendly = () => {
-    window.location.href = "/#contact";
+    if (ctaUrl.startsWith('#')) {
+      window.location.hash = ctaUrl;
+    } else if (ctaUrl.startsWith('/')) {
+      window.location.href = ctaUrl;
+    } else {
+      window.open(ctaUrl, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const pricingCards = [
@@ -133,7 +145,7 @@ export default function PricingHero() {
         <div ref={leftSideRef} className="lg:col-span-5 flex flex-col justify-center text-left">
           <div className="left-fade-badge inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-50 border border-slate-200 mb-6 w-fit">
             <span className="text-[10px] font-extrabold text-slate-800 uppercase tracking-widest">
-              Transparent Pricing
+              {badgeText}
             </span>
           </div>
 
@@ -156,22 +168,22 @@ export default function PricingHero() {
           </h1>
 
           <p className="left-fade-rest text-slate-500 text-sm sm:text-base leading-relaxed mb-10 max-w-lg">
-            Choose the engagement model that fits your business. From startups to enterprise organizations, we provide scalable software solutions with transparent pricing and no hidden costs.
+            {subtitleText}
           </p>
 
           <div className="left-fade-rest flex flex-wrap items-center gap-4 mb-12">
             <button 
               onClick={() => window.scrollTo({ top: 900, behavior: 'smooth' })}
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-black hover:bg-black/90 text-white text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 shadow-md shadow-slate-900/10"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-black hover:bg-black/90 text-white text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 shadow-md shadow-slate-900/10 cursor-pointer"
             >
               Get Free Quote
               <ArrowRight size={14} />
             </button>
             <button 
               onClick={openCalendly}
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-black text-sm border border-slate-200 font-bold transition-all duration-200 hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-black text-sm border border-slate-200 font-bold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
             >
-              Schedule Consultation
+              {ctaText}
             </button>
           </div>
 

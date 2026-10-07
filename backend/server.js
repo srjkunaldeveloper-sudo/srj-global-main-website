@@ -1,4 +1,5 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 process.on("uncaughtException", (err) => {
   console.error("[FATAL] Uncaught Exception:", err.message);
@@ -11,7 +12,6 @@ const helmet = require("helmet");
 const cors = require("cors");
 const compression = require("compression");
 const morgan = require("morgan");
-const path = require("path");
 
 const db = require("./config/db");
 const errorHandler = require("./middleware/errorHandler");
@@ -39,11 +39,11 @@ const partnerLogoRoutes = require("./routes/partnerLogoRoutes");
 const processStepRoutes = require("./routes/processStepRoutes");
 const companyStatsRoutes = require("./routes/companyStatsRoutes");
 const trustPointRoutes = require("./routes/trustPointRoutes");
+const pricingRoutes = require("./routes/pricingRoutes");
+const collaborationRoutes = require("./routes/collaborationRoutes");
 const { generateSitemap } = require("./controllers/sitemapController");
 
 const app = express();
-
-
 
 app.set("trust proxy", 1);
 
@@ -74,14 +74,18 @@ app.use((req, res, next) => {
   next();
 });
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(",")
-  : ["http://localhost:5173"];
+const configuredOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim()).filter(Boolean)
+  : ["http://localhost:5173", "http://localhost:5174"];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (
+        !origin ||
+        configuredOrigins.includes(origin) ||
+        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+      ) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
@@ -157,6 +161,8 @@ app.use("/api/partner-logos", partnerLogoRoutes);
 app.use("/api/process-steps", processStepRoutes);
 app.use("/api/company-stats", companyStatsRoutes);
 app.use("/api/trust-points", trustPointRoutes);
+app.use("/api/pricing", pricingRoutes);
+app.use("/api/collaboration", collaborationRoutes);
 app.use("/api", sendMeetingRoute);
 
 app.get("/sitemap.xml", generateSitemap);
@@ -171,11 +177,15 @@ app.use((req, res) => {
 
 app.use(errorHandler);
 
+const { runAutoMigrations } = require("./migrations");
+
 let server;
 
 db.getConnection()
-  .then(() => {
+  .then(async () => {
     console.log("MySQL connected successfully");
+
+    await runAutoMigrations();
 
     const PORT = process.env.PORT || 5000;
 

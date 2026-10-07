@@ -9,10 +9,10 @@ export function BrandLogo({ domain, id, alt, lazy, forceUrl, customStyle, logoUr
   const sources = [
     ...(finalLogoUrl ? [finalLogoUrl] : []),
     ...(finalDomain ? [
-      `https://logo.clearbit.com/${finalDomain}`,
+      `https://unavatar.io/${finalDomain}`,
+      `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${finalDomain}&size=128`,
       `https://vectorlogo.zone/logos/${id || finalDomain}/default.svg`,
-      `https://logo.uplead.com/${finalDomain}`,
-      `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://${finalDomain}&size=128`
+      `https://icons.duckduckgo.com/ip3/${finalDomain}.ico`
     ] : [])
   ].filter(Boolean);
 

@@ -85,6 +85,38 @@ CREATE TABLE IF NOT EXISTS `plan_inquiries` (
   INDEX `idx_plan_inquiries_created_at` (`created_at` DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Pricing Plans Table
+CREATE TABLE IF NOT EXISTS `pricing_plans` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(50) NOT NULL,
+  `display_name` VARCHAR(100) NOT NULL,
+  `price_display` VARCHAR(100) NOT NULL,
+  `pricing_label` VARCHAR(100) DEFAULT 'Estimated Investment',
+  `cta_text` VARCHAR(100) DEFAULT 'Discuss Your Project',
+  `description` TEXT,
+  `features` JSON DEFAULT NULL,
+  `badge` VARCHAR(50) DEFAULT NULL,
+  `is_popular` TINYINT(1) DEFAULT 0,
+  `sort_order` INT DEFAULT 0,
+  `is_active` TINYINT(1) DEFAULT 1,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_pricing_plans_sort` (`sort_order`, `is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Pricing Add-ons Table
+CREATE TABLE IF NOT EXISTS `pricing_addons` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(100) NOT NULL,
+  `price_display` VARCHAR(100) NOT NULL,
+  `description` TEXT,
+  `sort_order` INT DEFAULT 0,
+  `is_active` TINYINT(1) DEFAULT 1,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_pricing_addons_sort` (`sort_order`, `is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Promotions Table
 CREATE TABLE IF NOT EXISTS `promotions` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -157,12 +189,33 @@ CREATE TABLE IF NOT EXISTS `industries` (
   `badge` VARCHAR(100) NOT NULL,
   `features` TEXT NOT NULL,
   `benefits` TEXT NOT NULL,
+  `stats` TEXT DEFAULT NULL,
+  `cta_title` VARCHAR(255) DEFAULT NULL,
+  `cta_subtitle` TEXT DEFAULT NULL,
+  `cta_button_text` VARCHAR(100) DEFAULT NULL,
+  `cta_button_url` VARCHAR(255) DEFAULT NULL,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `sort_order` INT NOT NULL DEFAULT 0,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX `idx_industries_is_active` (`is_active`),
   INDEX `idx_industries_sort_order` (`sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Collaboration Models Table
+CREATE TABLE IF NOT EXISTS `collaboration_models` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(255) NOT NULL,
+  `description` TEXT NOT NULL,
+  `icon` VARCHAR(100) NOT NULL DEFAULT 'Lightbulb',
+  `image` VARCHAR(500) DEFAULT NULL,
+  `features` TEXT NOT NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_collab_is_active` (`is_active`),
+  INDEX `idx_collab_sort_order` (`sort_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Team Members Table
@@ -290,7 +343,18 @@ INSERT INTO `site_settings` (`setting_key`, `setting_value`, `group_name`, `fiel
 ('services_hero_subtitle', 'We build scalable web applications, enterprise software, AI-powered solutions, cloud infrastructure, and mobile applications that help startups and enterprises grow faster.', 'services', 'textarea', 'Services page hero section subtitle paragraph'),
 ('services_intro_badge', 'The SRJ Ecosystem', 'services', 'text', 'Services directory section top eyebrow/badge text'),
 ('services_intro_title', 'Everything You Need to Build, Scale, and Transform', 'services', 'text', 'Services directory section main heading'),
-('services_intro_description', 'Explore our complete range of technology services designed to help businesses turn ideas into powerful digital products.', 'services', 'textarea', 'Services directory section subtitle paragraph')
+('services_intro_description', 'Explore our complete range of technology services designed to help businesses turn ideas into powerful digital products.', 'services', 'textarea', 'Services directory section subtitle paragraph'),
+
+-- Pricing Page Group
+('pricing_hero_badge', 'ENGINEERED ARCHITECTURE & INVESTMENT', 'pricing', 'text', 'Badge text at the top of Pricing Hero'),
+('pricing_hero_title', 'Flexible Pricing That Grows With You', 'pricing', 'text', 'Main headline of Pricing Hero section'),
+('pricing_hero_subtitle', 'Transparent, milestone-based investment tiers crafted for scalable digital products and enterprise platforms.', 'pricing', 'textarea', 'Subtitle description of Pricing Hero section'),
+('pricing_hero_cta_text', 'Schedule Architecture Review', 'pricing', 'text', 'Primary CTA button text in Pricing Hero'),
+('pricing_hero_cta_url', '/#contact', 'pricing', 'text', 'Target URL or route for Pricing Hero CTA'),
+('pricing_cta_title', 'Need a custom enterprise architecture?', 'pricing', 'text', 'Bottom CTA banner main title on Pricing page'),
+('pricing_cta_subtitle', 'Talk to our senior architects to structure a custom proposal, dedicated pod, or RFP evaluation.', 'pricing', 'textarea', 'Bottom CTA banner subtitle on Pricing page'),
+('pricing_cta_button_text', 'Book Architectural Review', 'pricing', 'text', 'Bottom CTA button text on Pricing page'),
+('pricing_cta_button_url', '/#contact', 'pricing', 'text', 'Bottom CTA button target URL on Pricing page')
 ON DUPLICATE KEY UPDATE
   `group_name` = VALUES(`group_name`),
   `field_type` = VALUES(`field_type`),
@@ -323,10 +387,11 @@ INSERT INTO `navigation_items` (`id`, `group_location`, `parent_id`, `label`, `u
 (1, 'header', NULL, 'Home', '/', 'route', '_self', NULL, NULL, 1, 1),
 (2, 'header', NULL, 'Services', '/services', 'route', '_self', NULL, NULL, 2, 1),
 (3, 'header', NULL, 'Pricing', '/pricing', 'route', '_self', NULL, NULL, 3, 1),
-(4, 'header', NULL, 'Collaboration', '/collaboration', 'route', '_self', NULL, NULL, 4, 1),
-(5, 'header', NULL, 'Industries', '/industries', 'route', '_self', NULL, NULL, 5, 1),
-(6, 'header', NULL, 'About Us', '/about', 'route', '_self', NULL, NULL, 6, 1),
-(7, 'header', NULL, 'Contact Us', '/contact', 'route', '_self', NULL, NULL, 7, 1),
+(51, 'header', NULL, 'Careers', '/careers', 'route', '_self', NULL, NULL, 4, 1),
+(4, 'header', NULL, 'Collaboration', '/collaboration', 'route', '_self', NULL, NULL, 5, 1),
+(5, 'header', NULL, 'Industries', '/industries', 'route', '_self', NULL, NULL, 6, 1),
+(6, 'header', NULL, 'About Us', '/about', 'route', '_self', NULL, NULL, 7, 1),
+(7, 'header', NULL, 'Contact Us', '/contact', 'route', '_self', NULL, NULL, 8, 1),
 
 -- Services Dropdown Children (Parent ID: 2)
 (8, 'header', 2, 'Game Development', '/services#game-development', 'hash', '_self', 'Rocket', 'Immersive 2D/3D games for mobile, PC & console', 1, 1),
@@ -348,8 +413,7 @@ INSERT INTO `navigation_items` (`id`, `group_location`, `parent_id`, `label`, `u
 (20, 'footer_quick', NULL, 'Contact Us', '/contact', 'route', '_self', NULL, NULL, 1, 1),
 (21, 'footer_quick', NULL, 'Pricing Plans', '/pricing', 'route', '_self', NULL, NULL, 2, 1),
 (22, 'footer_quick', NULL, 'Blog', '/blog', 'route', '_self', NULL, NULL, 3, 1),
-(23, 'footer_quick', NULL, 'Careers', '/careers', 'route', '_self', NULL, NULL, 4, 1),
-(24, 'footer_quick', NULL, 'Collaboration', '/collaboration', 'route', '_self', NULL, NULL, 5, 1),
+(24, 'footer_quick', NULL, 'Collaboration', '/collaboration', 'route', '_self', NULL, NULL, 4, 1),
 
 -- Footer Legal Links
 (25, 'footer_legal', NULL, 'Privacy Policy', '/privacy', 'route', '_self', NULL, NULL, 1, 1),
@@ -390,7 +454,7 @@ INSERT INTO `partner_logos` (`id`, `name`, `logo_url`, `website_url`, `alt_text`
 (2, 'Reliance Industries', 'https://upload.wikimedia.org/wikipedia/en/0/0e/Reliance_Industries.svg', 'https://ril.com', 'Reliance Industries', 'ril.com', 2, 1),
 (3, 'Maruti Suzuki', 'https://upload.wikimedia.org/wikipedia/commons/8/86/Maruti_Suzuki_logo.svg', 'https://marutisuzuki.com', 'Maruti Suzuki', 'marutisuzuki.com', 3, 1),
 (4, 'Samsung', 'https://upload.wikimedia.org/wikipedia/commons/a/a7/Samsung_logo.svg', 'https://samsung.com', 'Samsung', 'samsung.com', 4, 1),
-(5, 'LG', 'https://logo.clearbit.com/lg.com', 'https://lg.com', 'LG', 'lg.com', 5, 1),
+(5, 'LG', 'https://upload.wikimedia.org/wikipedia/commons/2/20/LG_symbol.svg', 'https://lg.com', 'LG', 'lg.com', 5, 1),
 (6, 'Nissan', 'https://upload.wikimedia.org/wikipedia/commons/2/23/Nissan_2020_logo.svg', 'https://nissan-global.com', 'Nissan', 'nissan-global.com', 6, 1),
 (7, 'Mahindra Group', 'https://upload.wikimedia.org/wikipedia/commons/8/89/Mahindra_logo.svg', 'https://mahindra.com', 'Mahindra Group', 'mahindra.com', 7, 1),
 (8, 'Government e-Marketplace', 'https://upload.wikimedia.org/wikipedia/en/9/91/Government_e_Marketplace_Logo.png', 'https://gem.gov.in', 'Government e-Marketplace', 'gem.gov.in', 8, 1),
@@ -499,7 +563,7 @@ CREATE TABLE IF NOT EXISTS `trust_points` (
   INDEX `idx_trust_points_active_sort` (`is_active`, `sort_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Initial Trust Points Seed Data
+-- Trust Points Seed Data
 INSERT INTO `trust_points` (`id`, `title`, `description`, `icon_name`, `sort_order`, `is_active`) VALUES
 (1, 'End-to-End Product Development', 'From idea validation to post-launch growth — we own the entire lifecycle.', 'CheckCircle2', 1, 1),
 (2, 'Business & Technology Consultation', 'Strategic guidance that aligns technology investments with business outcomes.', 'CheckCircle2', 2, 1),
@@ -511,6 +575,34 @@ ON DUPLICATE KEY UPDATE
   `icon_name` = VALUES(`icon_name`),
   `sort_order` = VALUES(`sort_order`),
   `is_active` = VALUES(`is_active`);
+
+-- Jobs Table
+CREATE TABLE IF NOT EXISTS `jobs` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(255) NOT NULL,
+  `location` VARCHAR(255) NOT NULL,
+  `experience` VARCHAR(100) NOT NULL,
+  `type` VARCHAR(100) NOT NULL,
+  `salary` VARCHAR(100) NOT NULL,
+  `category` VARCHAR(100) NOT NULL,
+  `tags` TEXT,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_jobs_category` (`category`),
+  INDEX `idx_jobs_created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Job Applications Table
+CREATE TABLE IF NOT EXISTS `job_applications` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `job_title` VARCHAR(255) NOT NULL,
+  `full_name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  `phone` VARCHAR(20) NOT NULL,
+  `message` TEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_job_applications_created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 
 

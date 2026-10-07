@@ -348,7 +348,7 @@ export default function PartnerLogoManager() {
                           className="max-h-full max-w-full object-contain"
                           onError={(e) => {
                             if (logo.fallback_domain) {
-                              e.target.src = `https://logo.clearbit.com/${logo.fallback_domain}`;
+                              e.target.src = `https://unavatar.io/${logo.fallback_domain}`;
                             } else {
                               e.target.style.display = 'none';
                             }

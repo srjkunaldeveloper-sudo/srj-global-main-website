@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { 
@@ -193,19 +194,50 @@ export default function Process() {
           </p>
           
           <div className="flex flex-wrap gap-3.5 mb-12">
-            <a 
-              href={processCtaPrimaryUrl} 
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-black text-white text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 shadow-md shadow-slate-900/10"
-            >
-              {processCtaPrimaryText}
-              <ArrowRight size={14} />
-            </a>
-            <a 
-              href={processCtaSecondaryUrl} 
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-900 text-sm border border-slate-200 font-bold transition-all duration-200 hover:-translate-y-0.5"
-            >
-              {processCtaSecondaryText}
-            </a>
+            {(() => {
+              const renderCta = (url, text, isPrimary) => {
+                let target = url;
+                if (!target || target === '#contact' || target === 'contact') {
+                  target = '/contact';
+                }
+
+                const className = isPrimary
+                  ? "inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-black text-white text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 shadow-md shadow-slate-900/10 cursor-pointer"
+                  : "inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-900 text-sm border border-slate-200 font-bold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer";
+
+                if (target.startsWith('http://') || target.startsWith('https://')) {
+                  return (
+                    <a href={target} target="_blank" rel="noreferrer" className={className}>
+                      {text}
+                      {isPrimary && <ArrowRight size={14} />}
+                    </a>
+                  );
+                }
+
+                if (target.startsWith('#')) {
+                  return (
+                    <a href={target} className={className}>
+                      {text}
+                      {isPrimary && <ArrowRight size={14} />}
+                    </a>
+                  );
+                }
+
+                return (
+                  <Link to={target} className={className}>
+                    {text}
+                    {isPrimary && <ArrowRight size={14} />}
+                  </Link>
+                );
+              };
+
+              return (
+                <>
+                  {renderCta(processCtaPrimaryUrl, processCtaPrimaryText, true)}
+                  {renderCta(processCtaSecondaryUrl, processCtaSecondaryText, false)}
+                </>
+              );
+            })()}
           </div>
 
           {/* Process illustration image */}

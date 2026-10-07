@@ -38,6 +38,10 @@ const errorHandler = (err, req, res, next) => {
     error = handleJWTExpiredError();
   }
 
+  if (err.message === "Not allowed by CORS") {
+    error = new AppError("Not allowed by CORS", 403);
+  }
+
   if (err.code === "ECONNREFUSED") {
     error = new AppError("Database connection failed", 503);
   } else if (err.code && err.code.startsWith("ER_")) {
