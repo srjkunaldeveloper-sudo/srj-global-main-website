@@ -58,36 +58,6 @@ const GROUP_CONFIG = {
     icon: Clock,
     description: 'Customer inquiry response promise SLA and operating business hours.'
   },
-  hero: {
-    title: 'Hero Section',
-    icon: Sparkles,
-    description: 'Home page Hero section headline variants, top badge, subtitle paragraph, and CTA buttons.'
-  },
-  process: {
-    title: 'Process Section',
-    icon: Compass,
-    description: 'Home page Process section top badge, main heading, subtitle paragraph, and CTA buttons.'
-  },
-  trust: {
-    title: 'Trust & Stats Section',
-    icon: Award,
-    description: 'Home page Trust section and Achievements section headings and subtitles.'
-  },
-  services: {
-    title: 'Services Page',
-    icon: Layers,
-    description: 'Services page Hero and Directory Intro badges, headings, and descriptions.'
-  },
-  pricing: {
-    title: 'Pricing Page Content',
-    icon: DollarSign,
-    description: 'Pricing page Hero section badge, headline, subtitle paragraph, and Bottom CTA banner configuration.'
-  },
-  home: {
-    title: 'Home Capabilities (Services)',
-    icon: Sparkles,
-    description: 'Home page Capabilities ("Premium Engineering Services") section top badge, main heading, and subtitle paragraph.'
-  },
   collaboration: {
     title: 'Collaboration Page Content',
     icon: Handshake,
@@ -236,14 +206,15 @@ export default function SiteSettingsManager() {
       footer: [],
       seo: [],
       business: [],
-      hero: [],
-      process: [],
-      trust: [],
-      services: []
+      collaboration: []
     };
 
     settingsMetadata.forEach((setting) => {
       const group = setting.group_name || 'general';
+      // Exclude homepage, services, and pricing sections since they are managed in their dedicated managers
+      if (['hero', 'process', 'trust', 'home', 'services', 'pricing'].includes(group)) {
+        return;
+      }
       if (!map[group]) {
         map[group] = [];
       }
@@ -252,6 +223,11 @@ export default function SiteSettingsManager() {
 
     return map;
   }, [settingsMetadata]);
+
+  // Non-landing settings count
+  const nonLandingCount = useMemo(() => {
+    return Object.values(groupedSettings).reduce((acc, curr) => acc + curr.length, 0);
+  }, [groupedSettings]);
 
   // Loading Skeleton State
   if (isLoading) {
@@ -383,7 +359,7 @@ export default function SiteSettingsManager() {
               : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
           }`}
         >
-          All Settings ({settingsMetadata.length})
+          All Settings ({nonLandingCount})
         </button>
         {Object.keys(GROUP_CONFIG).map((groupKey) => {
           const groupMeta = GROUP_CONFIG[groupKey];

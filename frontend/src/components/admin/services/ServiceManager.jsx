@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, ExternalLink, Layers } from 'lucide-react';
+import {
+  Sparkles,
+  Layers,
+  Gamepad2,
+  FileText,
+  ExternalLink,
+  Plus
+} from 'lucide-react';
 import api from '../../../config/api';
 import ToastAlert from '../shared/ToastAlert';
 import HomeCapabilitiesView from './HomeCapabilitiesView';
 import ServiceDirectoryView from './ServiceDirectoryView';
+import ServicesPageHeaderEditor from './ServicesPageHeaderEditor';
+import GameDevelopmentManager from './GameDevelopmentManager';
 import ServiceModal from './ServiceModal';
 
 const INITIAL_SERVICE_STATE = {
@@ -24,8 +33,10 @@ export default function ServiceManager({ onNotify }) {
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
 
+  // Active Main Tab: 'catalog' | 'page-content' | 'game-dev' | 'home-pillars'
+  const [serviceViewMode, setServiceViewMode] = useState('catalog');
   const [activeServiceTab, setActiveServiceTab] = useState('all');
-  const [serviceViewMode, setServiceViewMode] = useState('home');
+
   const [homeServicesSettings, setHomeServicesSettings] = useState({
     badge: 'CAPABILITIES',
     title: 'Premium Engineering Services',
@@ -177,68 +188,141 @@ export default function ServiceManager({ onNotify }) {
     setIsEditServiceModalOpen(true);
   };
 
+  const VIEW_TABS = [
+    {
+      id: 'catalog',
+      label: 'All Services Catalog',
+      icon: Layers,
+      color: '#2563EB',
+      badge: `${services.length} Services`
+    },
+    {
+      id: 'page-content',
+      label: 'Services Page Content',
+      icon: FileText,
+      color: '#7C3AED',
+      badge: 'Hero & Intro CMS'
+    },
+    {
+      id: 'game-dev',
+      label: 'Game Development',
+      icon: Gamepad2,
+      color: '#EA580C',
+      badge: '16 Games'
+    },
+    {
+      id: 'home-pillars',
+      label: 'Homepage Capabilities',
+      icon: Sparkles,
+      color: '#059669',
+      badge: `${services.filter((s) => s.is_home).length} Home Pillars`
+    }
+  ];
+
   return (
     <div className="space-y-6">
       <ToastAlert notification={notification} />
 
-      {/* Header and View Mode Switcher */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.015)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Top Banner Header with Industries Pattern */}
+      <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 mb-2">
-            <Sparkles size={13} /> Engineering Capabilities & Services CMS
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 mb-3">
+            <Layers size={14} /> Official Engineering & Services CMS
           </div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">
             Services & Capabilities Manager
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Manage the 6 Pillar Capabilities displayed on the Homepage, plus the entire technical service catalog.
+          <p className="text-slate-500 text-sm max-w-2xl leading-relaxed">
+            Manage your complete technical services catalog across 8 categories, customize the <code>/services</code> landing page hero & intro, inspect the 16 game development solutions, and control homepage capabilities.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-3 shrink-0 flex-wrap">
           <a
-            href="/#services"
+            href="/services"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200 transition cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200 transition-all cursor-pointer"
           >
-            <ExternalLink size={13} /> View on Homepage
+            <ExternalLink size={14} /> View /services Page
           </a>
+          <button
+            onClick={() => {
+              setNewService(INITIAL_SERVICE_STATE);
+              setEditServiceId(null);
+              setIsEditServiceModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs transition-all shadow-md cursor-pointer"
+          >
+            <Plus size={16} /> New Service
+          </button>
         </div>
       </div>
 
-      {/* Sub-tab Pills */}
+      {/* Industries-Style Section Pill Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        <button
-          onClick={() => setServiceViewMode('home')}
-          className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-            serviceViewMode === 'home'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
-          }`}
-        >
-          <Sparkles size={14} className={serviceViewMode === 'home' ? 'text-amber-400' : 'text-slate-400'} />
-          🏠 Home Capabilities (Premium Engineering Services)
-          <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500 text-white font-extrabold ml-1">
-            {services.filter((s) => s.is_home).length} Active Pillars
-          </span>
-        </button>
+        {VIEW_TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = serviceViewMode === tab.id;
 
-        <button
-          onClick={() => setServiceViewMode('all')}
-          className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-            serviceViewMode === 'all'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
-          }`}
-        >
-          <Layers size={14} />
-          ⚙️ All Services Directory ({services.length})
-        </button>
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setServiceViewMode(tab.id)}
+              className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2.5 cursor-pointer border ${
+                isActive
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-md'
+                  : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'
+              }`}
+            >
+              <div
+                className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                style={{
+                  backgroundColor: isActive ? 'rgba(255,255,255,0.15)' : `${tab.color}15`,
+                  color: isActive ? '#FFFFFF' : tab.color
+                }}
+              >
+                <Icon size={14} />
+              </div>
+              <span>{tab.label}</span>
+              <span
+                className="text-[10px] px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider"
+                style={{
+                  backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : `${tab.color}12`,
+                  color: isActive ? '#FFFFFF' : tab.color
+                }}
+              >
+                {tab.badge}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* SUB-TAB 1: HOME CAPABILITIES SECTION */}
-      {serviceViewMode === 'home' && (
+      {/* TAB 1: ALL SERVICES CATALOG */}
+      {serviceViewMode === 'catalog' && (
+        <ServiceDirectoryView
+          services={services}
+          activeServiceTab={activeServiceTab}
+          setActiveServiceTab={setActiveServiceTab}
+          newService={newService}
+          setNewService={setNewService}
+          onCreateService={handleCreateOrUpdateService}
+          onEditService={handleEditService}
+          onDeleteService={handleDeleteService}
+        />
+      )}
+
+      {/* TAB 2: SERVICES PAGE HERO & INTRO CONTENT */}
+      {serviceViewMode === 'page-content' && (
+        <ServicesPageHeaderEditor onNotify={showNotification} />
+      )}
+
+      {/* TAB 3: GAME DEVELOPMENT SHOWCASE */}
+      {serviceViewMode === 'game-dev' && <GameDevelopmentManager />}
+
+      {/* TAB 4: HOMEPAGE CAPABILITIES PILLARS */}
+      {serviceViewMode === 'home-pillars' && (
         <HomeCapabilitiesView
           homeServicesSettings={homeServicesSettings}
           setHomeServicesSettings={setHomeServicesSettings}
@@ -247,20 +331,6 @@ export default function ServiceManager({ onNotify }) {
           services={services}
           onOpenAddHomeCard={handleOpenAddHomeCard}
           onToggleHomeService={handleToggleHomeService}
-          onEditService={handleEditService}
-          onDeleteService={handleDeleteService}
-        />
-      )}
-
-      {/* SUB-TAB 2: ALL SERVICES DIRECTORY */}
-      {serviceViewMode === 'all' && (
-        <ServiceDirectoryView
-          services={services}
-          activeServiceTab={activeServiceTab}
-          setActiveServiceTab={setActiveServiceTab}
-          newService={newService}
-          setNewService={setNewService}
-          onCreateService={handleCreateOrUpdateService}
           onEditService={handleEditService}
           onDeleteService={handleDeleteService}
         />

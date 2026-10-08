@@ -4,6 +4,7 @@ import AdminSidebar from './AdminSidebar';
 import ToastAlert from './shared/ToastAlert';
 
 // Domain Managers
+import LandingPageManager from './landing/LandingPageManager';
 import BlogManager from './blogs/BlogManager';
 import ServiceManager from './services/ServiceManager';
 import ContactManager from './contacts/ContactManager';
@@ -80,7 +81,9 @@ export default function AdminDashboard() {
         {/* Section Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight capitalize">
-            {activeTab === 'partner-logos'
+            {activeTab === 'landing-page'
+              ? 'Landing Page Content Hub'
+              : activeTab === 'partner-logos'
               ? 'Partner Logos'
               : activeTab === 'process-steps'
               ? 'Process & Roadmap'
@@ -95,12 +98,15 @@ export default function AdminDashboard() {
               : `${activeTab} Management`}
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Add, update, or remove live entries from your database.
+            {activeTab === 'landing-page'
+              ? 'Configure and manage all visual sections across the homepage.'
+              : 'Add, update, or remove live entries from your database.'}
           </p>
         </div>
 
         {/* Dynamic Domain Tab Modules */}
         <div className="space-y-10">
+          {activeTab === 'landing-page' && <LandingPageManager onNotify={showNotification} />}
           {activeTab === 'blogs' && <BlogManager onNotify={showNotification} />}
           {activeTab === 'services' && <ServiceManager onNotify={showNotification} />}
           {activeTab === 'contacts' && <ContactManager onNotify={showNotification} />}
