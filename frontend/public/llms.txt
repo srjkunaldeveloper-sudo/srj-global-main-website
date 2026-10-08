@@ -1,0 +1,60 @@
+# SRJ Global Technologies
+
+> Premier IT Consulting, Custom Software Engineering & Game Development Agency.
+> Headquartered in Noida (Delhi NCR), India, serving enterprise and startup clients globally.
+> Website: https://srjglobaltechnology.com
+
+## Company Overview
+SRJ Global Technologies is a technology solutions provider specializing in full-cycle software development, enterprise digital transformation, AI/ML integrations, and game engineering.
+
+- **Founding / Status**: Established Global IT Services Agency
+- **Headquarters**: C-1101, Urbtech Trade Center Tower, Noida Sector-132, Uttar Pradesh 201304, India
+- **Email**: srjglobaltechnology@gmail.com
+- **Phone**: +91 99904 30305 / +91 92667 06599
+- **Certifications & Standards**: ISO 9001:2015, ISO/IEC 27001 Certified, GDPR Compliant, Enterprise SLA (99.9% Uptime)
+
+## Core Capabilities & Services
+
+### 1. Game Development & Gaming Platforms
+- **Specializations**: Real-Money Games (RMG), Multiplayer Card Games, Casino Games, Board Games, Unity 3D & Unreal Engine Development.
+- **Titles / Frameworks**: Poker, Rummy, Teen Patti, Blackjack, Baccarat, Roulette, Andar Bahar, Dragon Tiger, Aviator, Crash Game, Colour Prediction, Spin Wheel, Ludo, Matka.
+- **Features**: Certified RNG (Random Number Generator), anti-fraud shields, low-latency WebSocket multiplayer networking, multi-currency wallet integration.
+
+### 2. Custom Software & Web Development
+- High-performance frontend engineering (React.js, Next.js, Vue.js, Tailwind CSS).
+- Resilient backend architectures (Node.js, Express, Python FastAPI, Go, Java Spring Boot).
+- Microservices, RESTful APIs, and GraphQL.
+- Database engineering (PostgreSQL, MySQL, MongoDB, Redis caching).
+
+### 3. Mobile App Development
+- Native iOS (Swift) & Android (Kotlin).
+- Cross-platform hybrid applications (Flutter, React Native).
+- Enterprise mobile security and offline synchronization.
+
+### 4. AI & Machine Learning Solutions
+- Generative AI integrations, intelligent customer service chatbots, conversational agents.
+- Predictive analytics, workflow automation, and Computer Vision solutions.
+
+### 5. Cloud Architecture & DevOps
+- Cloud infrastructure management (AWS, Google Cloud, Microsoft Azure).
+- Docker containerization, Kubernetes orchestration, CI/CD automated deployment pipelines.
+- 24/7 uptime monitoring, penetration testing, and load-balancing.
+
+## Industry Solutions
+- **Gaming & Entertainment**: Multiplayer lobbies, tournament engines, wallet architectures.
+- **FinTech & Banking**: Payment gateway integrations, ledger accounting, KYC automation.
+- **E-Commerce & Retail**: Multi-vendor marketplaces, inventory sync, recommendation engines.
+- **Healthcare & MedTech**: HIPAA-compliant telemedicine, patient record management (EHR/EMR).
+- **EdTech**: Learning Management Systems (LMS), interactive virtual classrooms.
+- **Real Estate & PropTech**: Property listing engines, CRM workflows, virtual walkthroughs.
+
+## Engagement & Collaboration Models
+- **Fixed-Scope Project**: Milestone-based delivery for well-defined requirements.
+- **Dedicated Developer / Team (Staff Augmentation)**: Monthly dedicated senior engineering pods.
+- **Time & Material (Agile Sprint)**: Flexible iterative development for evolving product scopes.
+- **Startup MVP Acceleration**: Rapid prototype development from ideation to production in 4 to 8 weeks.
+
+## Contact & Consultation
+- Consultation URL: https://srjglobaltechnology.com/contact
+- Pricing Estimator: https://srjglobaltechnology.com/pricing
+- Services Catalog: https://srjglobaltechnology.com/services

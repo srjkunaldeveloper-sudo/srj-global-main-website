@@ -13,6 +13,7 @@ import {
   FaSyncAlt,
 } from "react-icons/fa";
 import { useSiteSettings } from "../context/SiteSettingsContext";
+import SEO from "./SEO";
 
 function PrivacyPolicy() {
   const location = useLocation();
@@ -23,6 +24,12 @@ function PrivacyPolicy() {
   const contactEmail = getSetting('contact_email', 'srjglobaltechnology@gmail.com');
   const contactPhone = getSetting('contact_phone', '+91 99904 30305');
   const whatsappPhone = getSetting('whatsapp_phone', '+91 92667 06599');
+
+  const pageTitle = getSetting('privacy_policy_title', 'Privacy Policy');
+  const lastUpdated = getSetting('privacy_policy_last_updated', 'October 2025');
+  const disclaimerText = getSetting('privacy_policy_disclaimer', 'Disclaimer: In case of any discrepancy or difference, the English version of this Privacy Policy shall prevail.');
+  const rawContent = getSetting('privacy_policy_content', '');
+  const resolvedContent = (rawContent || '').replaceAll('{{company_name}}', companyName);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -62,6 +69,13 @@ function PrivacyPolicy() {
         padding: "120px 24px 80px",
       }}
     >
+      <SEO 
+        pageKey="privacy"
+        title={pageTitle}
+        description="Read the official Privacy Policy of SRJ Global Technologies explaining data collection, user protection, and compliance standards."
+        keywords="privacy policy, data security, user privacy, SRJ Global compliance"
+        url="https://srjglobaltechnology.com/privacy"
+      />
       <div
         style={{
           maxWidth: "800px",
@@ -76,35 +90,64 @@ function PrivacyPolicy() {
             color: "#000000",
             fontSize: "clamp(34px, 5vw, 48px)",
             fontWeight: "800",
-            marginBottom: "20px",
+            marginBottom: "16px",
             letterSpacing: "-0.03em",
           }}
         >
-          Privacy Policy
+          {pageTitle}
         </h1>
 
-        <p
-          style={{
-            fontFamily: "'Geist Sans', 'Inter', sans-serif",
-            textAlign: "center",
-            fontStyle: "italic",
-            color: "#64748b",
-            fontSize: "15px",
-            marginBottom: "50px",
-          }}
-        >
-          Disclaimer: In case of any discrepancy or difference, the English
-          version of this Privacy Policy shall prevail.
-        </p>
+        {lastUpdated && (
+          <p
+            style={{
+              fontFamily: "'Geist Sans', 'Inter', sans-serif",
+              textAlign: "center",
+              color: "#64748b",
+              fontSize: "15px",
+              marginBottom: "12px",
+            }}
+          >
+            Last Updated: {lastUpdated}
+          </p>
+        )}
 
-        {/* Section 1 */}
-        <h2 style={sectionTitle}>
-          <FaInfoCircle style={iconStyle} />
-          1. Introduction
-        </h2>
+        {disclaimerText && (
+          <p
+            style={{
+              fontFamily: "'Geist Sans', 'Inter', sans-serif",
+              textAlign: "center",
+              fontStyle: "italic",
+              color: "#64748b",
+              fontSize: "14px",
+              marginBottom: "50px",
+            }}
+          >
+            {disclaimerText}
+          </p>
+        )}
 
-        <p style={textStyle}>
-          At {companyName}, we value your privacy and are committed to
+        {/* Dynamic HTML Content from Admin Panel */}
+        {resolvedContent ? (
+          <div
+            className="legal-content prose prose-slate max-w-none mb-12"
+            dangerouslySetInnerHTML={{ __html: resolvedContent }}
+            style={{
+              fontFamily: "'Geist Sans', 'Inter', sans-serif",
+              fontSize: "16px",
+              lineHeight: "1.8",
+              color: "#475569",
+            }}
+          />
+        ) : (
+          <>
+            {/* Section 1 */}
+            <h2 style={sectionTitle}>
+              <FaInfoCircle style={iconStyle} />
+              1. Introduction
+            </h2>
+
+            <p style={textStyle}>
+              At {companyName}, we value your privacy and are committed to
           safeguarding the personal information you share with us. This Privacy
           Policy explains how we collect, use, and protect your data when you
           interact with our website, digital platforms, and IT services. By
@@ -313,11 +356,13 @@ function PrivacyPolicy() {
           here with a revised “Last Updated” date. Continued use of our services
           constitutes acceptance of the updated policy.
         </p>
+          </>
+        )}
 
-        {/* Section 12 */}
+        {/* Section: Contact Us */}
         <h2 style={sectionTitle}>
           <FaInfoCircle style={iconStyle} />
-          12. Contact Us
+          {resolvedContent ? "Contact Information" : "12. Contact Us"}
         </h2>
 
         <p style={textStyle}>
@@ -330,9 +375,13 @@ function PrivacyPolicy() {
             ...textStyle,
             marginTop: "15px",
             lineHeight: "2",
+            padding: "24px",
+            background: "#f8fafc",
+            borderRadius: "16px",
+            border: "1px solid #e2e8f0"
           }}
         >
-          <strong>{companyName}</strong>
+          <strong style={{ color: "#0f172a", fontSize: "17px" }}>{companyName}</strong>
           <br />
           📍 {officeAddress}
           <br />
@@ -346,7 +395,7 @@ function PrivacyPolicy() {
           {whatsappPhone && (
             <>
               <br />
-              📞 {whatsappPhone}
+              💬 {whatsappPhone}
             </>
           )}
         </div>

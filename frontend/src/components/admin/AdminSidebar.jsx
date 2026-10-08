@@ -19,7 +19,9 @@ import {
   Award,
   CheckCircle2,
   ChevronDown,
-  LogOut
+  LogOut,
+  PanelBottom,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function AdminSidebar({
@@ -51,7 +53,8 @@ export default function AdminSidebar({
         { id: 'industries', label: 'Industries', icon: Layers },
         { id: 'collaboration', label: 'Collaboration', icon: Handshake },
         { id: 'careers', label: 'Careers', icon: Briefcase },
-        { id: 'team', label: 'Team', icon: Users }
+        { id: 'team', label: 'Team', icon: Users },
+        { id: 'legal-pages', label: 'Legal Policies', icon: ShieldCheck }
       ]
     },
     {
@@ -65,6 +68,7 @@ export default function AdminSidebar({
     {
       title: 'Settings & System',
       items: [
+        { id: 'footer', label: 'Footer Manager', icon: PanelBottom },
         { id: 'settings', label: 'Site Settings', icon: Settings },
         { id: 'navigation', label: 'Navigation Manager', icon: Compass }
       ]

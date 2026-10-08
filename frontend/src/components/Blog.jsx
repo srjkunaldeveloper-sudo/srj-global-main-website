@@ -178,6 +178,7 @@ function Blog() {
   return (
     <div className="blog-page pt-4 min-h-screen bg-slate-50">
       <SEO 
+        pageKey="blog"
         title="Blog & Insights"
         description="Stay updated with the latest trends in software development, AI, and digital transformation from the experts at SRJ Global Technologies."
         keywords="tech blog, software development blog, IT insights, SRJ Global Technologies blog"

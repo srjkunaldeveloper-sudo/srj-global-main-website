@@ -19,6 +19,7 @@ import {
 import api from "../config/api";
 import "../styles/Industries.css";
 import IndustriesHero from "./IndustriesHero";
+import SEO from "./SEO";
 
 const ICON_MAP = {
   FaRocket,
@@ -96,6 +97,13 @@ export default function Industries() {
 
   return (
     <>
+      <SEO 
+        pageKey="industries"
+        title="Industry-Specific Software & Tech Solutions"
+        description="Transforming key industries including Gaming, FinTech, E-Commerce, Healthcare, EdTech, Real Estate, and Enterprise with tailored software solutions."
+        keywords="industry software solutions, gaming technology, fintech development, ecommerce platforms, healthcare software"
+        url="https://srjglobaltechnology.com/industries"
+      />
       <IndustriesHero />
       <section className="ij-section pt-10" aria-labelledby="ij-heading">
         <div className="ij-section-inner">

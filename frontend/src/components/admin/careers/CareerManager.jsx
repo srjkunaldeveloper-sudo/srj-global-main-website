@@ -9,10 +9,14 @@ const INITIAL_JOB_STATE = {
   title: '',
   location: '',
   experience: '',
-  type: '',
+  type: 'Full-time',
   salary: '',
   category: '',
-  tags: ''
+  tags: '',
+  description: '',
+  responsibilities: '',
+  requirements: '',
+  perks: ''
 };
 
 export default function CareerManager({ onNotify }) {
@@ -79,17 +83,21 @@ export default function CareerManager({ onNotify }) {
         return;
       }
 
-      const payload = { ...newJob, category: finalCategory };
+      const payload = { 
+        ...newJob, 
+        category: finalCategory 
+      };
+
       if (typeof payload.tags === 'string') {
         payload.tags = payload.tags.split(',').map((tag) => tag.trim()).filter(Boolean);
       }
 
       if (editJobId) {
         await api.put(`/jobs/${editJobId}`, payload);
-        showNotification('success', 'Job updated successfully!');
+        showNotification('success', 'Job posting updated successfully!');
       } else {
         await api.post('/jobs', payload);
-        showNotification('success', 'Job created successfully!');
+        showNotification('success', 'Job opening published live successfully!');
       }
 
       setNewJob(INITIAL_JOB_STATE);
@@ -111,10 +119,20 @@ export default function CareerManager({ onNotify }) {
       title: job.title || '',
       location: job.location || '',
       experience: job.experience || '',
-      type: job.type || '',
+      type: job.type || 'Full-time',
       salary: job.salary || '',
       category: job.category || '',
-      tags: Array.isArray(job.tags) ? job.tags.join(', ') : (job.tags || '')
+      tags: Array.isArray(job.tags) ? job.tags.join(', ') : (job.tags || ''),
+      description: job.description || '',
+      responsibilities: Array.isArray(job.responsibilities) 
+        ? job.responsibilities.join('\n') 
+        : (job.responsibilities || ''),
+      requirements: Array.isArray(job.requirements) 
+        ? job.requirements.join('\n') 
+        : (job.requirements || ''),
+      perks: Array.isArray(job.perks) 
+        ? job.perks.join('\n') 
+        : (job.perks || '')
     });
     setEditJobId(job.id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -142,7 +160,7 @@ export default function CareerManager({ onNotify }) {
     <div className="space-y-6">
       <ToastAlert notification={notification} />
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
         <JobForm
           editJobId={editJobId}
           newJob={newJob}
@@ -164,6 +182,8 @@ export default function CareerManager({ onNotify }) {
 
           <JobApplicationsList
             applications={applications}
+            onRefresh={fetchData}
+            showNotification={showNotification}
           />
         </div>
       </div>

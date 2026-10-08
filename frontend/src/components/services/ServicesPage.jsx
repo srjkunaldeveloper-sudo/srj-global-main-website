@@ -66,6 +66,7 @@ export default function ServicesPage() {
   return (
     <div className="services-page pt-4">
       <SEO 
+        pageKey="services"
         title="Our Services"
         description="Explore our wide range of software development and IT consulting services designed to accelerate your business growth."
         keywords="software services, web development, app development, IT consulting, SRJ Global Technologies services"

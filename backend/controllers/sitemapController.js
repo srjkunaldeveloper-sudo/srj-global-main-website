@@ -66,6 +66,18 @@ const generateSitemap = async (req, res) => {
       xml += `  </url>\n`;
     });
 
+    // 4. Fetch Dynamic Industries
+    const [industries] = await db.query("SELECT id, created_at FROM industries WHERE is_active = 1 ORDER BY sort_order ASC");
+    industries.forEach((ind) => {
+      const date = ind.created_at ? new Date(ind.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      xml += `  <url>\n`;
+      xml += `    <loc>${baseUrl}/industries/${ind.id}</loc>\n`;
+      xml += `    <lastmod>${date}</lastmod>\n`;
+      xml += `    <changefreq>monthly</changefreq>\n`;
+      xml += `    <priority>0.8</priority>\n`;
+      xml += `  </url>\n`;
+    });
+
     xml += `</urlset>`;
 
     res.header("Content-Type", "application/xml");

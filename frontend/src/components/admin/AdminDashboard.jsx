@@ -27,6 +27,8 @@ import PartnerLogoManager from './PartnerLogoManager';
 import ProcessManager from './ProcessManager';
 import CompanyStatsManager from './CompanyStatsManager';
 import TrustPointsManager from './TrustPointsManager';
+import FooterManager from './footer/FooterManager';
+import LegalPoliciesManager from './legal/LegalPoliciesManager';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('blogs');
@@ -95,6 +97,10 @@ export default function AdminDashboard() {
               ? 'Pricing & Plans'
               : activeTab === 'promotions'
               ? 'Announcements & Promo'
+              : activeTab === 'footer'
+              ? 'Footer & Socials Manager'
+              : activeTab === 'legal-pages'
+              ? 'Legal & Compliance Policies'
               : `${activeTab} Management`}
           </h1>
           <p className="text-slate-500 text-sm mt-1">
@@ -124,8 +130,10 @@ export default function AdminDashboard() {
           )}
           {activeTab === 'team' && <TeamManager onNotify={showNotification} />}
           {activeTab === 'subscribers' && <SubscriberManager onNotify={showNotification} />}
+          {activeTab === 'legal-pages' && <LegalPoliciesManager onNotify={showNotification} />}
 
           {/* Standalone System Settings & Integrations */}
+          {activeTab === 'footer' && <FooterManager onNotify={showNotification} />}
           {activeTab === 'users' && <AdminUserManager onNotify={showNotification} />}
           {activeTab === 'settings' && <SiteSettingsManager onNotify={showNotification} />}
           {activeTab === 'navigation' && <NavigationManager onNotify={showNotification} />}

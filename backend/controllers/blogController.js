@@ -2,11 +2,17 @@ const db = require("../config/db");
 const asyncHandler = require("../utils/asyncHandler");
 
 exports.createBlog = asyncHandler(async (req, res) => {
-  const { title, category, type, description, content, author } = req.body;
+  const { 
+    title, category, type, description, content, author,
+    meta_title, meta_description, meta_keywords, tags,
+    author_role, author_image, reading_time,
+    aeo_summary, aeo_faqs, key_takeaways
+  } = req.body;
+
   const image = req.file ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}` : req.body.image;
   
   let { slug } = req.body;
-  if (!slug) {
+  if (!slug && title) {
     slug = title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -15,17 +21,30 @@ exports.createBlog = asyncHandler(async (req, res) => {
 
   const [result] = await db.query(
     `INSERT INTO blogs
-    (title, slug, image, category, type, description, content, author)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    (title, slug, image, category, type, description, content, author,
+     meta_title, meta_description, meta_keywords, tags,
+     author_role, author_image, reading_time,
+     aeo_summary, aeo_faqs, key_takeaways)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       title,
       slug,
-      image,
-      category,
+      image || null,
+      category || "Technology",
       type || "Fresh Perspectives",
-      description,
+      description || null,
       content,
-      author || "SRJ Global Softech",
+      author || "SRJ Global Technologies",
+      meta_title || title,
+      meta_description || description,
+      meta_keywords || null,
+      tags || null,
+      author_role || "Principal Technical Architect",
+      author_image || null,
+      reading_time || null,
+      aeo_summary || description,
+      aeo_faqs || null,
+      key_takeaways || null
     ],
   );
 
@@ -44,9 +63,14 @@ exports.getBlogs = asyncHandler(async (req, res) => {
 });
 
 exports.getBlogById = asyncHandler(async (req, res) => {
-  const [blog] = await db.query("SELECT * FROM blogs WHERE id=?", [
+  const [blog] = await db.query("SELECT * FROM blogs WHERE id=? OR slug=?", [
+    req.params.id,
     req.params.id,
   ]);
+
+  if (!blog || blog.length === 0) {
+    return res.status(404).json({ message: "Blog not found" });
+  }
 
   res.json(blog[0]);
 });
@@ -61,7 +85,13 @@ exports.deleteBlog = asyncHandler(async (req, res) => {
 });
 
 exports.updateBlog = asyncHandler(async (req, res) => {
-  const { title, category, type, description, content, author, slug } = req.body;
+  const { 
+    title, category, type, description, content, author, slug,
+    meta_title, meta_description, meta_keywords, tags,
+    author_role, author_image, reading_time,
+    aeo_summary, aeo_faqs, key_takeaways
+  } = req.body;
+
   const image = req.file ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}` : req.body.image;
 
   let finalSlug = slug;
@@ -81,9 +111,39 @@ exports.updateBlog = asyncHandler(async (req, res) => {
          type = COALESCE(?, type), 
          description = COALESCE(?, description), 
          content = COALESCE(?, content), 
-         author = COALESCE(?, author)
+         author = COALESCE(?, author),
+         meta_title = COALESCE(?, meta_title),
+         meta_description = COALESCE(?, meta_description),
+         meta_keywords = COALESCE(?, meta_keywords),
+         tags = COALESCE(?, tags),
+         author_role = COALESCE(?, author_role),
+         author_image = COALESCE(?, author_image),
+         reading_time = COALESCE(?, reading_time),
+         aeo_summary = COALESCE(?, aeo_summary),
+         aeo_faqs = COALESCE(?, aeo_faqs),
+         key_takeaways = COALESCE(?, key_takeaways)
      WHERE id = ?`,
-    [title, finalSlug, image, category, type, description, content, author, req.params.id]
+    [
+      title, 
+      finalSlug, 
+      image, 
+      category, 
+      type, 
+      description, 
+      content, 
+      author,
+      meta_title,
+      meta_description,
+      meta_keywords,
+      tags,
+      author_role,
+      author_image,
+      reading_time,
+      aeo_summary,
+      aeo_faqs,
+      key_takeaways,
+      req.params.id
+    ]
   );
 
   res.json({

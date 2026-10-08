@@ -9,19 +9,34 @@ export default function Footer() {
   const { footerQuickNav, footerLegalNav } = useNavigation();
   const currentYear = new Date().getFullYear();
 
-  // Dynamic Settings
+  // Dynamic Settings (Column 1: Brand & Bio)
   const companyName = getSetting('company_name', 'SRJ Global Technologies');
   const dynamicLogo = getSetting('logo_url');
   const logoSrc = (dynamicLogo && (dynamicLogo.startsWith('http') || dynamicLogo.startsWith('/uploads'))) ? dynamicLogo : logoImg;
-
   const footerDescription = getSetting('footer_description', 'Innovative digital solutions: we build high-quality websites, mobile apps, and custom enterprise platforms for growing brands.');
+
+  // Column 2: Quick Links Title
+  const col2Title = getSetting('footer_col2_title', 'Quick Links');
+
+  // Column 3: Contact Info & Custom Labels
+  const col3Title = getSetting('footer_col3_title', 'Get In Touch');
+  const emailLabel = getSetting('footer_col3_email_label', 'EMAIL');
+  const phoneLabel = getSetting('footer_col3_phone_label', 'PHONE & WHATSAPP');
+  const officeLabel = getSetting('footer_col3_office_label', 'OFFICE');
   const contactEmail = getSetting('contact_email', 'srjglobaltechnology@gmail.com');
   const contactPhone = getSetting('contact_phone', '+91 99904 30305');
   const whatsappPhone = getSetting('whatsapp_phone', '+91 92667 06599');
   const officeAddress = getSetting('office_address', 'C-1101, Urbtech Trade Center Tower, Noida Sector-132, Uttar Pradesh 201304');
   const googleMapsUrl = getSetting('google_maps_url', 'https://maps.google.com/?q=Urbtech+Trade+Center+Tower+Noida+Sector+132');
+
+  // Column 4: Review Us & Legal Links
+  const col4Title = getSetting('footer_col4_title', 'Review Us');
+  const reviewText = getSetting('footer_review_text', 'Your feedback helps us deliver cutting-edge software products.');
+  const reviewBtnText = getSetting('footer_review_btn_text', 'Google Review');
+  const showReviewBtn = getSetting('footer_show_review_btn', '1') !== '0';
   const googleReviewUrl = getSetting('google_review_url', 'https://search.google.com/local/writereview?placeid=YOUR_PLACE_ID');
   
+  // Bottom Bar: Copyright
   const copyrightTemplate = getSetting('footer_copyright', '© {year} SRJ Global Technologies. All rights reserved.');
   const copyrightText = copyrightTemplate.replace('{year}', currentYear);
 
@@ -144,7 +159,9 @@ export default function Footer() {
 
         {/* === COLUMN 2: QUICK LINKS === */}
         <div className="sm:col-span-1 lg:col-span-2 lg:col-start-5">
-          <h3 className="text-slate-900 font-bold text-base mb-4 sm:mb-6 tracking-wide">Quick Links</h3>
+          <h3 className="text-slate-900 font-bold text-base mb-4 sm:mb-6 tracking-wide">
+            {col2Title}
+          </h3>
           <div className="flex flex-col gap-2.5">
             {(footerQuickNav || []).map((item, index) => {
               const isExternal = item.item_type === 'external';
@@ -176,11 +193,15 @@ export default function Footer() {
 
         {/* === COLUMN 3: CONTACT INFO === */}
         <div className="sm:col-span-1 lg:col-span-3">
-          <h3 className="text-slate-900 font-bold text-base mb-4 sm:mb-6 tracking-wide">Get In Touch</h3>
+          <h3 className="text-slate-900 font-bold text-base mb-4 sm:mb-6 tracking-wide">
+            {col3Title}
+          </h3>
           
           {contactEmail && (
             <div className="mb-4 sm:mb-5">
-              <div className="text-slate-900 text-xs font-semibold uppercase tracking-wider mb-1">Email</div>
+              <div className="text-slate-900 text-xs font-semibold uppercase tracking-wider mb-1">
+                {emailLabel}
+              </div>
               <a href={`mailto:${contactEmail}`} className="text-slate-500 hover:text-black transition-colors duration-200 text-fluid-sm py-0.5 inline-block">
                 {contactEmail}
               </a>
@@ -188,7 +209,9 @@ export default function Footer() {
           )}
 
           <div className="mb-4 sm:mb-5">
-            <div className="text-slate-900 text-xs font-semibold uppercase tracking-wider mb-1">Phone & WhatsApp</div>
+            <div className="text-slate-900 text-xs font-semibold uppercase tracking-wider mb-1">
+              {phoneLabel}
+            </div>
             {contactPhone && (
               <a href={`tel:${contactPhone.replace(/\s+/g, '')}`} className="text-slate-500 hover:text-black transition-colors duration-200 text-fluid-sm block py-0.5">
                 {contactPhone}
@@ -203,7 +226,9 @@ export default function Footer() {
 
           {officeAddress && (
             <div>
-              <div className="text-slate-900 text-xs font-semibold uppercase tracking-wider mb-1">Office</div>
+              <div className="text-slate-900 text-xs font-semibold uppercase tracking-wider mb-1">
+                {officeLabel}
+              </div>
               <a 
                 href={googleMapsUrl} 
                 target="_blank" 
@@ -218,11 +243,15 @@ export default function Footer() {
 
         {/* === COLUMN 4: REVIEWS & LEGAL === */}
         <div className="sm:col-span-2 lg:col-span-3">
-          <h3 className="text-slate-900 font-bold text-base mb-4 sm:mb-6 tracking-wide">Review Us</h3>
-          <p className="text-slate-500 text-fluid-sm mb-4 leading-relaxed">
-            Your feedback helps us deliver cutting-edge software products.
-          </p>
-          {googleReviewUrl && (
+          <h3 className="text-slate-900 font-bold text-base mb-4 sm:mb-6 tracking-wide">
+            {col4Title}
+          </h3>
+          {reviewText && (
+            <p className="text-slate-500 text-fluid-sm mb-4 leading-relaxed">
+              {reviewText}
+            </p>
+          )}
+          {showReviewBtn && googleReviewUrl && (
             <a
               href={googleReviewUrl}
               target="_blank"
@@ -232,7 +261,7 @@ export default function Footer() {
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.859-3.579-7.859-8s3.529-8 7.859-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.986 0-.743-.08-1.31-.177-1.879H12.24z" />
               </svg>
-              Google Review
+              {reviewBtnText}
             </a>
           )}
 
@@ -277,4 +306,3 @@ export default function Footer() {
     </footer>
   );
 }
-

@@ -90,6 +90,7 @@ export default function Contact() {
   return (
     <section id="contact" className="py-14 sm:py-20 lg:py-24 bg-white px-4 sm:px-6 lg:px-8 overflow-hidden">
       <SEO 
+        pageKey="contact"
         title="Contact Us"
         description="Get in touch with SRJ Global Technologies to discuss your next big project or software development needs."
         keywords="contact SRJ Global Technologies, hire developers, IT consultation"

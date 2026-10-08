@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import '../styles/collaboration.css';
 import CollabHero from './CollabHero';
+import SEO from './SEO';
 import api from '../config/api';
 import { useSiteSettings } from '../context/SiteSettingsContext';
 
@@ -168,7 +169,13 @@ const Collaboration = () => {
 
   return (
     <div className="collab-page pt-4">
-      
+      <SEO 
+        pageKey="collaboration"
+        title="Partnership & Collaboration Models"
+        description="Collaborate with SRJ Global Technologies. Explore our flexible engagement models from MVP consultation to dedicated engineering teams."
+        keywords="software development partner, IT collaboration models, dedicated developers, startup MVP partner"
+        url="https://srjglobaltechnology.com/collaboration"
+      />
       {/* HERO SECTION */}
       <CollabHero />
 

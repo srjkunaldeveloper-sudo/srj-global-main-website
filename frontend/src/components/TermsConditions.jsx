@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useSiteSettings } from "../context/SiteSettingsContext";
+import SEO from "./SEO";
 
 function TermsConditions() {
   const location = useLocation();
@@ -11,6 +12,11 @@ function TermsConditions() {
   const contactEmail = getSetting('contact_email', 'srjglobaltechnology@gmail.com');
   const contactPhone = getSetting('contact_phone', '+91 99904 30305');
   const whatsappPhone = getSetting('whatsapp_phone', '+91 92667 06599');
+
+  const pageTitle = getSetting('terms_conditions_title', 'Terms and Conditions');
+  const lastUpdated = getSetting('terms_conditions_last_updated', 'October 2025');
+  const rawContent = getSetting('terms_conditions_content', '');
+  const resolvedContent = (rawContent || '').replaceAll('{{company_name}}', companyName);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -42,6 +48,13 @@ function TermsConditions() {
         padding: "120px 24px 80px",
       }}
     >
+      <SEO 
+        pageKey="terms"
+        title={pageTitle}
+        description="Review our Terms and Conditions for utilizing SRJ Global Technologies services, platforms, and technological consulting."
+        keywords="terms and conditions, user agreement, service terms, legal notice"
+        url="https://srjglobaltechnology.com/terms"
+      />
       {/* Page Title */}
       <h1
         style={{
@@ -50,11 +63,11 @@ function TermsConditions() {
           color: "#000000",
           fontSize: "clamp(34px, 5vw, 48px)",
           fontWeight: "800",
-          marginBottom: "45px",
+          marginBottom: "16px",
           letterSpacing: "-0.03em",
         }}
       >
-        Terms and Conditions
+        {pageTitle}
       </h1>
 
       {/* Content Box */}
@@ -64,31 +77,48 @@ function TermsConditions() {
           margin: "0 auto",
         }}
       >
-        <p
-          style={{
-            fontFamily: "'Geist Sans', 'Inter', sans-serif",
-            fontStyle: "italic",
-            color: "#64748b",
-            marginBottom: "35px",
-            fontSize: "15px",
-          }}
-        >
-          Last Updated: 10/9/2025
-        </p>
+        {lastUpdated && (
+          <p
+            style={{
+              fontFamily: "'Geist Sans', 'Inter', sans-serif",
+              textAlign: "center",
+              fontStyle: "italic",
+              color: "#64748b",
+              marginBottom: "35px",
+              fontSize: "15px",
+            }}
+          >
+            Last Updated: {lastUpdated}
+          </p>
+        )}
 
-        <p style={textStyle}>
-          Welcome to {companyName} (“we,” “our,” or “us”). We’re
-          delighted to have you here! These Terms and Conditions (“Terms”) are
-          meant to provide clarity on how you can enjoy and make the most of our
-          IT services, products, and solutions. By choosing to work with us,
-          you’re placing your trust in our team, and we’re committed to
-          supporting you every step of the way. If at any time these Terms don’t
-          meet your expectations, you always have the option to discontinue
-          using our services — though we’ll be sad to see you go.
-        </p>
+        {/* Dynamic HTML Content from Admin Panel */}
+        {resolvedContent ? (
+          <div
+            className="legal-content prose prose-slate max-w-none mb-12"
+            dangerouslySetInnerHTML={{ __html: resolvedContent }}
+            style={{
+              fontFamily: "'Geist Sans', 'Inter', sans-serif",
+              fontSize: "16px",
+              lineHeight: "1.8",
+              color: "#475569",
+            }}
+          />
+        ) : (
+          <>
+            <p style={textStyle}>
+              Welcome to {companyName} (“we,” “our,” or “us”). We’re
+              delighted to have you here! These Terms and Conditions (“Terms”) are
+              meant to provide clarity on how you can enjoy and make the most of our
+              IT services, products, and solutions. By choosing to work with us,
+              you’re placing your trust in our team, and we’re committed to
+              supporting you every step of the way. If at any time these Terms don’t
+              meet your expectations, you always have the option to discontinue
+              using our services — though we’ll be sad to see you go.
+            </p>
 
-        {/* Section 1 */}
-        <h2 style={headingStyle}>1. Introduction</h2>
+            {/* Section 1 */}
+            <h2 style={headingStyle}>1. Introduction</h2>
 
         <p style={textStyle}>
           {companyName} is a leading IT solutions provider offering a
@@ -324,9 +354,13 @@ function TermsConditions() {
             of our services will imply acceptance of the updated Terms.
           </li>
         </ul>
+          </>
+        )}
 
-        {/* Section 15 */}
-        <h2 style={headingStyle}>15. Contact Us</h2>
+        {/* Section: Contact Us */}
+        <h2 style={headingStyle}>
+          {resolvedContent ? "Contact Information" : "15. Contact Us"}
+        </h2>
 
         <p style={textStyle}>
           For any questions, concerns, or clarifications regarding these Terms &
@@ -335,18 +369,32 @@ function TermsConditions() {
 
         <div
           style={{
-            marginTop: "20px",
-            color: "#2f3c52",
-            fontSize: "16px",
+            ...textStyle,
+            marginTop: "15px",
             lineHeight: "2",
-            fontFamily: "'Geist Sans', 'Inter', sans-serif",
+            padding: "24px",
+            background: "#f8fafc",
+            borderRadius: "16px",
+            border: "1px solid #e2e8f0"
           }}
         >
-          <strong>{companyName}</strong>
-          {officeAddress && <p>📍 {officeAddress}</p>}
-          {contactEmail && <p>📧 {contactEmail}</p>}
-          {contactPhone && <p>📞 {contactPhone}</p>}
-          {whatsappPhone && <p>📞 {whatsappPhone}</p>}
+          <strong style={{ color: "#0f172a", fontSize: "17px" }}>{companyName}</strong>
+          <br />
+          📍 {officeAddress}
+          <br />
+          📧 {contactEmail}
+          {contactPhone && (
+            <>
+              <br />
+              📞 {contactPhone}
+            </>
+          )}
+          {whatsappPhone && (
+            <>
+              <br />
+              💬 {whatsappPhone}
+            </>
+          )}
         </div>
       </div>
     </div>

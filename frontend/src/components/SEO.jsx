@@ -8,8 +8,10 @@ export default function SEO({
   keywords, 
   image, 
   url,
+  pageKey = null,
   isArticle = false,
   articleData = null,
+  faqs = null,
   extraSchema = null
 }) {
   const { getSetting } = useSiteSettings();
@@ -22,6 +24,20 @@ export default function SEO({
   const globalCanonicalUrl = getSetting('canonical_url', 'https://srjglobaltechnology.com');
   const companyName = getSetting('company_name', 'SRJ Global Technologies');
   const faviconUrl = getSetting('favicon_url', '/favicon.png');
+
+  // AEO & GEO Settings from Admin Panel
+  const geoKnowsAboutRaw = getSetting('geo_knows_about', 'Custom Software Development, Web Applications, Mobile App Engineering, Unity Game Development, Real Money Games, AI Solutions, Cloud Infrastructure, DevOps');
+  const geoAiSummary = getSetting('geo_ai_summary', 'SRJ Global Technologies is a premier global software engineering firm headquartered in India, specializing in enterprise digital transformation, scalable cloud architectures, custom web & mobile apps, and real-money gaming platforms.');
+  
+  const knowsAboutTopics = geoKnowsAboutRaw 
+    ? geoKnowsAboutRaw.split(',').map(t => t.trim()).filter(Boolean)
+    : [];
+
+  // Page-specific settings override from Admin DB (if pageKey provided)
+  const dbPageTitle = pageKey ? getSetting(`seo_${pageKey}_title`) : '';
+  const dbPageDesc = pageKey ? getSetting(`seo_${pageKey}_description`) : '';
+  const dbPageKeywords = pageKey ? getSetting(`seo_${pageKey}_keywords`) : '';
+  const dbPageOgImage = pageKey ? getSetting(`seo_${pageKey}_og_image`) : '';
 
   // Helper function to resolve image URLs safely
   const resolveUrl = (targetUrl, baseUrl) => {
@@ -45,19 +61,20 @@ export default function SEO({
     return `${cleanBase}${cleanPath}`;
   };
 
-  // Precedence Rules: Page-specific props > Site Settings > Fallback
+  // Precedence Rules: Admin page DB setting > JSX prop > Global Site Setting
   const siteName = companyName;
-  const fullTitle = title 
-    ? (title.includes(siteName) ? title : `${title} | ${siteName}`) 
+  const chosenTitle = dbPageTitle || title;
+  const fullTitle = chosenTitle 
+    ? (chosenTitle.includes(siteName) ? chosenTitle : `${chosenTitle} | ${siteName}`) 
     : globalTitle;
 
-  const finalDescription = description || globalDescription;
-  const finalKeywords = keywords || globalKeywords;
-  const rawImage = image || globalOgImage;
+  const finalDescription = dbPageDesc || description || globalDescription;
+  const finalKeywords = dbPageKeywords || keywords || globalKeywords;
+  const rawImage = dbPageOgImage || image || globalOgImage;
   const finalImage = resolveUrl(rawImage, globalCanonicalUrl);
   const finalUrl = resolveCanonicalUrl(url, globalCanonicalUrl);
 
-  // Favicon Runtime Update (preserves existing link element, prevents duplication)
+  // Favicon Runtime Update
   useEffect(() => {
     if (!faviconUrl) return;
     try {
@@ -88,7 +105,7 @@ export default function SEO({
   const contactPhone = getSetting('contact_phone', '');
   const officeAddress = getSetting('office_address', '');
 
-  // Filter valid social profiles for sameAs array
+  // Filter valid social profiles for sameAs array (GEO Knowledge Graph)
   const sameAsLinks = [
     getSetting('social_linkedin', ''),
     getSetting('social_twitter', ''),
@@ -103,14 +120,16 @@ export default function SEO({
   const websiteId = `${globalCanonicalUrl}/#website`;
   const serviceProviderId = `${globalCanonicalUrl}/#professional-service`;
 
-  // 1. Organization Entity
+  // 1. Organization Entity (Enhanced with GEO / AEO properties)
   const orgEntity = {
     "@type": "Organization",
     "@id": orgId,
     "name": companyName,
     "url": globalCanonicalUrl,
     "logo": finalLogo,
-    "description": globalDescription,
+    "description": finalDescription,
+    ...(geoAiSummary ? { "disambiguatingDescription": geoAiSummary } : {}),
+    ...(knowsAboutTopics.length > 0 ? { "knowsAbout": knowsAboutTopics } : {}),
     ...(contactEmail ? { "email": contactEmail } : {}),
     ...(contactPhone ? { "telephone": contactPhone } : {}),
     ...(officeAddress ? { "address": officeAddress } : {}),
@@ -129,27 +148,43 @@ export default function SEO({
     }
   };
 
-  // 3. ProfessionalService Entity (IT & Software Solutions Agency)
+  // 3. ProfessionalService Entity (IT & Software Solutions Agency with GEO details)
   const serviceEntity = {
     "@type": "ProfessionalService",
     "@id": serviceProviderId,
     "name": companyName,
     "url": globalCanonicalUrl,
     "logo": finalLogo,
-    "description": globalDescription,
+    "description": finalDescription,
+    "areaServed": "Worldwide",
     "parentOrganization": {
       "@id": orgId
     },
+    ...(knowsAboutTopics.length > 0 ? { "knowsAbout": knowsAboutTopics } : {}),
     ...(contactEmail ? { "email": contactEmail } : {}),
     ...(contactPhone ? { "telephone": contactPhone } : {}),
     ...(officeAddress ? { "address": officeAddress } : {}),
     ...(sameAsLinks.length > 0 ? { "sameAs": sameAsLinks } : {})
   };
 
-  // Article entity if article props provided
+  // 4. AEO FAQPage Entity (Provides direct structured Q&A for Answer Engines like Perplexity & ChatGPT)
+  const faqEntity = (faqs && Array.isArray(faqs) && faqs.length > 0) ? {
+    "@type": "FAQPage",
+    "@id": `${finalUrl}#faq`,
+    "mainEntity": faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.question || faq.q || faq.title,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer || faq.a || faq.desc || faq.description
+      }
+    }))
+  } : null;
+
+  // 5. Article entity if article props provided
   const articleEntity = isArticle && articleData ? {
     "@type": "Article",
-    "headline": articleData.title || title || companyName,
+    "headline": articleData.title || chosenTitle || companyName,
     "image": [finalImage],
     "datePublished": articleData.datePublished || new Date().toISOString(),
     "author": [{
@@ -169,6 +204,7 @@ export default function SEO({
       orgEntity,
       websiteEntity,
       serviceEntity,
+      ...(faqEntity ? [faqEntity] : []),
       ...(articleEntity ? [articleEntity] : []),
       ...extraSchemaArray
     ]
@@ -181,6 +217,9 @@ export default function SEO({
       <meta name="title" content={fullTitle} />
       <meta name="description" content={finalDescription} />
       {finalKeywords && <meta name="keywords" content={finalKeywords} />}
+
+      {/* AEO / AI Engine Direct Summary Meta */}
+      {geoAiSummary && <meta name="ai-summary" content={geoAiSummary} />}
 
       {/* Canonical Link */}
       <link rel="canonical" href={finalUrl} />
@@ -199,7 +238,7 @@ export default function SEO({
       <meta property="twitter:description" content={finalDescription} />
       <meta property="twitter:image" content={finalImage} />
 
-      {/* Structured Data (JSON-LD Schema Graph) */}
+      {/* Structured Data (JSON-LD Schema Graph with AEO & GEO entities) */}
       <script type="application/ld+json">
         {JSON.stringify(graphSchema)}
       </script>

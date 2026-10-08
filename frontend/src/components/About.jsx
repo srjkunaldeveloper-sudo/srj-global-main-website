@@ -24,6 +24,7 @@ export default function About() {
   return (
     <div className="pt-24 sm:pt-28 md:pt-32 bg-slate-50 min-h-screen">
       <SEO 
+        pageKey="about"
         title="About Us"
         description="Learn more about SRJ Global Technologies, our mission, vision, and the expert team driving digital transformation for businesses worldwide."
         keywords="about SRJ Global Technologies, IT company, digital transformation, tech experts"

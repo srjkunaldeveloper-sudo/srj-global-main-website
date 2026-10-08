@@ -6,12 +6,23 @@ import BlogList from './BlogList';
 
 const INITIAL_BLOG_STATE = {
   title: '',
-  category: '',
+  slug: '',
+  category: 'Software Development',
   type: 'Fresh Perspectives',
   description: '',
   content: '',
   image: '',
-  author: 'SRJ Global Softech'
+  author: 'SRJ Global Technologies',
+  author_role: 'Principal Technical Architect',
+  author_image: '',
+  reading_time: '8 min read',
+  tags: '',
+  key_takeaways: '',
+  meta_title: '',
+  meta_description: '',
+  meta_keywords: '',
+  aeo_summary: '',
+  aeo_faqs: ''
 };
 
 export default function BlogManager({ onNotify }) {
@@ -51,9 +62,14 @@ export default function BlogManager({ onNotify }) {
   const handleCreateBlog = async (e) => {
     e.preventDefault();
     try {
+      const finalSlug = newBlog.slug?.trim() || newBlog.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+
       const payload = {
         ...newBlog,
-        slug: newBlog.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+        slug: finalSlug
       };
 
       const formData = new FormData();
@@ -65,36 +81,47 @@ export default function BlogManager({ onNotify }) {
 
       if (editBlogId) {
         await api.put(`/blogs/${editBlogId}`, formData);
-        showNotification('success', 'Blog post updated successfully!');
+        showNotification('success', 'Article & SEO metadata updated successfully!');
       } else {
         await api.post('/blogs', formData);
-        showNotification('success', 'Blog post created successfully!');
+        showNotification('success', 'Article published live successfully!');
       }
 
       setNewBlog(INITIAL_BLOG_STATE);
       setEditBlogId(null);
       fetchBlogs();
     } catch (err) {
-      showNotification('error', err.response?.data?.message || 'Failed to save blog');
+      showNotification('error', err.response?.data?.message || 'Failed to save blog post');
     }
   };
 
   const handleEditBlog = (blog) => {
     setNewBlog({
       title: blog.title || '',
-      category: blog.category || '',
+      slug: blog.slug || '',
+      category: blog.category || 'Software Development',
       type: blog.type || 'Fresh Perspectives',
       description: blog.description || '',
       content: blog.content || '',
       image: blog.image || '',
-      author: blog.author || 'SRJ Global Softech'
+      author: blog.author || 'SRJ Global Technologies',
+      author_role: blog.author_role || 'Principal Technical Architect',
+      author_image: blog.author_image || '',
+      reading_time: blog.reading_time || '8 min read',
+      tags: blog.tags || '',
+      key_takeaways: blog.key_takeaways || '',
+      meta_title: blog.meta_title || '',
+      meta_description: blog.meta_description || '',
+      meta_keywords: blog.meta_keywords || '',
+      aeo_summary: blog.aeo_summary || '',
+      aeo_faqs: blog.aeo_faqs || ''
     });
     setEditBlogId(blog.id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDeleteBlog = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this blog?')) return;
+    if (!window.confirm('Are you sure you want to delete this blog post?')) return;
     try {
       await api.delete(`/blogs/${id}`);
       showNotification('success', 'Blog deleted successfully!');
@@ -113,7 +140,7 @@ export default function BlogManager({ onNotify }) {
     <div className="space-y-6">
       <ToastAlert notification={notification} />
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
         <BlogForm
           editBlogId={editBlogId}
           newBlog={newBlog}

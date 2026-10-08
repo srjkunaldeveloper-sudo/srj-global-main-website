@@ -403,10 +403,12 @@ const Pricing = () => {
   return (
     <div className="pricing-page pt-4">
       <SEO 
+        pageKey="pricing"
         title="B2B Software & IT Consulting Pricing"
         description="Explore transparent, flexible investment models for custom web development, mobile apps, enterprise software, and AI solutions."
         keywords="IT consulting pricing, software development cost, custom web app pricing, enterprise software quote, SRJ Global pricing"
         url="https://srjglobaltechnology.com/pricing"
+        faqs={pricingFaqs}
         extraSchema={{
           "@type": "OfferCatalog",
           "@id": "https://srjglobaltechnology.com/pricing#catalog",

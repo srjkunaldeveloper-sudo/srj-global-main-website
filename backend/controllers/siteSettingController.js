@@ -35,9 +35,14 @@ function validateFieldValue(key, fieldType, cleanVal) {
       throw new AppError(`Invalid email format for key '${key}'`, 400);
     }
   } else if (fieldType === "url") {
+    const isAnchorOrSpecial =
+      cleanVal === "#" ||
+      cleanVal.startsWith("#") ||
+      cleanVal.startsWith("mailto:") ||
+      cleanVal.startsWith("tel:");
     const isRelativeUrl = cleanVal.startsWith("/");
     const isAbsoluteUrl = /^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(cleanVal);
-    if (!isRelativeUrl && !isAbsoluteUrl) {
+    if (!isAnchorOrSpecial && !isRelativeUrl && !isAbsoluteUrl) {
       throw new AppError(`Invalid URL format for key '${key}'`, 400);
     }
   } else if (fieldType === "phone") {
@@ -132,19 +137,26 @@ exports.updateSettingByKey = asyncHandler(async (req, res) => {
   );
 
   if (existingRows.length === 0) {
-    throw new AppError(`Setting key '${key}' not found`, 404);
+    // Auto-create setting if it didn't exist before
+    const defaultGroup = key.startsWith('footer_') ? 'footer'
+      : key.startsWith('legal_') || key.startsWith('privacy_') || key.startsWith('terms_') || key.startsWith('cookie_') ? 'legal'
+      : key.startsWith('seo_') || key.startsWith('geo_') ? 'seo'
+      : key.startsWith('social_') ? 'social'
+      : key.startsWith('contact_') ? 'contact'
+      : 'general';
+
+    await db.query(
+      "INSERT INTO site_settings (setting_key, setting_value, group_name, field_type, description) VALUES (?, ?, ?, 'text', ?)",
+      [key, newValue, defaultGroup, `Dynamic setting for ${key}`]
+    );
+  } else {
+    const existingSetting = existingRows[0];
+    validateFieldValue(key, existingSetting.field_type, newValue);
+    await db.query(
+      "UPDATE site_settings SET setting_value = ? WHERE setting_key = ?",
+      [newValue, key]
+    );
   }
-
-  const existingSetting = existingRows[0];
-
-  // Perform field type validation
-  validateFieldValue(key, existingSetting.field_type, newValue);
-
-  // Update setting value
-  await db.query(
-    "UPDATE site_settings SET setting_value = ? WHERE setting_key = ?",
-    [newValue, key]
-  );
 
   const [updatedRows] = await db.query(
     "SELECT id, setting_key, setting_value, group_name, field_type, description, updated_at FROM site_settings WHERE setting_key = ?",
@@ -169,39 +181,41 @@ exports.updateBulkSettings = asyncHandler(async (req, res) => {
 
   // Fetch all existing settings to validate keys
   const [existingRows] = await db.query(
-    "SELECT id, setting_key, field_type FROM site_settings"
+    "SELECT id, setting_key, field_type, group_name FROM site_settings"
   );
-  const existingKeyMap = new Map(existingRows.map((r) => [r.setting_key, r.field_type]));
+  const existingKeyMap = new Map(existingRows.map((r) => [r.setting_key, r]));
 
   const validUpdates = [];
-  const invalidKeys = [];
 
-  inputKeys.forEach((key) => {
-    if (!existingKeyMap.has(key)) {
-      invalidKeys.push(key);
-      return;
-    }
-
-    const fieldType = existingKeyMap.get(key);
+  for (const key of inputKeys) {
+    const existing = existingKeyMap.get(key);
     const rawVal = inputPairs[key];
     const cleanVal = rawVal !== null && rawVal !== undefined ? String(rawVal).trim() : null;
 
-    // Field type validation
-    validateFieldValue(key, fieldType, cleanVal);
+    if (existing) {
+      validateFieldValue(key, existing.field_type, cleanVal);
+      await db.query(
+        "UPDATE site_settings SET setting_value = ? WHERE setting_key = ?",
+        [cleanVal, key]
+      );
+    } else {
+      // Auto-upsert new keys cleanly
+      const inferredGroup =
+        key.startsWith("footer_") ? "footer" :
+        key.startsWith("legal_") || key.startsWith("privacy_") || key.startsWith("terms_") || key.startsWith("cookie_") ? "legal" :
+        key.startsWith("seo_") || key.startsWith("geo_") ? "seo" :
+        key.startsWith("social_") ? "social" :
+        key.startsWith("contact_") ? "contact" :
+        key.startsWith("home_") || key.startsWith("hero_") ? "home" :
+        "general";
+
+      await db.query(
+        "INSERT INTO site_settings (setting_key, setting_value, group_name, field_type, description) VALUES (?, ?, ?, 'text', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)",
+        [key, cleanVal, inferredGroup, `Custom setting ${key}`]
+      );
+    }
 
     validUpdates.push({ key, value: cleanVal });
-  });
-
-  if (invalidKeys.length > 0 && validUpdates.length === 0) {
-    throw new AppError(`Unknown setting key(s): ${invalidKeys.join(", ")}`, 400);
-  }
-
-  // Execute updates
-  for (const item of validUpdates) {
-    await db.query(
-      "UPDATE site_settings SET setting_value = ? WHERE setting_key = ?",
-      [item.value, item.key]
-    );
   }
 
   // Fetch fresh public settings map
@@ -219,7 +233,6 @@ exports.updateBulkSettings = asyncHandler(async (req, res) => {
     message: `Successfully updated ${validUpdates.length} setting(s)`,
     updatedCount: validUpdates.length,
     updatedKeys: validUpdates.map((u) => u.key),
-    ignoredKeys: invalidKeys.length > 0 ? invalidKeys : undefined,
     settings: updatedSettingsMap,
   });
 });

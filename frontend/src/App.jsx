@@ -34,6 +34,7 @@ const BlogDetail = lazy(() => import('./components/blog/BlogDetail'));
 const Careers = lazy(() => import('./components/Careers'));
 const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
 const TermsConditions = lazy(() => import('./components/TermsConditions'));
+const CookiePolicy = lazy(() => import('./components/CookiePolicy'));
 const AdminLogin = lazy(() => import('./components/admin/AdminLogin'));
 const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
 const ForgotPassword = lazy(() => import('./components/admin/ForgotPassword'));
@@ -65,6 +66,7 @@ export default function App() {
                   <Route path="/" element={
                     <>
                       <SEO 
+                        pageKey="home"
                         title="Software Development & IT Solutions" 
                         description="SRJ Global Technologies specializes in custom software development, IT consulting, and innovative digital solutions to propel your business forward."
                         keywords="software development, IT solutions, SRJ Global Technologies, web development, app development"
@@ -97,6 +99,8 @@ export default function App() {
                   <Route path="/careers" element={<Careers />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/terms" element={<TermsConditions />} />
+                  <Route path="/cookies" element={<CookiePolicy />} />
+                  <Route path="/cookie-policy" element={<CookiePolicy />} />
                   
                   {/* Admin Portal Routes */}
                   <Route path="/admin/login" element={<AdminLogin />} />
